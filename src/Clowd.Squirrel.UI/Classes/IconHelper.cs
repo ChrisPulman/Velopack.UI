@@ -91,7 +91,7 @@ public static class IconHelper
     /// <param name="fileName">any filename</param>
     /// <param name="large">16x16 or 32x32 icon</param>
     /// <returns>null if path is null, otherwise - an icon</returns>
-    public static ImageSource FindIconForFilename(string fileName, bool large)
+    public static ImageSource? FindIconForFilename(string fileName, bool large)
     {
         var extension = Path.GetExtension(fileName);
         if (extension == null)
@@ -177,7 +177,7 @@ public static class IconHelper
     /// </summary>
     /// <param name="icon">The icon.</param>
     /// <returns></returns>
-    public static ImageSource ToImageSource(this Icon icon)
+    public static ImageSource? ToImageSource(this Icon icon)
     {
         if (icon == null)
         {
@@ -275,15 +275,11 @@ public static class IconHelper
                 flags += Shell32.ShgfiLinkoverlay;
             }
             /* Check the size specified for return. */
-            if (IconSize.Small == size)
+            flags += size switch
             {
-                flags += Shell32.ShgfiSmallicon;
-            }
-            else
-            {
-                flags += Shell32.ShgfiLargeicon;
-            }
-
+                IconSize.Small => Shell32.ShgfiSmallicon,
+                _ => Shell32.ShgfiLargeicon,
+            };
             Shell32.SHGetFileInfo(name,
                 Shell32.FileAttributeNormal,
                 ref shfi,
