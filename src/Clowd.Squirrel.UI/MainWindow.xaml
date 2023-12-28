@@ -9,9 +9,9 @@
     x:Name="mainWindow"
     Title="MainWindow"
     Width="1024"
-    Height="768"
-    MinWidth="525"
-    MinHeight="400"
+    Height="960"
+    MinWidth="1024"
+    MinHeight="768"
     x:TypeArguments="local:MainWindowViewModel"
     Style="{DynamicResource NavigationWindowStyle}"
     mc:Ignorable="d" />

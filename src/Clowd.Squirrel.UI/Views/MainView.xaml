@@ -10,10 +10,12 @@
     xmlns:rxNav="https://github.com/ChrisPulman/CrissCross"
     xmlns:rxui="http://reactiveui.net"
     xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
+    x:Name="mainView"
     Width="1024"
     Height="768"
     MinWidth="525"
     MinHeight="400"
+    d:DataContext="{d:DesignInstance Type=local:MainViewModel}"
     x:TypeArguments="local:MainViewModel"
     mc:Ignorable="d">
 
@@ -139,13 +141,11 @@
                         <Menu
                             Grid.ColumnSpan="3"
                             Margin="0,0,0,20"
-                            DataContext="{Binding ElementName=MainWindow, Path=DataContext}">
-                            <MenuItem FontSize="16" Header="Project File">
+                            DataContext="{Binding ElementName=mainView, Path=DataContext}"
+                            FontSize="16">
+                            <MenuItem Width="200" Header="Project File">
                                 <MenuItem.Icon>
-                                    <Image
-                                        Width="24"
-                                        Height="24"
-                                        Source="/Clowd.Squirrel.UI;component/Images/folder_24.png" />
+                                    <Image Source="/Clowd.Squirrel.UI;component/Images/folder_24.png" Stretch="UniformToFill" />
                                 </MenuItem.Icon>
                                 <MenuItem x:Name="CreateNewProject" Header="Create New" />
                                 <MenuItem x:Name="OpenProject" Header="Open" />
@@ -162,7 +162,7 @@
                         <TextBox
                             Grid.Row="2"
                             Grid.Column="0"
-                            Text="{Binding AppId, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged}" />
+                            Text="{Binding AppId, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged}" Background="{x:Null}" />
 
                         <TextBlock
                             Grid.Row="4"
@@ -173,7 +173,7 @@
                             Grid.Row="5"
                             Grid.Column="0"
                             IsEnabled="{Binding ElementName=cbManualVersion, Path=IsChecked}"
-                            Text="{Binding Version, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged}" />
+                            Text="{Binding Version, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged}" Background="{x:Null}" />
                         <CheckBox
                             x:Name="cbManualVersion"
                             Grid.Row="6"
@@ -191,7 +191,7 @@
                         <TextBox
                             Grid.Row="9"
                             Grid.Column="0"
-                            Text="{Binding Title, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged}" />
+                            Text="{Binding Title, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged}" Background="{x:Null}" />
 
                         <TextBlock
                             Grid.Row="11"
@@ -203,7 +203,7 @@
                             Grid.Column="0"
                             Height="50"
                             AcceptsReturn="True"
-                            Text="{Binding Description, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged}" />
+                            Text="{Binding Description, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged}" Background="{x:Null}" />
 
                         <TextBlock
                             Grid.Row="14"
@@ -213,7 +213,7 @@
                         <TextBox
                             Grid.Row="15"
                             Grid.Column="0"
-                            Text="{Binding Authors, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged}" />
+                            Text="{Binding Authors, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged}" Background="{x:Null}" />
 
                         <TextBlock
                             Grid.Row="17"
@@ -224,7 +224,7 @@
                             Grid.Row="18"
                             Grid.Column="0"
                             ItemsSource="{Binding AvailableUploadLocation}"
-                            SelectedItem="{Binding SelectedConnectionString, ValidatesOnDataErrors=True}" />
+                            SelectedItem="{Binding SelectedConnectionString, ValidatesOnDataErrors=True}" Background="{x:Null}" />
                         <StackPanel
                             Grid.Row="19"
                             Grid.Column="0"
@@ -331,7 +331,7 @@
                             dd:DragDrop.UseDefaultDragAdorner="True"
                             AllowDrop="True"
                             ItemsSource="{Binding PackageFiles}"
-                            Tag="{Binding DataContext, RelativeSource={RelativeSource Self}}">
+                            Tag="{Binding DataContext, RelativeSource={RelativeSource Self}}" Background="{x:Null}">
                             <mstv:MultiSelectTreeView.Template>
                                 <ControlTemplate TargetType="{x:Type mstv:MultiSelectTreeView}">
                                     <Border
@@ -449,7 +449,7 @@
                                 <Grid.Style>
                                     <Style TargetType="Grid">
                                         <Style.Triggers>
-                                            <DataTrigger Binding="{Binding DataContext.Model.SelectedItem, ElementName=MainWindow}" Value="{x:Null}">
+                                            <DataTrigger Binding="{Binding DataContext.Model.SelectedItem, ElementName=mainView}" Value="{x:Null}">
                                                 <Setter Property="Visibility" Value="Hidden" />
                                             </DataTrigger>
                                         </Style.Triggers>
@@ -531,6 +531,7 @@
                     </GroupBox.Header>
                     <ListView
                         Grid.Row="1"
+                        Background="{x:Null}"
                         ItemsSource="{Binding Path=UploadQueue}"
                         SelectedItem="{Binding Path=SelectedUploadItem}">
                         <ListView.View>

@@ -9,7 +9,6 @@ using System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using CrissCross;
 using FluentValidation;
 using FluentValidation.Results;
 using GongSolutions.Wpf.DragDrop;
@@ -26,40 +25,40 @@ namespace Clowd.Squirrel.UI
     public class AutoSquirrelModel : WebConnectionBase, GongSolutions.Wpf.DragDrop.IDropTarget
     {
         [DataMember]
-        internal List<WebConnectionBase> CachedConnection = new List<WebConnectionBase>();
+        internal List<WebConnectionBase> CachedConnection = [];
 
-        private readonly ConnectionDiscoveryService connectionDiscoveryService = new ConnectionDiscoveryService();
-        private ReactiveCommand<Unit,Unit> _addDirectoryCmd;
-        private string _appId;
-        private string _authors;
+        private readonly ConnectionDiscoveryService _connectionDiscoveryService = new();
+        private readonly string _newFolderName = "NEW FOLDER";
+        private ReactiveCommand<Unit, Unit> _addDirectoryCmd;
+        private string? _appId;
+        private string? _authors;
         private List<string> _availableUploadLocation;
-        private string _description;
+        private string? _description;
         private ReactiveCommand<Unit, Unit> _editConnectionCmd;
-        private string _iconFilepath;
-        private string _mainExePath;
-        private string _nupkgOutputPath;
+        private string? _iconFilepath;
+        private string? _mainExePath;
+        private string? _nupkgOutputPath;
         private ObservableCollection<ItemLink> _packageFiles = new ObservableCollection<ItemLink>();
         private ReactiveCommand<Unit, Unit> _refreshVersionNumber;
         private ReactiveCommand<Unit, Unit> _removeAllItemsCmd;
         private ReactiveCommand<Unit, Unit> _removeItemCmd;
-        private WebConnectionBase _selectedConnection;
-        private string _selectedConnectionString;
+        private WebConnectionBase? _selectedConnection;
+        private string? _selectedConnectionString;
         private SingleFileUpload _selectedUploadItem;
         private ReactiveCommand<Unit, Unit> _selectIconCmd;
         private bool _setVersionManually;
-        private string _splashFilepath;
-        private string _squirrelOutputPath;
-        private string _title;
+        private string? _splashFilepath;
+        private string? _squirrelOutputPath;
+        private string? _title;
         private ObservableCollection<SingleFileUpload> _uploadQueue = new ObservableCollection<SingleFileUpload>();
         private string? _version;
-        private string newFolderName = "NEW FOLDER";
-        private ItemLink selectedItem = new ItemLink();
-        private ReactiveCommand<Unit, Unit> selectSplashCmd;
+        private ItemLink _selectedItem = new();
+        private ReactiveCommand<Unit, Unit> _selectSplashCmd;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AutoSquirrelModel"/> class.
         /// </summary>
-        public AutoSquirrelModel() => PackageFiles = new ObservableCollection<ItemLink>();
+        public AutoSquirrelModel() => PackageFiles = [];
 
         /// <summary>
         /// Gets the add directory command.
@@ -72,7 +71,7 @@ namespace Clowd.Squirrel.UI
         /// </summary>
         /// <value>The application identifier.</value>
         [DataMember]
-        public string AppId
+        public string? AppId
         {
             get => _appId;
             set => this.RaiseAndSetIfChanged(ref _appId, value);
@@ -83,7 +82,7 @@ namespace Clowd.Squirrel.UI
         /// </summary>
         /// <value>The authors.</value>
         [DataMember]
-        public string Authors
+        public string? Authors
         {
             get => _authors;
             set => this.RaiseAndSetIfChanged(ref _authors, value);
@@ -97,11 +96,7 @@ namespace Clowd.Squirrel.UI
         {
             get
             {
-                _availableUploadLocation =
-                    _availableUploadLocation ?? new List<string>(
-                        connectionDiscoveryService.AvailableConnections.Select(
-                            connection => connection.ConnectionName!));
-
+                _availableUploadLocation ??= new List<string>(_connectionDiscoveryService.AvailableConnections.Select(connection => connection.ConnectionName!));
                 return _availableUploadLocation;
             }
         }
@@ -111,14 +106,14 @@ namespace Clowd.Squirrel.UI
         /// </summary>
         /// <value>The current file path.</value>
         [DataMember]
-        public string CurrentFilePath { get; internal set; }
+        public string? CurrentFilePath { get; internal set; }
 
         /// <summary>
         /// Gets or sets the description.
         /// </summary>
         /// <value>The description.</value>
         [DataMember]
-        public string Description
+        public string? Description
         {
             get => _description;
             set => this.RaiseAndSetIfChanged(ref _description, value);
@@ -135,7 +130,7 @@ namespace Clowd.Squirrel.UI
         /// </summary>
         /// <value>The icon filepath.</value>
         [DataMember]
-        public string IconFilepath
+        public string? IconFilepath
         {
             get => _iconFilepath;
 
@@ -151,7 +146,7 @@ namespace Clowd.Squirrel.UI
         /// Gets the icon source.
         /// </summary>
         /// <value>The icon source.</value>
-        public ImageSource IconSource
+        public ImageSource? IconSource
         {
             get
             {
@@ -172,7 +167,7 @@ namespace Clowd.Squirrel.UI
         /// </summary>
         /// <value>The main executable path.</value>
         [DataMember]
-        public string MainExePath
+        public string? MainExePath
         {
             get => _mainExePath;
             set => this.RaiseAndSetIfChanged(ref _mainExePath, value);
@@ -183,7 +178,7 @@ namespace Clowd.Squirrel.UI
         /// </summary>
         /// <value>The nupkg output path.</value>
         [DataMember]
-        public string NupkgOutputPath
+        public string? NupkgOutputPath
         {
             get => _nupkgOutputPath;
             set => this.RaiseAndSetIfChanged(ref _nupkgOutputPath, value);
@@ -223,7 +218,7 @@ namespace Clowd.Squirrel.UI
         /// </summary>
         /// <value>The selected connection.</value>
         [DataMember]
-        public WebConnectionBase SelectedConnection
+        public WebConnectionBase? SelectedConnection
         {
             get => _selectedConnection;
             set => this.RaiseAndSetIfChanged(ref _selectedConnection, value);
@@ -234,7 +229,7 @@ namespace Clowd.Squirrel.UI
         /// </summary>
         /// <value>The selected connection string.</value>
         [DataMember]
-        public string SelectedConnectionString
+        public string? SelectedConnectionString
         {
             get => _selectedConnectionString;
 
@@ -256,8 +251,8 @@ namespace Clowd.Squirrel.UI
         /// <value>The selected item.</value>
         public ItemLink SelectedItem
         {
-            get => selectedItem;
-            set => this.RaiseAndSetIfChanged(ref selectedItem, value);
+            get => _selectedItem;
+            set => this.RaiseAndSetIfChanged(ref _selectedItem, value);
         }
 
         /// <summary>
@@ -287,7 +282,7 @@ namespace Clowd.Squirrel.UI
         /// </summary>
         /// <value>The select splash command.</value>
         public ICommand SelectSplashCmd =>
-selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
+_selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
 
         /// <summary>
         /// Gets or sets a value indicating whether [set version manually].
@@ -310,7 +305,7 @@ selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
         /// </summary>
         /// <value>The splash filepath.</value>
         [DataMember]
-        public string SplashFilepath
+        public string? SplashFilepath
         {
             get => _splashFilepath;
 
@@ -346,7 +341,7 @@ selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
         /// </summary>
         /// <value>The squirrel output path.</value>
         [DataMember]
-        public string SquirrelOutputPath
+        public string? SquirrelOutputPath
         {
             get => _squirrelOutputPath;
             set => this.RaiseAndSetIfChanged(ref _squirrelOutputPath, value);
@@ -357,7 +352,7 @@ selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
         /// </summary>
         /// <value>The title.</value>
         [DataMember]
-        public string Title
+        public string? Title
         {
             get => _title;
             set => this.RaiseAndSetIfChanged(ref _title, value);
@@ -412,13 +407,13 @@ selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
             var selectedLink = SelectedLink[0];
             if (selectedLink != null)
             {
-                var validFolderName = GetValidName(newFolderName, selectedLink.Children);
+                var validFolderName = GetValidName(_newFolderName, selectedLink.Children);
 
                 selectedLink.Children.Add(new ItemLink { OutputFilename = validFolderName, IsDirectory = true });
             }
             else
             {
-                var validFolderName = GetValidName(newFolderName, PackageFiles);
+                var validFolderName = GetValidName(_newFolderName, PackageFiles);
 
                 PackageFiles.Add(new ItemLink { OutputFilename = validFolderName, IsDirectory = true });
             }
@@ -439,7 +434,7 @@ selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
         {
             if (dropInfo == null)
             {
-                throw new System.ArgumentNullException(nameof(dropInfo));
+                throw new ArgumentNullException(nameof(dropInfo));
             }
 
             dropInfo.DropTargetAdorner = DropTargetAdorners.Highlight;
@@ -455,7 +450,7 @@ selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
             // MOVE FILE INSIDE PACKAGE
             if (dropInfo == null)
             {
-                throw new System.ArgumentNullException(nameof(dropInfo));
+                throw new ArgumentNullException(nameof(dropInfo));
             }
 
             var targetItem = dropInfo.TargetItem as ItemLink;
@@ -555,7 +550,7 @@ selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
                 return;
             }
 
-            foreach (var link in SelectedLink)
+            foreach (var link in SelectedLink!)
             {
                 RemoveFromTreeview(link);
             }
@@ -608,7 +603,7 @@ selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
         /// </summary>
         public void SelectOutputDirectory()
         {
-            var dialog = new System.Windows.Forms.FolderBrowserDialog();
+            var dialog = new FolderBrowserDialog();
 
             if (Directory.Exists(SquirrelOutputPath))
             {
@@ -630,7 +625,7 @@ selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
         /// </summary>
         public void SelectSplash()
         {
-            var ofd = new System.Windows.Forms.OpenFileDialog
+            var ofd = new OpenFileDialog
             {
                 AddExtension = true,
                 DefaultExt = ".gif",
@@ -672,7 +667,7 @@ selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
             return base.Validate();
         }
 
-        internal static BitmapImage GetImageFromFilepath(string path)
+        internal static BitmapImage? GetImageFromFilepath(string? path)
         {
             if (!File.Exists(path))
             {
@@ -762,7 +757,7 @@ selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
                 updatedFiles.Add(new FileInfo(ffp));
             }
 
-            UploadQueue = UploadQueue ?? new ObservableCollection<SingleFileUpload>();
+            UploadQueue ??= [];
 
             UploadQueue.Clear();
 
@@ -786,7 +781,7 @@ selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
 
         private static string BytesToString(long byteCount)
         {
-            string[] suf = { "B", "KB", "MB", "GB", "TB", "PB", "EB" }; //Longs run out around EB
+            string[] suf = ["B", "KB", "MB", "GB", "TB", "PB", "EB"]; //Longs run out around EB
             if (byteCount == 0)
             {
                 return "0" + suf[0];
@@ -828,7 +823,7 @@ selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
             }
         }
 
-        private void AddFile(string filePath, ItemLink targetItem)
+        private void AddFile(string filePath, ItemLink? targetItem)
         {
             var isDir = false;
             var fa = File.GetAttributes(filePath);
@@ -921,7 +916,7 @@ selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
             }
         }
 
-        private void Current_OnUploadCompleted(object sender, UploadCompleteEventArgs e)
+        private void Current_OnUploadCompleted(object? sender, UploadCompleteEventArgs e)
         {
             var i = e.FileUploaded;
 
@@ -932,7 +927,7 @@ selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
             ProcessNextUploadFile();
         }
 
-        private void MoveItem(ItemLink draggedItem, ItemLink targetItem)
+        private void MoveItem(ItemLink draggedItem, ItemLink? targetItem)
         {
             // Remove from current location
             RemoveFromTreeview(draggedItem);
@@ -975,7 +970,7 @@ selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
                     item?.Dispose();
                 }
 
-                selectedItem.Dispose();
+                _selectedItem.Dispose();
             }
             base.Dispose(disposing);
         }
@@ -1033,10 +1028,7 @@ selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
             // Element is in the treeview root.
             if (parent == null)
             {
-                if (_packageFiles.Contains(item))
-                {
-                    _packageFiles.Remove(item);
-                }
+                _packageFiles.Remove(item);
             }
             else
             {
@@ -1062,7 +1054,7 @@ selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
         /// connection string , he don't lose inserted parameter
         /// </summary>
         /// <param name="connectionType">Type of the connection.</param>
-        private void UpdateSelectedConnection(string connectionType)
+        private void UpdateSelectedConnection(string? connectionType)
         {
             if (string.IsNullOrWhiteSpace(connectionType))
             {
@@ -1070,12 +1062,12 @@ selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
             }
 
             // Instantiate cache if null
-            CachedConnection = CachedConnection ?? new List<WebConnectionBase>();
+            CachedConnection ??= [];
 
             // Retrieve cached connection or take new isntance from connection service
             var con =
                 CachedConnection.FirstOrDefault(c => c.ConnectionName == connectionType) ??
-                connectionDiscoveryService.GetByName(connectionType);
+                _connectionDiscoveryService.GetByName(connectionType);
 
             // Cache connection if not cached already
             if (con != null && !CachedConnection.Contains(con))
