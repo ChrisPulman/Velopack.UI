@@ -23,7 +23,7 @@ namespace Clowd.Squirrel.UI
         private string? _fileSize;
         private double _progressPercentage;
         private FileUploadStatus _uploadStatus;
-        private TransferUtility? fileTransferUtility;
+        private TransferUtility? _fileTransferUtility;
 
         /// <summary>
         /// Occurs when [on upload completed].
@@ -119,7 +119,7 @@ namespace Clowd.Squirrel.UI
 
                 var amazonClient = new AmazonS3Client(amazonCon.AccessKey, amazonCon.SecretAccessKey, amazonCon.GetRegion());
 
-                fileTransferUtility = new TransferUtility(amazonClient);
+                _fileTransferUtility = new TransferUtility(amazonClient);
 
                 if (!await AmazonS3Util.DoesS3BucketExistV2Async(amazonClient, amazonCon.BucketName))
                 {
@@ -136,7 +136,7 @@ namespace Clowd.Squirrel.UI
 
                 uploadRequest.UploadProgressEvent += uploadRequest_UploadPartProgressEvent;
 
-                fileTransferUtility.UploadAsync(uploadRequest);
+                await _fileTransferUtility.UploadAsync(uploadRequest);
 
                 Trace.WriteLine("Start Upload : " + FullPath);
             }
@@ -146,7 +146,7 @@ namespace Clowd.Squirrel.UI
             }
         }
 
-        private static async Task CreateABucketAsync(IAmazonS3 client, string bucketName)
+        private static async Task CreateABucketAsync(AmazonS3Client client, string? bucketName)
         {
             var putRequest1 = new PutBucketRequest
             {
@@ -166,8 +166,7 @@ namespace Clowd.Squirrel.UI
             OnUploadCompleted?.Invoke(null, uploadEvent);
         }
 
-        private void uploadRequest_UploadPartProgressEvent(
-          object sender, UploadProgressArgs e)
+        private void uploadRequest_UploadPartProgressEvent(object? sender, UploadProgressArgs e)
         {
             ProgressPercentage = e.PercentDone;
 
@@ -181,7 +180,7 @@ namespace Clowd.Squirrel.UI
                 {
                     Application.Current.Dispatcher.BeginInvoke(
                       DispatcherPriority.Background,
-                      new System.Action(() => RequesteUploadComplete(new UploadCompleteEventArgs(this))));
+                      new Action(() => RequesteUploadComplete(new UploadCompleteEventArgs(this))));
                 }
             }
         }
@@ -190,7 +189,7 @@ namespace Clowd.Squirrel.UI
         {
             if (disposing)
             {
-                fileTransferUtility?.Dispose();
+                _fileTransferUtility?.Dispose();
             }
 
             base.Dispose(disposing);

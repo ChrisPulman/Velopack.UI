@@ -3,7 +3,7 @@
 /// <summary>
 /// Upload Complete EventArgs
 /// </summary>
-/// <seealso cref="System.EventArgs"/>
+/// <seealso cref="EventArgs"/>
 public class UploadCompleteEventArgs : EventArgs
 {
     /// <summary>
