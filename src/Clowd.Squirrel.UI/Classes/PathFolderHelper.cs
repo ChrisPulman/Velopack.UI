@@ -98,7 +98,7 @@ namespace Clowd.Squirrel.UI
                              .GetName()
                              .Version;
 
-            return $"{ver.Major}.{ver.Minor}.{ver.Build}";
+            return $"{ver?.Major}.{ver?.Minor}.{ver?.Build}";
         }
 
         internal static Preference LoadUserPreference()
@@ -107,7 +107,7 @@ namespace Clowd.Squirrel.UI
                 var path = GetMyDirectory(MyDirectory.Base) + "\\Preference.txt";
 
                 if (File.Exists(path)) {
-                    var p = FileUtility.Deserialize<Preference>(path);
+                    var p = new Preference(); //// FileUtility.Deserialize<Preference>(path);
 
                     // Check if project files still exist.
 
@@ -135,7 +135,7 @@ namespace Clowd.Squirrel.UI
             try {
                 var path = GetMyDirectory(MyDirectory.Base) + "\\Preference.txt";
 
-                FileUtility.SerializeToFile(path, userPreference);
+                ////FileUtility.SerializeToFile(path, userPreference);
             } catch (Exception) {
                 MessageBox.Show("Error on saving preference !");
             }

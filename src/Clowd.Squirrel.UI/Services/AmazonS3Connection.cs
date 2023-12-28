@@ -1,5 +1,7 @@
 ﻿using System.Runtime.Serialization;
 using Amazon;
+using FluentValidation;
+using FluentValidation.Results;
 using ReactiveUI;
 
 namespace Clowd.Squirrel.UI
@@ -11,14 +13,14 @@ namespace Clowd.Squirrel.UI
     [DataContract]
     public class AmazonS3Connection : WebConnectionBase
     {
-        private string _accessKey;
-        private List<string> _availableRegionList;
+        private string? _accessKey;
+        private List<string>? _availableRegionList;
 
         //http://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-s3-bucket-naming-requirements.html
-        private string _bucketName;
+        private string? _bucketName;
 
-        private string _regionName;
-        private string _secretAccessKey;
+        private string? _regionName;
+        private string? _secretAccessKey;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AmazonS3Connection"/> class.
@@ -30,7 +32,7 @@ namespace Clowd.Squirrel.UI
         /// </summary>
         /// <value>The access key.</value>
         [DataMember]
-        public string AccessKey
+        public string? AccessKey
         {
             get => _accessKey;
             set => this.RaiseAndSetIfChanged(ref _accessKey, value);
@@ -45,7 +47,7 @@ namespace Clowd.Squirrel.UI
             get
             {
                 if (_availableRegionList == null) {
-                    _availableRegionList = new List<string>();
+                    _availableRegionList = [];
 
                     foreach (var r in RegionEndpoint.EnumerableAllRegions) {
                         _availableRegionList.Add(r.DisplayName);
@@ -61,7 +63,7 @@ namespace Clowd.Squirrel.UI
         /// </summary>
         /// <value>The name of the bucket.</value>
         [DataMember]
-        public string BucketName
+        public string? BucketName
         {
             get => _bucketName;
 
@@ -82,7 +84,7 @@ namespace Clowd.Squirrel.UI
         /// </summary>
         /// <value>The name of the region.</value>
         [DataMember]
-        public string RegionName
+        public string? RegionName
         {
             get => _regionName;
 
@@ -98,7 +100,7 @@ namespace Clowd.Squirrel.UI
         /// </summary>
         /// <value>The secret access key.</value>
         [DataMember]
-        public string SecretAccessKey
+        public string? SecretAccessKey
         {
             get => _secretAccessKey;
             set => this.RaiseAndSetIfChanged(ref _secretAccessKey, value);
@@ -116,7 +118,7 @@ namespace Clowd.Squirrel.UI
                     return "Missing Parameter";
                 }
 
-                return "https://s3-" + GetRegion().SystemName + ".amazonaws.com/" + BucketName.ToLower() + "/Setup.exe";
+                return "https://s3-" + GetRegion()?.SystemName + ".amazonaws.com/" + BucketName.ToLower() + "/Setup.exe";
             }
         }
 
@@ -134,7 +136,7 @@ namespace Clowd.Squirrel.UI
             return base.Validate();
         }
 
-        internal RegionEndpoint GetRegion() =>
+        internal RegionEndpoint? GetRegion() =>
             RegionEndpoint.EnumerableAllRegions.FirstOrDefault(r => r.DisplayName == RegionName);
 
         private class Validator : AbstractValidator<AmazonS3Connection>
@@ -148,9 +150,9 @@ namespace Clowd.Squirrel.UI
                 RuleFor(c => c.BucketName).Must(CheckBucketName).WithState(x => "Bucket Name not valid ! See Amazon SDK documentation");
             }
 
-            private static bool CheckBucketName(string bucketName)
+            private static bool CheckBucketName(string? bucketName)
             {
-                if (string.IsNullOrWhiteSpace(bucketName) || bucketName.Contains(" ")) {
+                if (string.IsNullOrWhiteSpace(bucketName) || bucketName.Contains(' ')) {
                     return false;
                 }
 
