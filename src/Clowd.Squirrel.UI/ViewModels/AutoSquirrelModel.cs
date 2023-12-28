@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.IO;
 using System.Net.Cache;
+using System.Reactive;
 using System.Runtime.Serialization;
 using System.Windows;
 using System.Windows.Forms;
@@ -9,6 +10,8 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using CrissCross;
+using FluentValidation;
+using FluentValidation.Results;
 using GongSolutions.Wpf.DragDrop;
 using ReactiveUI;
 
@@ -20,29 +23,29 @@ namespace Clowd.Squirrel.UI
     /// <seealso cref="AutoSquirrel.PropertyChangedBaseValidable"/>
     /// <seealso cref="GongSolutions.Wpf.DragDrop.IDropTarget"/>
     [DataContract]
-    public class AutoSquirrelModel : RxObject, GongSolutions.Wpf.DragDrop.IDropTarget
+    public class AutoSquirrelModel : WebConnectionBase, GongSolutions.Wpf.DragDrop.IDropTarget
     {
         [DataMember]
         internal List<WebConnectionBase> CachedConnection = new List<WebConnectionBase>();
 
         private readonly ConnectionDiscoveryService connectionDiscoveryService = new ConnectionDiscoveryService();
-        private ICommand _addDirectoryCmd;
+        private ReactiveCommand<Unit,Unit> _addDirectoryCmd;
         private string _appId;
         private string _authors;
         private List<string> _availableUploadLocation;
         private string _description;
-        private ICommand _editConnectionCmd;
+        private ReactiveCommand<Unit, Unit> _editConnectionCmd;
         private string _iconFilepath;
         private string _mainExePath;
         private string _nupkgOutputPath;
         private ObservableCollection<ItemLink> _packageFiles = new ObservableCollection<ItemLink>();
-        private ICommand _refreshVersionNumber;
-        private ICommand _removeAllItemsCmd;
-        private ICommand _removeItemCmd;
+        private ReactiveCommand<Unit, Unit> _refreshVersionNumber;
+        private ReactiveCommand<Unit, Unit> _removeAllItemsCmd;
+        private ReactiveCommand<Unit, Unit> _removeItemCmd;
         private WebConnectionBase _selectedConnection;
         private string _selectedConnectionString;
         private SingleFileUpload _selectedUploadItem;
-        private ICommand _selectIconCmd;
+        private ReactiveCommand<Unit, Unit> _selectIconCmd;
         private bool _setVersionManually;
         private string _splashFilepath;
         private string _squirrelOutputPath;
@@ -51,7 +54,7 @@ namespace Clowd.Squirrel.UI
         private string? _version;
         private string newFolderName = "NEW FOLDER";
         private ItemLink selectedItem = new ItemLink();
-        private ICommand selectSplashCmd;
+        private ReactiveCommand<Unit, Unit> selectSplashCmd;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AutoSquirrelModel"/> class.
@@ -62,8 +65,7 @@ namespace Clowd.Squirrel.UI
         /// Gets the add directory command.
         /// </summary>
         /// <value>The add directory command.</value>
-        public ICommand AddDirectoryCmd => _addDirectoryCmd ??
-       (_addDirectoryCmd = new DelegateCommand(AddDirectory));
+        public ReactiveCommand<Unit, Unit> AddDirectoryCmd => _addDirectoryCmd ??= ReactiveCommand.Create(AddDirectory);
 
         /// <summary>
         /// Gets or sets the application identifier.
@@ -98,7 +100,7 @@ namespace Clowd.Squirrel.UI
                 _availableUploadLocation =
                     _availableUploadLocation ?? new List<string>(
                         connectionDiscoveryService.AvailableConnections.Select(
-                            connection => connection.ConnectionName));
+                            connection => connection.ConnectionName!));
 
                 return _availableUploadLocation;
             }
@@ -126,8 +128,7 @@ namespace Clowd.Squirrel.UI
         /// Gets the edit connection command.
         /// </summary>
         /// <value>The edit connection command.</value>
-        public ICommand EditConnectionCmd => _editConnectionCmd ??
-       (_editConnectionCmd = new DelegateCommand(EditCurrentConnection));
+        public ReactiveCommand<Unit, Unit> EditConnectionCmd => _editConnectionCmd ??= ReactiveCommand.Create(EditCurrentConnection);
 
         /// <summary>
         /// Gets or sets the icon filepath.
@@ -203,22 +204,19 @@ namespace Clowd.Squirrel.UI
         /// Gets the refresh version number.
         /// </summary>
         /// <value>The refresh version number.</value>
-        public ICommand RefreshVersionNumber => _refreshVersionNumber ??
-               (_refreshVersionNumber = new DelegateCommand(RefreshPackageVersion));
+        public ReactiveCommand<Unit, Unit> RefreshVersionNumber => _refreshVersionNumber ??= ReactiveCommand.Create(RefreshPackageVersion);
 
         /// <summary>
         /// Gets the remove all items command.
         /// </summary>
         /// <value>The remove all items command.</value>
-        public ICommand RemoveAllItemsCmd => _removeAllItemsCmd ??
-               (_removeAllItemsCmd = new DelegateCommand(RemoveAllItems));
+        public ReactiveCommand<Unit, Unit> RemoveAllItemsCmd => _removeAllItemsCmd ??= ReactiveCommand.Create(RemoveAllItems);
 
         /// <summary>
         /// Gets the remove item command.
         /// </summary>
         /// <value>The remove item command.</value>
-        public ICommand RemoveItemCmd => _removeItemCmd ??
-       (_removeItemCmd = new DelegateCommand(RemoveItem));
+        public ReactiveCommand<Unit, Unit> RemoveItemCmd => _removeItemCmd ??= ReactiveCommand.Create(RemoveItem);
 
         /// <summary>
         /// Gets or sets the selected connection.
@@ -282,15 +280,14 @@ namespace Clowd.Squirrel.UI
         /// Gets the select icon command.
         /// </summary>
         /// <value>The select icon command.</value>
-        public ICommand SelectIconCmd => _selectIconCmd ??
-       (_selectIconCmd = new DelegateCommand(SelectIcon));
+        public ReactiveCommand<Unit, Unit> SelectIconCmd => _selectIconCmd ??= ReactiveCommand.Create(SelectIcon);
 
         /// <summary>
         /// Gets the select splash command.
         /// </summary>
         /// <value>The select splash command.</value>
         public ICommand SelectSplashCmd =>
-                    selectSplashCmd ?? (selectSplashCmd = new DelegateCommand(SelectSplash));
+selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
 
         /// <summary>
         /// Gets or sets a value indicating whether [set version manually].
@@ -440,6 +437,11 @@ namespace Clowd.Squirrel.UI
         /// </remarks>
         public void DragOver(IDropInfo dropInfo)
         {
+            if (dropInfo == null)
+            {
+                throw new System.ArgumentNullException(nameof(dropInfo));
+            }
+
             dropInfo.DropTargetAdorner = DropTargetAdorners.Highlight;
             dropInfo.Effects = System.Windows.DragDropEffects.Copy;
         }
@@ -451,6 +453,10 @@ namespace Clowd.Squirrel.UI
         public void Drop(IDropInfo dropInfo)
         {
             // MOVE FILE INSIDE PACKAGE
+            if (dropInfo == null)
+            {
+                throw new System.ArgumentNullException(nameof(dropInfo));
+            }
 
             var targetItem = dropInfo.TargetItem as ItemLink;
 
@@ -958,6 +964,20 @@ namespace Clowd.Squirrel.UI
             }
 
             this.RaisePropertyChanged(nameof(PackageFiles));
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                foreach (var item in UploadQueue)
+                {
+                    item?.Dispose();
+                }
+
+                selectedItem.Dispose();
+            }
+            base.Dispose(disposing);
         }
 
         private void ProcessNextUploadFile()

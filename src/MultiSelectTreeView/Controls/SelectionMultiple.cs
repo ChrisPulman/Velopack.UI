@@ -17,7 +17,7 @@ namespace System.Windows.Controls
         private BorderSelectionLogic _borderSelectionLogic;
         private object _lastShiftRoot;
 
-        public SelectionMultiple(MultiSelectTreeView treeView) => this._treeView = treeView;
+        public SelectionMultiple(MultiSelectTreeView treeView) => _treeView = treeView;
 
         public bool LastCancelAll { get; private set; }
 

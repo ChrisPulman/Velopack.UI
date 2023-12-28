@@ -121,7 +121,7 @@ namespace Clowd.Squirrel.UI
 
                 fileTransferUtility = new TransferUtility(amazonClient);
 
-                if (!await AmazonS3Util.DoesS3BucketExist(amazonClient, amazonCon.BucketName))
+                if (!await AmazonS3Util.DoesS3BucketExistV2Async(amazonClient, amazonCon.BucketName))
                 {
                     await CreateABucketAsync(amazonClient, amazonCon.BucketName);
                 }
@@ -184,6 +184,16 @@ namespace Clowd.Squirrel.UI
                       new System.Action(() => RequesteUploadComplete(new UploadCompleteEventArgs(this))));
                 }
             }
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                fileTransferUtility?.Dispose();
+            }
+
+            base.Dispose(disposing);
         }
     }
 }
