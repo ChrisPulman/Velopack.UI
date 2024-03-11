@@ -12,7 +12,7 @@
   <ItemGroup>
     <PackageReference Include="Clowd.Squirrel" Version="2.11.1" />
     <PackageReference Include="AWSSDK.S3" Version="3.7.305.31" />
-    <PackageReference Include="CrissCross.WPF" Version="1.0.3" />
+    <PackageReference Include="CrissCross.WPF" Version="1.0.13" />
     <PackageReference Include="DotNetProjects.Extended.Wpf.Toolkit" Version="5.0.113" />
     <PackageReference Include="gong-wpf-dragdrop" Version="3.2.1" />
     <PackageReference Include="FluentValidation" Version="11.8.1" />
