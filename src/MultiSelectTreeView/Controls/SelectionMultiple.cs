@@ -45,15 +45,12 @@ namespace System.Windows.Controls
             }
         }
 
-        public void ApplyTemplate()
-        {
-            _borderSelectionLogic = new BorderSelectionLogic(
+        public void ApplyTemplate() => _borderSelectionLogic = new BorderSelectionLogic(
                _treeView,
                _treeView.Template.FindName("selectionBorder", _treeView) as Border,
                _treeView.Template.FindName("scrollViewer", _treeView) as ScrollViewer,
                _treeView.Template.FindName("content", _treeView) as ItemsPresenter,
                MultiSelectTreeView.RecursiveTreeViewItemEnumerable(_treeView, false, false));
-        }
 
         public bool Select(MultiSelectTreeViewItem item)
         {
@@ -351,15 +348,9 @@ namespace System.Windows.Controls
             return SelectFromKey(item);
         }
 
-        public bool SelectPageUpFromKey()
-        {
-            return SelectPageUpDown(false);
-        }
+        public bool SelectPageUpFromKey() => SelectPageUpDown(false);
 
-        public bool SelectPageDownFromKey()
-        {
-            return SelectPageUpDown(true);
-        }
+        public bool SelectPageDownFromKey() => SelectPageUpDown(true);
 
         public bool SelectAllFromKey()
         {

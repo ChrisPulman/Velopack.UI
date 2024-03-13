@@ -1,7 +1,9 @@
 ﻿using System.Reactive.Disposables;
-using System.Windows.Controls;
+using ReactiveMarbles.ObservableEvents;
 using CrissCross;
+using CrissCross.WPF.UI.Appearance;
 using ReactiveUI;
+using System.Windows.Forms;
 
 namespace Clowd.Squirrel.UI;
 
@@ -12,21 +14,12 @@ public partial class MainWindow
 {
     public MainWindow()
     {
+        SystemThemeWatcher.Watch(this);
         InitializeComponent();
         this.WhenActivated(d =>
         {
-            GoBackButton!.Command = ReactiveCommand.Create(() => this.NavigateBack(), this.CanNavigateBack()).DisposeWith(d);
-            ExitApp!.Command = ReactiveCommand.Create(() => App.Current.Shutdown()).DisposeWith(d);
-            this.NavigateToView<MainViewModel>();
+            GoBackButton.Command = ReactiveCommand.Create(() => this.NavigateBack(), this.CanNavigateBack()).DisposeWith(d);
+            this.NavigateToView<MainViewModel>();            
         });
-    }
-    private Button? GoBackButton { get; set; }
-    private Button? ExitApp { get; set; }
-
-    public override void OnApplyTemplate()
-    {
-        base.OnApplyTemplate();
-        GoBackButton = (Button)Template.FindName(nameof(GoBackButton), this);
-        ExitApp = (Button)Template.FindName(nameof(ExitApp), this);
     }
 }

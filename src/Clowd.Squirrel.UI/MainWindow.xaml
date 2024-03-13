@@ -1,17 +1,22 @@
-﻿<rxNav:NavigationWindow
+﻿<ui:FluentNavigationWindow
     x:Class="Clowd.Squirrel.UI.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="clr-namespace:Clowd.Squirrel.UI"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:rxNav="https://github.com/ChrisPulman/CrissCross"
+    xmlns:ui="https://github.com/ChrisPulman/CrissCross.ui"
     x:Name="mainWindow"
-    Title="MainWindow"
+    Title="Clowd Squirrel UI"
     Width="1024"
     Height="960"
     MinWidth="1024"
     MinHeight="768"
     x:TypeArguments="local:MainWindowViewModel"
-    Style="{DynamicResource NavigationWindowStyle}"
-    mc:Ignorable="d" />
+    mc:Ignorable="d">
+    <ui:FluentNavigationWindow.TitleContent>
+        <StackPanel Orientation="Horizontal">
+            <ui:Button x:Name="GoBackButton" Content="Back" />
+        </StackPanel>
+    </ui:FluentNavigationWindow.TitleContent>
+</ui:FluentNavigationWindow>

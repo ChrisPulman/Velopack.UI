@@ -242,20 +242,11 @@ namespace System.Windows.Automation.Peers
             return base.GetPattern(patternInterface);
         }
 
-        void IScrollItemProvider.ScrollIntoView()
-        {
-            ((MultiSelectTreeViewItem)Owner).BringIntoView();
-        }
+        void IScrollItemProvider.ScrollIntoView() => ((MultiSelectTreeViewItem)Owner).BringIntoView();
 
-        void ISelectionItemProvider.AddToSelection()
-        {
-            throw new NotImplementedException();
-        }
+        void ISelectionItemProvider.AddToSelection() => throw new NotImplementedException();
 
-        void ISelectionItemProvider.RemoveFromSelection()
-        {
-            throw new NotImplementedException();
-        }
+        void ISelectionItemProvider.RemoveFromSelection() => throw new NotImplementedException();
 
         void ISelectionItemProvider.Select() => ((MultiSelectTreeViewItem)Owner).ParentTreeView.Selection.SelectCore((MultiSelectTreeViewItem)Owner);
 

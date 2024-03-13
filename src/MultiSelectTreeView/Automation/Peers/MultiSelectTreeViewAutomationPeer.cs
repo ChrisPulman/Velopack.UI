@@ -3,60 +3,61 @@ using System.Windows.Controls;
 
 namespace System.Windows.Automation.Peers
 {
-	public class MultiSelectTreeViewAutomationPeer(MultiSelectTreeView owner) : ItemsControlAutomationPeer(owner), ISelectionProvider
-	{
+    public class MultiSelectTreeViewAutomationPeer(MultiSelectTreeView owner) : ItemsControlAutomationPeer(owner), ISelectionProvider
+    {
         public bool CanSelectMultiple => false;
 
         public bool IsSelectionRequired => false;
 
         public override object GetPattern(PatternInterface patternInterface)
-		{
-			if (patternInterface == PatternInterface.Selection)
-			{
-				return this;
-			}
+        {
+            if (patternInterface == PatternInterface.Selection)
+            {
+                return this;
+            }
 
-			// if (patternInterface == PatternInterface.Scroll)
-			// {
-			// ItemsControl itemsControl = (ItemsControl)Owner;
-			// if (itemsControl.ScrollHost != null)
-			// {
-			// AutomationPeer automationPeer = UIElementAutomationPeer.CreatePeerForElement(itemsControl.ScrollHost);
-			// if (automationPeer != null && automationPeer is IScrollProvider)
-			// {
-			// automationPeer.EventsSource = this;
-			// return (IScrollProvider)automationPeer;
-			// }
-			// }
-			// }
-			return base.GetPattern(patternInterface);
-		}
+            if (patternInterface == PatternInterface.Scroll)
+            {
+                var itemsControl = (ItemsControl)Owner;
+                ////if (itemsControl.ScrollHost != null)
+                ////{
+                ////    var automationPeer = UIElementAutomationPeer.CreatePeerForElement(itemsControl.ScrollHost);
+                ////    if (automationPeer != null && automationPeer is IScrollProvider provider)
+                ////    {
+                ////        automationPeer.EventsSource = this;
+                ////        return provider;
+                ////    }
+                ////}
+            }
 
-		IRawElementProviderSimple[] ISelectionProvider.GetSelection()
-		{
-			IRawElementProviderSimple[] array = null;
+            return base.GetPattern(patternInterface);
+        }
 
-			// MultiSelectTreeViewItem selectedContainer = ((MultiSelectTreeView) base.Owner).SelectedContainer;
-			// if (selectedContainer != null)
-			// {
-			// AutomationPeer automationPeer = UIElementAutomationPeer.FromElement(selectedContainer);
-			// if (automationPeer.EventsSource != null)
-			// {
-			// automationPeer = automationPeer.EventsSource;
-			// }
+        IRawElementProviderSimple[]? ISelectionProvider.GetSelection()
+        {
+            IRawElementProviderSimple[]? array = null;
 
-			// if (automationPeer != null)
-			// {
-			// array = new[] { this.ProviderFromPeer(automationPeer) };
-			// }
-			// }
+            ////MultiSelectTreeViewItem selectedContainer = ((MultiSelectTreeView)base.Owner).SelectedContainer;
+            ////if (selectedContainer != null)
+            ////{
+            ////    var automationPeer = FromElement(selectedContainer);
+            ////    if (automationPeer.EventsSource != null)
+            ////    {
+            ////        automationPeer = automationPeer.EventsSource;
+            ////    }
 
-			// if (array == null)
-			// {
-			// array = new IRawElementProviderSimple[0];
-			// }
-			return array;
-		}
+            ////    if (automationPeer != null)
+            ////    {
+            ////        array = [ProviderFromPeer(automationPeer)];
+            ////    }
+            ////}
+
+            if (array == null)
+            {
+                array = [];
+            }
+            return array;
+        }
 
         /// <summary>
         /// When overridden in a derived class, creates a new instance of the

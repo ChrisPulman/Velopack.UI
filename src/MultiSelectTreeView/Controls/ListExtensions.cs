@@ -4,7 +4,7 @@ namespace System.Windows.Controls
 {
     internal static class ListExtensions
     {
-		internal static object Last(this IList list)
+        internal static object Last(this IList list)
         {
             if (list.Count < 1)
             {
@@ -13,7 +13,7 @@ namespace System.Windows.Controls
             return list[list.Count - 1];
         }
 
-		internal static object First(this IList list)
+        internal static object First(this IList list)
         {
             if (list.Count < 1)
             {

@@ -7,8 +7,8 @@
     xmlns:local="clr-namespace:Clowd.Squirrel.UI"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:mstv="clr-namespace:System.Windows.Controls;assembly=MultiSelectTreeView"
-    xmlns:rxNav="https://github.com/ChrisPulman/CrissCross"
     xmlns:rxui="http://reactiveui.net"
+    xmlns:ui="https://github.com/ChrisPulman/CrissCross.ui"
     xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
     x:Name="mainView"
     Width="1024"
@@ -26,19 +26,19 @@
         <xctk:BusyIndicator.BusyContentTemplate>
             <DataTemplate>
                 <StackPanel Width="250" Margin="4">
-                    <TextBlock
+                    <ui:TextBlock
                         HorizontalAlignment="Center"
                         FontSize="18"
                         FontWeight="Bold"
                         Text="PACKAGE CREATION" />
                     <StackPanel Margin="4" HorizontalAlignment="Stretch">
-                        <TextBlock FontSize="12" Text="{Binding CurrentPackageCreationStage}" />
+                        <ui:TextBlock FontSize="12" Text="{Binding CurrentPackageCreationStage}" />
                         <ProgressBar
                             Height="25"
                             Margin="5"
                             IsIndeterminate="True" />
                     </StackPanel>
-                    <Button
+                    <ui:Button
                         Grid.Column="1"
                         Margin="2,0,0,0"
                         HorizontalAlignment="Center"
@@ -90,7 +90,7 @@
                 <GroupBox Grid.RowSpan="2" Margin="5,5,5,4.5">
                     <GroupBox.Header>
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock
+                            <ui:TextBlock
                                 FontSize="14"
                                 Foreground="White"
                                 Text="PACKAGE DETAILS" />
@@ -154,26 +154,28 @@
                             </MenuItem>
                         </Menu>
 
-                        <TextBlock
+                        <ui:TextBlock
                             Grid.Row="1"
                             Grid.Column="0"
                             Style="{StaticResource ResourceKey=Label}"
                             Text="APP ID" />
-                        <TextBox
+                        <ui:TextBox
                             Grid.Row="2"
                             Grid.Column="0"
-                            Text="{Binding AppId, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged}" Background="{x:Null}" />
+                            Background="{x:Null}"
+                            Text="{Binding AppId, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged}" />
 
-                        <TextBlock
+                        <ui:TextBlock
                             Grid.Row="4"
                             Grid.Column="0"
                             Style="{StaticResource ResourceKey=Label}"
                             Text="VERSION" />
-                        <TextBox
+                        <ui:TextBox
                             Grid.Row="5"
                             Grid.Column="0"
+                            Background="{x:Null}"
                             IsEnabled="{Binding ElementName=cbManualVersion, Path=IsChecked}"
-                            Text="{Binding Version, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged}" Background="{x:Null}" />
+                            Text="{Binding Version, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged}" />
                         <CheckBox
                             x:Name="cbManualVersion"
                             Grid.Row="6"
@@ -183,39 +185,42 @@
                             Foreground="{DynamicResource Accent}"
                             IsChecked="{Binding SetVersionManually}" />
 
-                        <TextBlock
+                        <ui:TextBlock
                             Grid.Row="8"
                             Grid.Column="0"
                             Style="{StaticResource ResourceKey=Label}"
                             Text="TITLE" />
-                        <TextBox
+                        <ui:TextBox
                             Grid.Row="9"
                             Grid.Column="0"
-                            Text="{Binding Title, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged}" Background="{x:Null}" />
+                            Background="{x:Null}"
+                            Text="{Binding Title, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged}" />
 
-                        <TextBlock
+                        <ui:TextBlock
                             Grid.Row="11"
                             Grid.Column="0"
                             Style="{StaticResource ResourceKey=Label}"
                             Text="DESCRIPTION" />
-                        <TextBox
+                        <ui:TextBox
                             Grid.Row="12"
                             Grid.Column="0"
                             Height="50"
                             AcceptsReturn="True"
-                            Text="{Binding Description, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged}" Background="{x:Null}" />
+                            Background="{x:Null}"
+                            Text="{Binding Description, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged}" />
 
-                        <TextBlock
+                        <ui:TextBlock
                             Grid.Row="14"
                             Grid.Column="0"
                             Style="{StaticResource ResourceKey=Label}"
                             Text="AUTHORS" />
-                        <TextBox
+                        <ui:TextBox
                             Grid.Row="15"
                             Grid.Column="0"
-                            Text="{Binding Authors, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged}" Background="{x:Null}" />
+                            Background="{x:Null}"
+                            Text="{Binding Authors, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged}" />
 
-                        <TextBlock
+                        <ui:TextBlock
                             Grid.Row="17"
                             Grid.Column="0"
                             Style="{StaticResource ResourceKey=Label}"
@@ -223,8 +228,9 @@
                         <ComboBox
                             Grid.Row="18"
                             Grid.Column="0"
+                            Background="{x:Null}"
                             ItemsSource="{Binding AvailableUploadLocation}"
-                            SelectedItem="{Binding SelectedConnectionString, ValidatesOnDataErrors=True}" Background="{x:Null}" />
+                            SelectedItem="{Binding SelectedConnectionString, ValidatesOnDataErrors=True}" />
                         <StackPanel
                             Grid.Row="19"
                             Grid.Column="0"
@@ -235,12 +241,11 @@
                                 Height="16"
                                 Margin="4,0"
                                 Source="/Clowd.Squirrel.UI;component/Images/edit_16.png" />
-                            <Button
+                            <ui:Button
                                 Margin="4"
                                 Command="{Binding EditConnectionCmd}"
                                 Content="Edit Connection"
-                                FontSize="16"
-                                Style="{StaticResource ResourceKey=LinkButton}" />
+                                FontSize="16" />
                         </StackPanel>
 
                         <Grid Grid.Row="21">
@@ -257,8 +262,7 @@
                                     Command="{Binding SelectIconCmd}"
                                     Content="APP ICON"
                                     FontSize="14"
-                                    FontWeight="Bold"
-                                    Style="{StaticResource LinkButton}" />
+                                    FontWeight="Bold" />
                                 <Border
                                     Margin="2"
                                     Padding="3"
@@ -282,8 +286,7 @@
                                     Command="{Binding SelectSplashCmd}"
                                     Content="SPLASH"
                                     FontSize="14"
-                                    FontWeight="Bold"
-                                    Style="{StaticResource LinkButton}" />
+                                    FontWeight="Bold" />
                                 <Border
                                     Margin="2"
                                     Padding="3"
@@ -312,7 +315,7 @@
                 <GroupBox Grid.Column="2" Margin="5,5,5,4.5">
                     <GroupBox.Header>
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock
+                            <ui:TextBlock
                                 FontSize="14"
                                 Foreground="White"
                                 Text="INSTALLER PACKAGE CONTENT" />
@@ -330,8 +333,9 @@
                             dd:DragDrop.IsDropTarget="True"
                             dd:DragDrop.UseDefaultDragAdorner="True"
                             AllowDrop="True"
+                            Background="{x:Null}"
                             ItemsSource="{Binding PackageFiles}"
-                            Tag="{Binding DataContext, RelativeSource={RelativeSource Self}}" Background="{x:Null}">
+                            Tag="{Binding DataContext, RelativeSource={RelativeSource Self}}">
                             <mstv:MultiSelectTreeView.Template>
                                 <ControlTemplate TargetType="{x:Type mstv:MultiSelectTreeView}">
                                     <Border
@@ -350,7 +354,7 @@
                                                 BorderBrush="{Binding BorderBrushSelectionRectangle, RelativeSource={RelativeSource FindAncestor, AncestorLevel=1, AncestorType={x:Type mstv:MultiSelectTreeView}}}"
                                                 BorderThickness="1"
                                                 Visibility="Collapsed" />
-                                            <TextBlock
+                                            <ui:TextBlock
                                                 Margin="0,40,0,0"
                                                 HorizontalAlignment="Center"
                                                 VerticalAlignment="Top"
@@ -467,36 +471,36 @@
                                         <RowDefinition Height="Auto" />
                                     </Grid.RowDefinitions>
 
-                                    <TextBlock
+                                    <ui:TextBlock
                                         Grid.Row="0"
                                         Grid.Column="1"
                                         Margin="8,0"
                                         Text="Source Filepath" />
-                                    <TextBlock
+                                    <ui:TextBlock
                                         Grid.Row="0"
                                         Grid.Column="2"
                                         Margin="4,0"
                                         Text="{Binding SourceFilepath}"
                                         TextWrapping="Wrap" />
 
-                                    <TextBlock
+                                    <ui:TextBlock
                                         Grid.Row="1"
                                         Grid.Column="1"
                                         Margin="8,0"
                                         Text="File Dimension" />
-                                    <TextBlock
+                                    <ui:TextBlock
                                         Grid.Row="1"
                                         Grid.Column="2"
                                         Margin="4,0"
                                         Text="{Binding FileDimension}"
                                         TextWrapping="Wrap" />
 
-                                    <TextBlock
+                                    <ui:TextBlock
                                         Grid.Row="2"
                                         Grid.Column="1"
                                         Margin="8,0"
                                         Text="Last Edit " />
-                                    <TextBlock
+                                    <ui:TextBlock
                                         Grid.Row="2"
                                         Grid.Column="2"
                                         Margin="4,0"
@@ -523,7 +527,7 @@
                     Margin="5,5.5,5,4.5">
                     <GroupBox.Header>
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock
+                            <ui:TextBlock
                                 FontSize="14"
                                 Foreground="White"
                                 Text="UPLOAD QUEUE" />
@@ -602,7 +606,7 @@
                                 Height="32"
                                 Margin="5,0"
                                 Source="/Clowd.Squirrel.UI;component/Images/upload_32.png" />
-                            <TextBlock
+                            <ui:TextBlock
                                 FontSize="20"
                                 FontWeight="Bold"
                                 Foreground="Green"
@@ -635,7 +639,7 @@
                                 Height="32"
                                 Margin="5,0"
                                 Source="/Clowd.Squirrel.UI;component/Images/upload_32.png" />
-                            <TextBlock
+                            <ui:TextBlock
                                 FontSize="20"
                                 FontWeight="Bold"
                                 Foreground="Green"

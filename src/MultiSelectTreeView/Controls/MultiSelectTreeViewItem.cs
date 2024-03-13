@@ -458,20 +458,11 @@ namespace System.Windows.Controls
             }
         }
 
-        protected override DependencyObject GetContainerForItemOverride()
-        {
-            return new MultiSelectTreeViewItem();
-        }
+        protected override DependencyObject GetContainerForItemOverride() => new MultiSelectTreeViewItem();
 
-        protected override bool IsItemItsOwnContainerOverride(object item)
-        {
-            return item is MultiSelectTreeViewItem;
-        }
+        protected override bool IsItemItsOwnContainerOverride(object item) => item is MultiSelectTreeViewItem;
 
-        protected override AutomationPeer OnCreateAutomationPeer()
-        {
-            return new MultiSelectTreeViewItemAutomationPeer(this);
-        }
+        protected override AutomationPeer OnCreateAutomationPeer() => new MultiSelectTreeViewItemAutomationPeer(this);
 
         protected override void OnInitialized(EventArgs e)
         {
@@ -614,15 +605,11 @@ namespace System.Windows.Controls
             IsEditing = false;
         }
 
-        protected override void OnGotFocus(RoutedEventArgs e)
-        {
+        protected override void OnGotFocus(RoutedEventArgs e) =>
             // Do not call the base method because it would bring all of its children into view on
             // selecting which is not the desired behaviour.
             //base.OnGotFocus(e);
-            ParentTreeView.LastFocusedItem = this;
-            //System.Diagnostics.Debug.WriteLine("MultiSelectTreeViewItem.OnGotFocus(), DisplayName = " + DisplayName);
-            //System.Diagnostics.Debug.WriteLine(Environment.StackTrace);
-        }
+            ParentTreeView.LastFocusedItem = this;//System.Diagnostics.Debug.WriteLine("MultiSelectTreeViewItem.OnGotFocus(), DisplayName = " + DisplayName);//System.Diagnostics.Debug.WriteLine(Environment.StackTrace);
 
         protected override void OnLostFocus(RoutedEventArgs e)
         {
