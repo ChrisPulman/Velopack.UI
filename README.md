@@ -1,1 +1,1 @@
-# Clowd.Squirrel.UI
+# Velopack.UI
