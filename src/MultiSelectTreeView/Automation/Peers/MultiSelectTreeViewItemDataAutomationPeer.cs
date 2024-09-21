@@ -1,153 +1,152 @@
 ﻿using System.Windows.Automation.Provider;
 using System.Windows.Controls;
 
-namespace System.Windows.Automation.Peers
+namespace System.Windows.Automation.Peers;
+
+public class MultiSelectTreeViewItemDataAutomationPeer(object item, ItemsControlAutomationPeer itemsControlAutomationPeer) :
+    ItemAutomationPeer(item, itemsControlAutomationPeer),
+    ISelectionItemProvider,
+    IScrollItemProvider,
+    IExpandCollapseProvider,
+    IValueProvider
 {
-    public class MultiSelectTreeViewItemDataAutomationPeer(object item, ItemsControlAutomationPeer itemsControlAutomationPeer) :
-        ItemAutomationPeer(item, itemsControlAutomationPeer),
-        ISelectionItemProvider,
-        IScrollItemProvider,
-        IExpandCollapseProvider,
-        IValueProvider
+    ExpandCollapseState IExpandCollapseProvider.ExpandCollapseState
     {
-        ExpandCollapseState IExpandCollapseProvider.ExpandCollapseState
+        get
         {
-            get
-            {
-                return ItemPeer.ExpandCollapseState;
-            }
+            return ItemPeer.ExpandCollapseState;
         }
+    }
 
-        bool ISelectionItemProvider.IsSelected
+    bool ISelectionItemProvider.IsSelected
+    {
+        get
         {
-            get
-            {
-                return ((ISelectionItemProvider)ItemPeer).IsSelected;
-            }
+            return ((ISelectionItemProvider)ItemPeer).IsSelected;
         }
+    }
 
-        IRawElementProviderSimple ISelectionItemProvider.SelectionContainer
+    IRawElementProviderSimple ISelectionItemProvider.SelectionContainer
+    {
+        get
         {
-            get
-            {
-                // TreeViewItemAutomationPeer treeViewItemAutomationPeer = GetWrapperPeer() as TreeViewItemAutomationPeer;
-                // if (treeViewItemAutomationPeer != null)
-                // {
-                // ISelectionItemProvider selectionItemProvider = treeViewItemAutomationPeer;
-                // return selectionItemProvider.SelectionContainer;
-                // }
+            // TreeViewItemAutomationPeer treeViewItemAutomationPeer = GetWrapperPeer() as TreeViewItemAutomationPeer;
+            // if (treeViewItemAutomationPeer != null)
+            // {
+            // ISelectionItemProvider selectionItemProvider = treeViewItemAutomationPeer;
+            // return selectionItemProvider.SelectionContainer;
+            // }
 
-                // this.ThrowElementNotAvailableException();
-                return null;
-            }
+            // this.ThrowElementNotAvailableException();
+            return null;
         }
+    }
 
-        private MultiSelectTreeViewItemAutomationPeer ItemPeer
+    private MultiSelectTreeViewItemAutomationPeer ItemPeer
+    {
+        get
         {
-            get
+            AutomationPeer automationPeer = null;
+            UIElement wrapper = GetWrapper();
+            if (wrapper != null)
             {
-                AutomationPeer automationPeer = null;
-                UIElement wrapper = GetWrapper();
-                if (wrapper != null)
+                automationPeer = UIElementAutomationPeer.CreatePeerForElement(wrapper);
+                if (automationPeer == null)
                 {
-                    automationPeer = UIElementAutomationPeer.CreatePeerForElement(wrapper);
-                    if (automationPeer == null)
+                    if (wrapper is FrameworkElement)
                     {
-                        if (wrapper is FrameworkElement)
-                        {
-                            automationPeer = new FrameworkElementAutomationPeer((FrameworkElement)wrapper);
-                        }
-                        else
-                        {
-                            automationPeer = new UIElementAutomationPeer(wrapper);
-                        }
+                        automationPeer = new FrameworkElementAutomationPeer((FrameworkElement)wrapper);
+                    }
+                    else
+                    {
+                        automationPeer = new UIElementAutomationPeer(wrapper);
                     }
                 }
-
-                var treeViewItemAutomationPeer = automationPeer as MultiSelectTreeViewItemAutomationPeer;
-
-                if (treeViewItemAutomationPeer == null)
-                {
-                    throw new InvalidOperationException("Could not find parent automation peer.");
-                }
-
-                return treeViewItemAutomationPeer;
             }
-        }
 
-        public override object GetPattern(PatternInterface patternInterface)
+            var treeViewItemAutomationPeer = automationPeer as MultiSelectTreeViewItemAutomationPeer;
+
+            if (treeViewItemAutomationPeer == null)
+            {
+                throw new InvalidOperationException("Could not find parent automation peer.");
+            }
+
+            return treeViewItemAutomationPeer;
+        }
+    }
+
+    public override object GetPattern(PatternInterface patternInterface)
+    {
+        if (patternInterface == PatternInterface.ExpandCollapse)
         {
-            if (patternInterface == PatternInterface.ExpandCollapse)
-            {
-                return this;
-            }
-
-            if (patternInterface == PatternInterface.SelectionItem)
-            {
-                return this;
-            }
-
-            if (patternInterface == PatternInterface.ScrollItem)
-            {
-                return this;
-            }
-
-            if (patternInterface == PatternInterface.Value)
-            {
-                return this;
-            }
-
-            if (patternInterface == PatternInterface.ItemContainer
-                || patternInterface == PatternInterface.SynchronizedInput)
-            {
-                return ItemPeer;
-            }
-
-            return base.GetPattern(patternInterface);
+            return this;
         }
 
-        void IExpandCollapseProvider.Collapse() => ItemPeer.Collapse();
-
-        void IExpandCollapseProvider.Expand() => ItemPeer.Expand();
-
-        void IScrollItemProvider.ScrollIntoView() => ((IScrollItemProvider)ItemPeer).ScrollIntoView();
-
-        void ISelectionItemProvider.AddToSelection() => ((ISelectionItemProvider)ItemPeer).AddToSelection();
-
-        void ISelectionItemProvider.RemoveFromSelection() => ((ISelectionItemProvider)ItemPeer).RemoveFromSelection();
-
-        void ISelectionItemProvider.Select() => ((ISelectionItemProvider)ItemPeer).Select();
-
-        protected override AutomationControlType GetAutomationControlTypeCore() => AutomationControlType.TreeItem;
-
-        protected override string GetClassNameCore() => "TreeViewItem";
-
-        private UIElement GetWrapper()
+        if (patternInterface == PatternInterface.SelectionItem)
         {
-            UIElement result = null;
-            ItemsControlAutomationPeer itemsControlAutomationPeer = ItemsControlAutomationPeer;
-            if (itemsControlAutomationPeer != null)
+            return this;
+        }
+
+        if (patternInterface == PatternInterface.ScrollItem)
+        {
+            return this;
+        }
+
+        if (patternInterface == PatternInterface.Value)
+        {
+            return this;
+        }
+
+        if (patternInterface == PatternInterface.ItemContainer
+            || patternInterface == PatternInterface.SynchronizedInput)
+        {
+            return ItemPeer;
+        }
+
+        return base.GetPattern(patternInterface);
+    }
+
+    void IExpandCollapseProvider.Collapse() => ItemPeer.Collapse();
+
+    void IExpandCollapseProvider.Expand() => ItemPeer.Expand();
+
+    void IScrollItemProvider.ScrollIntoView() => ((IScrollItemProvider)ItemPeer).ScrollIntoView();
+
+    void ISelectionItemProvider.AddToSelection() => ((ISelectionItemProvider)ItemPeer).AddToSelection();
+
+    void ISelectionItemProvider.RemoveFromSelection() => ((ISelectionItemProvider)ItemPeer).RemoveFromSelection();
+
+    void ISelectionItemProvider.Select() => ((ISelectionItemProvider)ItemPeer).Select();
+
+    protected override AutomationControlType GetAutomationControlTypeCore() => AutomationControlType.TreeItem;
+
+    protected override string GetClassNameCore() => "TreeViewItem";
+
+    private UIElement GetWrapper()
+    {
+        UIElement result = null;
+        ItemsControlAutomationPeer itemsControlAutomationPeer = ItemsControlAutomationPeer;
+        if (itemsControlAutomationPeer != null)
+        {
+            ItemsControl itemsControl = (ItemsControl)itemsControlAutomationPeer.Owner;
+            if (itemsControl != null)
             {
-                ItemsControl itemsControl = (ItemsControl)itemsControlAutomationPeer.Owner;
-                if (itemsControl != null)
-                {
-                    result = itemsControl.ItemContainerGenerator.ContainerFromItem(Item) as UIElement;
-                }
+                result = itemsControl.ItemContainerGenerator.ContainerFromItem(Item) as UIElement;
             }
-
-            return result;
         }
 
-        bool IValueProvider.IsReadOnly
-        {
-            get { return ((IValueProvider)ItemPeer).IsReadOnly; }
-        }
+        return result;
+    }
 
-        void IValueProvider.SetValue(string value) => ((IValueProvider)ItemPeer).SetValue(value);
+    bool IValueProvider.IsReadOnly
+    {
+        get { return ((IValueProvider)ItemPeer).IsReadOnly; }
+    }
 
-        string IValueProvider.Value
-        {
-            get { return ((IValueProvider)ItemPeer).Value; }
-        }
+    void IValueProvider.SetValue(string value) => ((IValueProvider)ItemPeer).SetValue(value);
+
+    string IValueProvider.Value
+    {
+        get { return ((IValueProvider)ItemPeer).Value; }
     }
 }
