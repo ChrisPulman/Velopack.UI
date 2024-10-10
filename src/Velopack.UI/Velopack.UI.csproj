@@ -11,7 +11,7 @@
 
   <ItemGroup>
     <PackageReference Include="ReactiveUI.SourceGenerators" Version="1.1.31" />
-    <PackageReference Include="Velopack" Version="0.0.610" />
+    <PackageReference Include="Velopack" Version="0.0.626" />
     <PackageReference Include="AWSSDK.S3" Version="3.7.403.1" />
     <PackageReference Include="CrissCross.WPF.UI" Version="2.0.6" />
     <PackageReference Include="DotNetProjects.Extended.Wpf.Toolkit" Version="5.0.115" />
