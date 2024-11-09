@@ -3,19 +3,11 @@ using System.Windows.Media;
 
 namespace System.Windows.Controls;
 
-public sealed class SelectionSingle : ISelectionStrategy
+public class SelectionSingle(MultiSelectTreeView treeView) : ISelectionStrategy
 {
-    private readonly MultiSelectTreeView treeView;
+    private bool _disposedValue;
 
-
-    public SelectionSingle(MultiSelectTreeView treeView)
-    {
-        this.treeView = treeView;
-    }
-
-    public void Dispose() => GC.SuppressFinalize(this);
-
-    public event EventHandler<PreviewSelectionChangedEventArgs> PreviewSelectionChanged;
+    public event EventHandler<PreviewSelectionChangedEventArgs>? PreviewSelectionChanged;
     public void ApplyTemplate()
     {
     }
@@ -84,29 +76,29 @@ public sealed class SelectionSingle : ISelectionStrategy
 
     public bool SelectPreviousFromKey()
     {
-        List<MultiSelectTreeViewItem> items = MultiSelectTreeView.RecursiveTreeViewItemEnumerable(treeView, false, false).ToList();
-        MultiSelectTreeViewItem item = MultiSelectTreeView.GetPreviousItem(GetFocusedItem(), items);
+        var items = MultiSelectTreeView.RecursiveTreeViewItemEnumerable(treeView, false, false).ToList();
+        var item = MultiSelectTreeView.GetPreviousItem(GetFocusedItem(), items);
         return SelectFromKey(item);
     }
 
     public bool SelectNextFromKey()
     {
-        List<MultiSelectTreeViewItem> items = MultiSelectTreeView.RecursiveTreeViewItemEnumerable(treeView, false, false).ToList();
-        MultiSelectTreeViewItem item = MultiSelectTreeView.GetNextItem(GetFocusedItem(), items);
+        var items = MultiSelectTreeView.RecursiveTreeViewItemEnumerable(treeView, false, false).ToList();
+        var item = MultiSelectTreeView.GetNextItem(GetFocusedItem(), items);
         return SelectFromKey(item);
     }
 
     public bool SelectFirstFromKey()
     {
-        List<MultiSelectTreeViewItem> items = MultiSelectTreeView.RecursiveTreeViewItemEnumerable(treeView, false, false).ToList();
-        MultiSelectTreeViewItem item = MultiSelectTreeView.GetFirstItem(items);
+        var items = MultiSelectTreeView.RecursiveTreeViewItemEnumerable(treeView, false, false).ToList();
+        var item = MultiSelectTreeView.GetFirstItem(items);
         return SelectFromKey(item);
     }
 
     public bool SelectLastFromKey()
     {
-        List<MultiSelectTreeViewItem> items = MultiSelectTreeView.RecursiveTreeViewItemEnumerable(treeView, false, false).ToList();
-        MultiSelectTreeViewItem item = MultiSelectTreeView.GetLastItem(items);
+        var items = MultiSelectTreeView.RecursiveTreeViewItemEnumerable(treeView, false, false).ToList();
+        var item = MultiSelectTreeView.GetLastItem(items);
         return SelectFromKey(item);
     }
 
@@ -118,7 +110,7 @@ public sealed class SelectionSingle : ISelectionStrategy
 
     public bool SelectParentFromKey()
     {
-        DependencyObject parent = GetFocusedItem();
+        DependencyObject? parent = GetFocusedItem();
         while (parent != null)
         {
             parent = VisualTreeHelper.GetParent(parent);
@@ -130,7 +122,7 @@ public sealed class SelectionSingle : ISelectionStrategy
     public bool SelectCurrentBySpace()
     {
         var item = GetFocusedItem();
-        var e = new PreviewSelectionChangedEventArgs(true, item.DataContext);
+        var e = new PreviewSelectionChangedEventArgs(true, item!.DataContext);
         OnPreviewSelectionChanged(e);
         if (e.CancelAny)
         {
@@ -148,23 +140,33 @@ public sealed class SelectionSingle : ISelectionStrategy
         return true;
     }
 
+    /// <summary>
+    /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
+    /// </summary>
+    public void Dispose()
+    {
+        // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+        Dispose(disposing: true);
+        GC.SuppressFinalize(this);
+    }
+
     private bool SelectPageUpDown(bool down)
     {
-        List<MultiSelectTreeViewItem> items = MultiSelectTreeView.RecursiveTreeViewItemEnumerable(treeView, false, false).ToList();
-        MultiSelectTreeViewItem item = GetFocusedItem();
+        var items = MultiSelectTreeView.RecursiveTreeViewItemEnumerable(treeView, false, false).ToList();
+        var item = GetFocusedItem();
         if (item == null)
         {
             return down ? SelectLastFromKey() : SelectFirstFromKey();
         }
 
-        double targetY = item.TransformToAncestor(treeView).Transform(new Point()).Y;
-        FrameworkElement itemContent = (FrameworkElement)item.Template.FindName("PART_Header", item);
+        var targetY = item.TransformToAncestor(treeView).Transform(new Point()).Y;
+        var itemContent = (FrameworkElement)item.Template.FindName("PART_Header", item);
         if (itemContent == null)
         {
             return down ? SelectLastFromKey() : SelectFirstFromKey();
         }
 
-        double offset = treeView.ActualHeight - 2 * ((FrameworkElement)itemContent.Parent).ActualHeight;
+        var offset = treeView.ActualHeight - 2 * ((FrameworkElement)itemContent.Parent).ActualHeight;
         if (!down) offset = -offset;
         targetY += offset;
         while (true)
@@ -172,7 +174,7 @@ public sealed class SelectionSingle : ISelectionStrategy
             var newItem = down ? MultiSelectTreeView.GetNextItem(item, items) : MultiSelectTreeView.GetPreviousItem(item, items);
             if (newItem == null) break;
             item = newItem;
-            double itemY = item.TransformToAncestor(treeView).Transform(new Point()).Y;
+            var itemY = item.TransformToAncestor(treeView).Transform(new Point()).Y;
             if (down && itemY > targetY ||
                 !down && itemY < targetY)
             {
@@ -182,7 +184,7 @@ public sealed class SelectionSingle : ISelectionStrategy
         return SelectFromKey(item);
     }
 
-    private bool SelectFromKey(MultiSelectTreeViewItem item)
+    private bool SelectFromKey(MultiSelectTreeViewItem? item)
     {
         if (item == null)
         {
@@ -192,7 +194,7 @@ public sealed class SelectionSingle : ISelectionStrategy
         return SelectCore(item);
     }
 
-    private MultiSelectTreeViewItem GetFocusedItem()
+    private MultiSelectTreeViewItem? GetFocusedItem()
     {
         foreach (var item in MultiSelectTreeView.RecursiveTreeViewItemEnumerable(treeView, false, false))
         {
@@ -205,5 +207,18 @@ public sealed class SelectionSingle : ISelectionStrategy
     {
         var handler = PreviewSelectionChanged;
         handler?.Invoke(this, e);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!_disposedValue)
+        {
+            if (disposing)
+            {
+                // TODO: dispose managed state (managed objects)
+            }
+
+            _disposedValue = true;
+        }
     }
 }

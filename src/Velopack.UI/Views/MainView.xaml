@@ -90,10 +90,7 @@
                 <GroupBox Grid.RowSpan="2" Margin="5,5,5,4.5">
                     <GroupBox.Header>
                         <StackPanel Orientation="Horizontal">
-                            <ui:TextBlock
-                                FontSize="14"
-                                Foreground="White"
-                                Text="PACKAGE DETAILS" />
+                            <ui:TextBlock FontSize="14" Text="PACKAGE DETAILS" />
                         </StackPanel>
                     </GroupBox.Header>
                     <Grid>
@@ -235,7 +232,7 @@
                             Grid.Column="0"
                             HorizontalAlignment="Right"
                             Orientation="Horizontal">
-                            <Image
+                            <ui:Image
                                 Width="16"
                                 Height="16"
                                 Margin="4,0"
@@ -256,49 +253,45 @@
                                 Grid.Column="0"
                                 Margin="4"
                                 Orientation="Vertical">
-                                <Button
+                                <ui:Button
                                     HorizontalAlignment="Center"
                                     Command="{Binding SelectIconCommand}"
                                     Content="APP ICON"
                                     FontSize="14"
                                     FontWeight="Bold" />
-                                <Border
+                                <ui:Border
                                     Margin="2"
                                     Padding="3"
                                     HorizontalAlignment="Center"
-                                    Background="White"
-                                    BorderBrush="Gray"
                                     BorderThickness="1">
-                                    <Image
+                                    <ui:Image
                                         Width="32"
                                         Height="32"
                                         Margin="3"
                                         Source="{Binding IconSource}" />
-                                </Border>
+                                </ui:Border>
                             </StackPanel>
                             <StackPanel
                                 Grid.Column="1"
                                 Margin="4"
                                 Orientation="Vertical">
-                                <Button
+                                <ui:Button
                                     HorizontalAlignment="Center"
                                     Command="{Binding SelectSplashCmd}"
                                     Content="SPLASH"
                                     FontSize="14"
                                     FontWeight="Bold" />
-                                <Border
+                                <ui:Border
                                     Margin="2"
                                     Padding="3"
                                     HorizontalAlignment="Center"
-                                    Background="White"
-                                    BorderBrush="Gray"
                                     BorderThickness="1">
-                                    <Image
+                                    <ui:Image
                                         Width="32"
                                         Height="32"
                                         Margin="3"
                                         Source="{Binding Path=SplashSource}" />
-                                </Border>
+                                </ui:Border>
                             </StackPanel>
                         </Grid>
                     </Grid>
@@ -309,15 +302,11 @@
                     Width="2"
                     Margin="2,40,3,40.5"
                     HorizontalAlignment="Center"
-                    BorderBrush="#FFFFFF"
                     IsTabStop="False" />
                 <GroupBox Grid.Column="2" Margin="5,5,5,4.5">
                     <GroupBox.Header>
                         <StackPanel Orientation="Horizontal">
-                            <ui:TextBlock
-                                FontSize="14"
-                                Foreground="White"
-                                Text="INSTALLER PACKAGE CONTENT" />
+                            <ui:TextBlock FontSize="14" Text="INSTALLER PACKAGE CONTENT" />
                         </StackPanel>
                     </GroupBox.Header>
                     <Grid>
@@ -337,15 +326,15 @@
                             Tag="{Binding DataContext, RelativeSource={RelativeSource Self}}">
                             <mstv:MultiSelectTreeView.Template>
                                 <ControlTemplate TargetType="{x:Type mstv:MultiSelectTreeView}">
-                                    <Border
+                                    <ui:Border
                                         x:Name="Bd"
                                         Padding="1"
                                         Background="{TemplateBinding Background}"
                                         BorderBrush="{TemplateBinding BorderBrush}"
                                         BorderThickness="{TemplateBinding BorderThickness}"
                                         SnapsToDevicePixels="True">
-                                        <Grid>
-                                            <Border
+                                        <ui:Grid>
+                                            <ui:Border
                                                 x:Name="selectionBorder"
                                                 HorizontalAlignment="Left"
                                                 VerticalAlignment="Top"
@@ -359,7 +348,6 @@
                                                 VerticalAlignment="Top"
                                                 FontSize="38"
                                                 FontWeight="Light"
-                                                Foreground="Wheat"
                                                 Opacity=".3"
                                                 Text="Drag files here" />
                                             <Path
@@ -386,8 +374,8 @@
                                                 </ScrollViewer.Resources>
                                                 <ItemsPresenter x:Name="content" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
                                             </ScrollViewer>
-                                        </Grid>
-                                    </Border>
+                                        </ui:Grid>
+                                    </ui:Border>
                                     <ControlTemplate.Triggers>
                                         <Trigger Property="IsEnabled" Value="False">
                                             <Setter TargetName="Bd" Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" />
@@ -427,29 +415,29 @@
                             <mstv:MultiSelectTreeView.Resources>
 
                                 <HierarchicalDataTemplate DataType="{x:Type local:ItemLink}" ItemsSource="{Binding Children}">
-                                    <StackPanel Orientation="Horizontal">
-                                        <Image
+                                    <ui:StackPanel Orientation="Horizontal">
+                                        <ui:Image
                                             Width="24"
                                             Height="24"
                                             Margin="3,0"
                                             Source="{Binding Path=FileIcon}" />
                                         <mstv:EditTextBox Text="{Binding Filename, Mode=TwoWay}" />
-                                    </StackPanel>
+                                    </ui:StackPanel>
                                 </HierarchicalDataTemplate>
                             </mstv:MultiSelectTreeView.Resources>
                         </mstv:MultiSelectTreeView>
-                        <Border
+                        <ui:Border
                             Grid.Row="1"
                             Padding="4"
                             BorderBrush="#999"
                             BorderThickness="1,0,1,1"
                             SnapsToDevicePixels="True">
-                            <Grid
+                            <ui:Grid
                                 x:Name="DetailGrid"
                                 DataContext="{Binding SelectedItem}"
                                 TextElement.FontSize="14"
                                 TextElement.Foreground="#607D8B">
-                                <Grid.Style>
+                                <ui:Grid.Style>
                                     <Style TargetType="Grid">
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding DataContext.Model.SelectedItem, ElementName=mainView}" Value="{x:Null}">
@@ -457,18 +445,18 @@
                                             </DataTrigger>
                                         </Style.Triggers>
                                     </Style>
-                                </Grid.Style>
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
+                                </ui:Grid.Style>
+                                <ui:Grid>
+                                    <ui:Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="Auto" />
                                         <ColumnDefinition Width="Auto" />
                                         <ColumnDefinition />
-                                    </Grid.ColumnDefinitions>
-                                    <Grid.RowDefinitions>
+                                    </ui:Grid.ColumnDefinitions>
+                                    <ui:Grid.RowDefinitions>
                                         <RowDefinition Height="Auto" />
                                         <RowDefinition Height="Auto" />
                                         <RowDefinition Height="Auto" />
-                                    </Grid.RowDefinitions>
+                                    </ui:Grid.RowDefinitions>
 
                                     <ui:TextBlock
                                         Grid.Row="0"
@@ -506,7 +494,7 @@
                                         Text="{Binding LastEdit}"
                                         TextWrapping="Wrap" />
 
-                                    <Image
+                                    <ui:Image
                                         Grid.Row="0"
                                         Grid.RowSpan="3"
                                         Grid.Column="0"
@@ -514,9 +502,9 @@
                                         Margin="5"
                                         VerticalAlignment="Center"
                                         Source="{Binding FileIcon}" />
-                                </Grid>
-                            </Grid>
-                        </Border>
+                                </ui:Grid>
+                            </ui:Grid>
+                        </ui:Border>
                     </Grid>
                 </GroupBox>
 
@@ -526,10 +514,7 @@
                     Margin="5,5.5,5,4.5">
                     <GroupBox.Header>
                         <StackPanel Orientation="Horizontal">
-                            <ui:TextBlock
-                                FontSize="14"
-                                Foreground="White"
-                                Text="UPLOAD QUEUE" />
+                            <ui:TextBlock FontSize="14" Text="UPLOAD QUEUE" />
                         </StackPanel>
                     </GroupBox.Header>
                     <ListView
@@ -572,35 +557,24 @@
                     </ListView>
                 </GroupBox>
 
-                <Grid
+                <ui:Grid
                     Grid.Row="2"
                     Grid.ColumnSpan="3"
                     Margin="0,1.5,0,0.5">
-                    <Grid.ColumnDefinitions>
+                    <ui:Grid.ColumnDefinitions>
                         <ColumnDefinition />
                         <ColumnDefinition />
-                    </Grid.ColumnDefinitions>
+                    </ui:Grid.ColumnDefinitions>
 
-                    <Button
+                    <ui:Button
                         x:Name="PublishPackageOnlyUpdate"
                         Width="320"
                         Margin="5"
                         Padding="0"
                         HorizontalAlignment="Center"
-                        BorderBrush="DarkGray"
                         Cursor="Hand">
-                        <Button.Style>
-                            <Style TargetType="Button">
-                                <Style.Triggers>
-                                    <Trigger Property="Button.IsMouseOver" Value="True">
-                                        <Setter Property="Button.BorderBrush" Value="#8BC34A" />
-                                    </Trigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Button.Style>
-
-                        <StackPanel Orientation="Horizontal">
-                            <Image
+                        <ui:StackPanel Orientation="Horizontal">
+                            <ui:Image
                                 Width="32"
                                 Height="32"
                                 Margin="5,0"
@@ -610,30 +584,19 @@
                                 FontWeight="Bold"
                                 Foreground="Green"
                                 Text="Publish Only Update Files" />
-                        </StackPanel>
-                    </Button>
+                        </ui:StackPanel>
+                    </ui:Button>
 
-                    <Button
+                    <ui:Button
                         x:Name="PublishPackageComplete"
                         Grid.Column="1"
                         Width="320"
                         Margin="5"
                         Padding="0"
                         HorizontalAlignment="Center"
-                        BorderBrush="DarkGray"
                         Cursor="Hand">
-                        <Button.Style>
-                            <Style TargetType="Button">
-                                <Style.Triggers>
-                                    <Trigger Property="Button.IsMouseOver" Value="True">
-                                        <Setter Property="Button.BorderBrush" Value="#8BC34A" />
-                                    </Trigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Button.Style>
-
-                        <StackPanel Orientation="Horizontal">
-                            <Image
+                        <ui:StackPanel Orientation="Horizontal">
+                            <ui:Image
                                 Width="32"
                                 Height="32"
                                 Margin="5,0"
@@ -643,9 +606,9 @@
                                 FontWeight="Bold"
                                 Foreground="Green"
                                 Text="Publish Complete Setup" />
-                        </StackPanel>
-                    </Button>
-                </Grid>
+                        </ui:StackPanel>
+                    </ui:Button>
+                </ui:Grid>
             </Grid>
         </Grid>
     </xctk:BusyIndicator>

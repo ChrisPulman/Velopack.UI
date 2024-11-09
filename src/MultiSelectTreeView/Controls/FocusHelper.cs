@@ -23,7 +23,7 @@ public static class FocusHelper
 
         if (bringIntoView)
         {
-            FrameworkElement itemContent = (FrameworkElement)element.Template.FindName("PART_Header", element);
+            var itemContent = (FrameworkElement)element.Template.FindName("PART_Header", element);
             if (itemContent != null)   // May not be rendered yet...
             {
                 ((FrameworkElement)itemContent.Parent).BringIntoView();
@@ -51,7 +51,7 @@ public static class FocusHelper
 
 #if DEBUG
         // no good idea, seems to block sometimes
-        int i = 0;
+        var i = 0;
         while (i < 5)
         {
             if (element.IsFocused)

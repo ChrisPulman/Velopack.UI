@@ -353,7 +353,7 @@ public class MultiSelectTreeView : ItemsControl
         return true;
     }
 
-    internal static MultiSelectTreeViewItem? GetNextItem(MultiSelectTreeViewItem item, List<MultiSelectTreeViewItem> items)
+    internal static MultiSelectTreeViewItem? GetNextItem(MultiSelectTreeViewItem? item, List<MultiSelectTreeViewItem> items)
     {
         var indexOfCurrent = item != null ? items.IndexOf(item) : -1;
         for (var i = indexOfCurrent + 1; i < items.Count; i++)
@@ -366,7 +366,7 @@ public class MultiSelectTreeView : ItemsControl
         return null;
     }
 
-    internal static MultiSelectTreeViewItem? GetPreviousItem(MultiSelectTreeViewItem item, List<MultiSelectTreeViewItem> items)
+    internal static MultiSelectTreeViewItem? GetPreviousItem(MultiSelectTreeViewItem? item, List<MultiSelectTreeViewItem> items)
     {
         var indexOfCurrent = item != null ? items.IndexOf(item) : -1;
         for (var i = indexOfCurrent - 1; i >= 0; i--)

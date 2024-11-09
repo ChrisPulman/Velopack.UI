@@ -10,26 +10,11 @@ public class MultiSelectTreeViewItemDataAutomationPeer(object item, ItemsControl
     IExpandCollapseProvider,
     IValueProvider
 {
-    ExpandCollapseState IExpandCollapseProvider.ExpandCollapseState
-    {
-        get
-        {
-            return ItemPeer.ExpandCollapseState;
-        }
-    }
+    ExpandCollapseState IExpandCollapseProvider.ExpandCollapseState => ItemPeer.ExpandCollapseState;
 
-    bool ISelectionItemProvider.IsSelected
-    {
-        get
-        {
-            return ((ISelectionItemProvider)ItemPeer).IsSelected;
-        }
-    }
+    bool ISelectionItemProvider.IsSelected => ((ISelectionItemProvider)ItemPeer).IsSelected;
 
-    IRawElementProviderSimple ISelectionItemProvider.SelectionContainer
-    {
-        get
-        {
+    IRawElementProviderSimple? ISelectionItemProvider.SelectionContainer =>
             // TreeViewItemAutomationPeer treeViewItemAutomationPeer = GetWrapperPeer() as TreeViewItemAutomationPeer;
             // if (treeViewItemAutomationPeer != null)
             // {
@@ -38,24 +23,22 @@ public class MultiSelectTreeViewItemDataAutomationPeer(object item, ItemsControl
             // }
 
             // this.ThrowElementNotAvailableException();
-            return null;
-        }
-    }
+            null;
 
     private MultiSelectTreeViewItemAutomationPeer ItemPeer
     {
         get
         {
-            AutomationPeer automationPeer = null;
-            UIElement wrapper = GetWrapper();
+            AutomationPeer? automationPeer = null;
+            var wrapper = GetWrapper();
             if (wrapper != null)
             {
                 automationPeer = UIElementAutomationPeer.CreatePeerForElement(wrapper);
                 if (automationPeer == null)
                 {
-                    if (wrapper is FrameworkElement)
+                    if (wrapper is FrameworkElement element)
                     {
-                        automationPeer = new FrameworkElementAutomationPeer((FrameworkElement)wrapper);
+                        automationPeer = new FrameworkElementAutomationPeer(element);
                     }
                     else
                     {
@@ -64,9 +47,8 @@ public class MultiSelectTreeViewItemDataAutomationPeer(object item, ItemsControl
                 }
             }
 
-            var treeViewItemAutomationPeer = automationPeer as MultiSelectTreeViewItemAutomationPeer;
 
-            if (treeViewItemAutomationPeer == null)
+            if (automationPeer is not MultiSelectTreeViewItemAutomationPeer treeViewItemAutomationPeer)
             {
                 throw new InvalidOperationException("Could not find parent automation peer.");
             }
@@ -122,13 +104,13 @@ public class MultiSelectTreeViewItemDataAutomationPeer(object item, ItemsControl
 
     protected override string GetClassNameCore() => "TreeViewItem";
 
-    private UIElement GetWrapper()
+    private UIElement? GetWrapper()
     {
-        UIElement result = null;
-        ItemsControlAutomationPeer itemsControlAutomationPeer = ItemsControlAutomationPeer;
+        UIElement? result = null;
+        var itemsControlAutomationPeer = ItemsControlAutomationPeer;
         if (itemsControlAutomationPeer != null)
         {
-            ItemsControl itemsControl = (ItemsControl)itemsControlAutomationPeer.Owner;
+            var itemsControl = (ItemsControl)itemsControlAutomationPeer.Owner;
             if (itemsControl != null)
             {
                 result = itemsControl.ItemContainerGenerator.ContainerFromItem(Item) as UIElement;
@@ -138,15 +120,9 @@ public class MultiSelectTreeViewItemDataAutomationPeer(object item, ItemsControl
         return result;
     }
 
-    bool IValueProvider.IsReadOnly
-    {
-        get { return ((IValueProvider)ItemPeer).IsReadOnly; }
-    }
+    bool IValueProvider.IsReadOnly => ((IValueProvider)ItemPeer).IsReadOnly;
 
     void IValueProvider.SetValue(string value) => ((IValueProvider)ItemPeer).SetValue(value);
 
-    string IValueProvider.Value
-    {
-        get { return ((IValueProvider)ItemPeer).Value; }
-    }
+    string IValueProvider.Value => ((IValueProvider)ItemPeer).Value;
 }

@@ -33,15 +33,18 @@ public class PreviewSelectionChangedEventArgs : RoutedEventArgs
     /// Gets a value indicating whether the item was selected or deselected.
     /// </summary>
     public bool Selecting { get; private set; }
+
     /// <summary>
     /// Gets the item that is being selected or deselected.
     /// </summary>
     public object Item { get; private set; }
+
     /// <summary>
     /// Gets or sets a value indicating whether the selection change of this item shall be
     /// cancelled.
     /// </summary>
     public bool CancelThis { get; set; }
+
     /// <summary>
     /// Gets or sets a value indicating whether the selection change of this item and all other
     /// affected items shall be cancelled.
