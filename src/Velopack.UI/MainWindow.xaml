@@ -12,5 +12,11 @@
     Height="825"
     MinWidth="1024"
     MinHeight="825"
+    ui:Design.Background="{DynamicResource ApplicationBackgroundBrush}"
+    ui:Design.Foreground="{DynamicResource TextFillColorPrimaryBrush}"
     x:TypeArguments="local:MainWindowViewModel"
+    ExtendsContentIntoTitleBar="True"
+    Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+    WindowBackdropType="Mica"
+    WindowCornerPreference="Round"
     mc:Ignorable="d" />

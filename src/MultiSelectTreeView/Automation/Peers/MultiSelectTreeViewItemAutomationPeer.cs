@@ -62,7 +62,7 @@ public class MultiSelectTreeViewItemAutomationPeer :
         return base.GetClickablePointCore();
     }
 
-    private static ContentPresenter GetContentPresenter(MultiSelectTreeViewItem treeViewItem)
+    private static ContentPresenter? GetContentPresenter(MultiSelectTreeViewItem treeViewItem)
     {
         var contentPresenter = treeViewItem.Template.FindName("PART_Header", treeViewItem) as ContentPresenter;
         return contentPresenter;
@@ -73,7 +73,7 @@ public class MultiSelectTreeViewItemAutomationPeer :
     /// header as children, too. That was requested by the users.
     /// </summary>
     /// <returns>Returns a list of children.</returns>
-    protected override List<AutomationPeer> GetChildrenCore()
+    protected override List<AutomationPeer>? GetChildrenCore()
     {
         //System.Diagnostics.Trace.WriteLine("MultiSelectTreeViewItemAutomationPeer.GetChildrenCore()");
         var owner = (MultiSelectTreeViewItem)Owner;
@@ -118,16 +118,11 @@ public class MultiSelectTreeViewItemAutomationPeer :
         return null;
     }
 
-    private static void AddAutomationPeer(List<AutomationPeer> children, UIElement child)
+    private static void AddAutomationPeer(List<AutomationPeer> children, UIElement? child)
     {
         if (child != null)
         {
-            var peer = FromElement(child);
-            if (peer == null)
-            {
-                peer = CreatePeerForElement(child);
-            }
-
+            var peer = FromElement(child) ?? CreatePeerForElement(child);
             if (peer != null)
             {
                 // In the array that GetChildrenCore returns, which is used by AutomationPeer.EnsureChildren,
@@ -159,15 +154,9 @@ public class MultiSelectTreeViewItemAutomationPeer :
         }
     }
 
-    bool ISelectionItemProvider.IsSelected
-    {
-        get
-        {
-            return ((MultiSelectTreeViewItem)Owner).IsSelected;
-        }
-    }
+    bool ISelectionItemProvider.IsSelected => ((MultiSelectTreeViewItem)Owner).IsSelected;
 
-    IRawElementProviderSimple ISelectionItemProvider.SelectionContainer
+    IRawElementProviderSimple? ISelectionItemProvider.SelectionContainer
     {
         get
         {

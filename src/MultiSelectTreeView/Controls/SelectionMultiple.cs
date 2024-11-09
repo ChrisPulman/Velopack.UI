@@ -148,8 +148,8 @@ public sealed class SelectionMultiple : ISelectionStrategy
         }
         else if (IsShiftKeyDown && _treeView.SelectedItems.Count > 0)
         {
-            object firstSelectedItem = _lastShiftRoot ?? _treeView.SelectedItems.First();
-            MultiSelectTreeViewItem shiftRootItem = _treeView.GetTreeViewItemsFor(new List<object> { firstSelectedItem }).First();
+            var firstSelectedItem = _lastShiftRoot ?? _treeView.SelectedItems.First();
+            var shiftRootItem = _treeView.GetTreeViewItemsFor(new List<object> { firstSelectedItem }).First();
 
             var newSelection = _treeView.GetNodesToSelectBetween(shiftRootItem, item).Select(n => n.DataContext).ToList();
             // Make a copy of the list because we're modifying it while enumerating it
@@ -288,49 +288,49 @@ public sealed class SelectionMultiple : ISelectionStrategy
 
     public bool SelectNextFromKey()
     {
-        List<MultiSelectTreeViewItem> items = MultiSelectTreeView.RecursiveTreeViewItemEnumerable(_treeView, false, false).ToList();
-        MultiSelectTreeViewItem item = MultiSelectTreeView.GetNextItem(GetFocusedItem(), items);
+        var items = MultiSelectTreeView.RecursiveTreeViewItemEnumerable(_treeView, false, false).ToList();
+        var item = MultiSelectTreeView.GetNextItem(GetFocusedItem(), items);
         return SelectFromKey(item);
     }
 
     public bool SelectPreviousFromKey()
     {
-        List<MultiSelectTreeViewItem> items = MultiSelectTreeView.RecursiveTreeViewItemEnumerable(_treeView, false, false).ToList();
-        MultiSelectTreeViewItem item = MultiSelectTreeView.GetPreviousItem(GetFocusedItem(), items);
+        var items = MultiSelectTreeView.RecursiveTreeViewItemEnumerable(_treeView, false, false).ToList();
+        var item = MultiSelectTreeView.GetPreviousItem(GetFocusedItem(), items);
         return SelectFromKey(item);
     }
 
     public bool SelectFirstFromKey()
     {
-        List<MultiSelectTreeViewItem> items = MultiSelectTreeView.RecursiveTreeViewItemEnumerable(_treeView, false, false).ToList();
-        MultiSelectTreeViewItem item = MultiSelectTreeView.GetFirstItem(items);
+        var items = MultiSelectTreeView.RecursiveTreeViewItemEnumerable(_treeView, false, false).ToList();
+        var item = MultiSelectTreeView.GetFirstItem(items);
         return SelectFromKey(item);
     }
 
     public bool SelectLastFromKey()
     {
-        List<MultiSelectTreeViewItem> items = MultiSelectTreeView.RecursiveTreeViewItemEnumerable(_treeView, false, false).ToList();
-        MultiSelectTreeViewItem item = MultiSelectTreeView.GetLastItem(items);
+        var items = MultiSelectTreeView.RecursiveTreeViewItemEnumerable(_treeView, false, false).ToList();
+        var item = MultiSelectTreeView.GetLastItem(items);
         return SelectFromKey(item);
     }
 
     private bool SelectPageUpDown(bool down)
     {
-        List<MultiSelectTreeViewItem> items = MultiSelectTreeView.RecursiveTreeViewItemEnumerable(_treeView, false, false).ToList();
-        MultiSelectTreeViewItem item = GetFocusedItem();
+        var items = MultiSelectTreeView.RecursiveTreeViewItemEnumerable(_treeView, false, false).ToList();
+        var item = GetFocusedItem();
         if (item == null)
         {
             return down ? SelectLastFromKey() : SelectFirstFromKey();
         }
 
-        double targetY = item.TransformToAncestor(_treeView).Transform(new Point()).Y;
-        FrameworkElement itemContent = (FrameworkElement)item.Template.FindName("PART_Header", item);
+        var targetY = item.TransformToAncestor(_treeView).Transform(new Point()).Y;
+        var itemContent = (FrameworkElement)item.Template.FindName("PART_Header", item);
         if (itemContent == null)
         {
             return down ? SelectLastFromKey() : SelectFirstFromKey();
         }
 
-        double offset = _treeView.ActualHeight - 2 * ((FrameworkElement)itemContent.Parent).ActualHeight;
+        var offset = _treeView.ActualHeight - 2 * ((FrameworkElement)itemContent.Parent).ActualHeight;
         if (!down) offset = -offset;
         targetY += offset;
         while (true)
@@ -338,7 +338,7 @@ public sealed class SelectionMultiple : ISelectionStrategy
             var newItem = down ? MultiSelectTreeView.GetNextItem(item, items) : MultiSelectTreeView.GetPreviousItem(item, items);
             if (newItem == null) break;
             item = newItem;
-            double itemY = item.TransformToAncestor(_treeView).Transform(new Point()).Y;
+            var itemY = item.TransformToAncestor(_treeView).Transform(new Point()).Y;
             if (down && itemY > targetY ||
                 !down && itemY < targetY)
             {

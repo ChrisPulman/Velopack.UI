@@ -30,52 +30,61 @@ public partial class AutoSquirrelModel : WebConnectionBase, GongSolutions.Wpf.Dr
 
     private readonly ConnectionDiscoveryService _connectionDiscoveryService = new();
     private readonly string _newFolderName = "NEW FOLDER";
-    private string? _appId;
-    private string? _authors;
     private List<string> _availableUploadLocation;
-    private string? _description;
     private string? _iconFilepath;
+
+    [DataMember]
+    [Reactive]
+    private string? _appId;
+
+    [DataMember]
+    [Reactive]
+    private string? _authors;
+
+    [DataMember]
+    [Reactive]
+    private string? _description;
+
+    [DataMember] 
+    [Reactive]
     private string? _mainExePath;
+
+    [DataMember]
+    [Reactive]
     private string? _nupkgOutputPath;
+
+    [DataMember] 
+    [Reactive]
     private ObservableCollection<ItemLink> _packageFiles = [];
+
+    [DataMember]
+    [Reactive]
     private WebConnectionBase? _selectedConnection;
-    private string? _selectedConnectionString;
+
+    [Reactive]
+    private ItemLink _selectedItem = new();
+
+    [Reactive]
     private SingleFileUpload _selectedUploadItem;
+
+    [DataMember]
+    [Reactive]
+    private string? _squirrelOutputPath;
+
+    [DataMember]
+    [Reactive]
+    private string? _title;
+    private string? _selectedConnectionString;
     private bool _setVersionManually;
     private string? _splashFilepath;
-    private string? _squirrelOutputPath;
-    private string? _title;
     private ObservableCollection<SingleFileUpload> _uploadQueue = [];
     private string? _version;
-    private ItemLink _selectedItem = new();
     private ReactiveCommand<Unit, Unit> _selectSplashCmd;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="AutoSquirrelModel"/> class.
     /// </summary>
     public AutoSquirrelModel() => PackageFiles = [];
-
-    /// <summary>
-    /// Gets or sets the application identifier.
-    /// </summary>
-    /// <value>The application identifier.</value>
-    [DataMember]
-    public string? AppId
-    {
-        get => _appId;
-        set => this.RaiseAndSetIfChanged(ref _appId, value);
-    }
-
-    /// <summary>
-    /// Gets or sets the authors.
-    /// </summary>
-    /// <value>The authors.</value>
-    [DataMember]
-    public string? Authors
-    {
-        get => _authors;
-        set => this.RaiseAndSetIfChanged(ref _authors, value);
-    }
 
     /// <summary>
     /// Gets the available upload location.
@@ -96,17 +105,6 @@ public partial class AutoSquirrelModel : WebConnectionBase, GongSolutions.Wpf.Dr
     /// <value>The current file path.</value>
     [DataMember]
     public string? CurrentFilePath { get; internal set; }
-
-    /// <summary>
-    /// Gets or sets the description.
-    /// </summary>
-    /// <value>The description.</value>
-    [DataMember]
-    public string? Description
-    {
-        get => _description;
-        set => this.RaiseAndSetIfChanged(ref _description, value);
-    }
 
     /// <summary>
     /// Gets or sets the icon filepath.
@@ -146,50 +144,6 @@ public partial class AutoSquirrelModel : WebConnectionBase, GongSolutions.Wpf.Dr
     }
 
     /// <summary>
-    /// Gets or sets the main executable path.
-    /// </summary>
-    /// <value>The main executable path.</value>
-    [DataMember]
-    public string? MainExePath
-    {
-        get => _mainExePath;
-        set => this.RaiseAndSetIfChanged(ref _mainExePath, value);
-    }
-
-    /// <summary>
-    /// Gets or sets the nupkg output path.
-    /// </summary>
-    /// <value>The nupkg output path.</value>
-    [DataMember]
-    public string? NupkgOutputPath
-    {
-        get => _nupkgOutputPath;
-        set => this.RaiseAndSetIfChanged(ref _nupkgOutputPath, value);
-    }
-
-    /// <summary>
-    /// Gets or sets the package files.
-    /// </summary>
-    /// <value>The package files.</value>
-    [DataMember]
-    public ObservableCollection<ItemLink> PackageFiles
-    {
-        get => _packageFiles;
-        set => this.RaiseAndSetIfChanged(ref _packageFiles, value);
-    }
-
-    /// <summary>
-    /// Gets or sets the selected connection.
-    /// </summary>
-    /// <value>The selected connection.</value>
-    [DataMember]
-    public WebConnectionBase? SelectedConnection
-    {
-        get => _selectedConnection;
-        set => this.RaiseAndSetIfChanged(ref _selectedConnection, value);
-    }
-
-    /// <summary>
     /// Gets or sets the selected connection string.
     /// </summary>
     /// <value>The selected connection string.</value>
@@ -211,30 +165,10 @@ public partial class AutoSquirrelModel : WebConnectionBase, GongSolutions.Wpf.Dr
     }
 
     /// <summary>
-    /// Gets the selected item.
-    /// </summary>
-    /// <value>The selected item.</value>
-    public ItemLink SelectedItem
-    {
-        get => _selectedItem;
-        set => this.RaiseAndSetIfChanged(ref _selectedItem, value);
-    }
-
-    /// <summary>
     /// Gets or sets the selected link.
     /// </summary>
     /// <value>The selected link.</value>
     public IList<ItemLink> SelectedLink { get; set; } = [];
-
-    /// <summary>
-    /// Gets or sets the selected upload item.
-    /// </summary>
-    /// <value>The selected upload item.</value>
-    public SingleFileUpload SelectedUploadItem
-    {
-        get => _selectedUploadItem;
-        set => this.RaiseAndSetIfChanged(ref _selectedUploadItem, value);
-    }
 
     /// <summary>
     /// Gets the select splash command.
@@ -289,32 +223,9 @@ _selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
             }
             catch
             {
-                //Todo - splasha default
                 return default;
             }
         }
-    }
-
-    /// <summary>
-    /// Gets or sets the squirrel output path.
-    /// </summary>
-    /// <value>The squirrel output path.</value>
-    [DataMember]
-    public string? SquirrelOutputPath
-    {
-        get => _squirrelOutputPath;
-        set => this.RaiseAndSetIfChanged(ref _squirrelOutputPath, value);
-    }
-
-    /// <summary>
-    /// Gets or sets the title.
-    /// </summary>
-    /// <value>The title.</value>
-    [DataMember]
-    public string? Title
-    {
-        get => _title;
-        set => this.RaiseAndSetIfChanged(ref _title, value);
     }
 
     /// <summary>

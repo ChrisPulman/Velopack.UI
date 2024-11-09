@@ -7,17 +7,21 @@ using System.Windows;
 using CrissCross;
 using Microsoft.Win32;
 using ReactiveUI;
+using ReactiveUI.SourceGenerators;
 
 namespace Velopack.UI;
 
-public class MainViewModel : RxObject
+public partial class MainViewModel : RxObject
 {
     internal BackgroundWorker? ActiveBackgroungWorker;
     private bool _abortPackageFlag;
+    [Reactive]
     private string? _currentPackageCreationStage;
+    [Reactive]
     private bool _isBusy;
-    private bool _isSaved;
+    [Reactive]
     private AutoSquirrelModel? _model;
+    private bool _isSaved;
     private int _publishMode;
     private Process? _exeProcess;
     private string? _filePath;
@@ -45,16 +49,6 @@ public class MainViewModel : RxObject
     public ReactiveCommand<Unit, Unit> AbortPackageCreationCmd { get; }
 
     /// <summary>
-    /// Gets or sets the current package creation stage.
-    /// </summary>
-    /// <value>The current package creation stage.</value>
-    public string? CurrentPackageCreationStage
-    {
-        get => _currentPackageCreationStage;
-        set => this.RaiseAndSetIfChanged(ref _currentPackageCreationStage, value);
-    }
-
-    /// <summary>
     /// Gets or sets the file path.
     /// </summary>
     /// <value>The file path.</value>
@@ -71,26 +65,6 @@ public class MainViewModel : RxObject
             
             this.RaiseAndSetIfChanged(ref _filePath, value);
         }
-    }
-
-    /// <summary>
-    /// Gets or sets a value indicating whether this instance is busy.
-    /// </summary>
-    /// <value><c>true</c> if this instance is busy; otherwise, <c>false</c>.</value>
-    public bool IsBusy
-    {
-        get => _isBusy;
-        set => this.RaiseAndSetIfChanged(ref _isBusy, value);
-    }
-
-    /// <summary>
-    /// Gets or sets the model.
-    /// </summary>
-    /// <value>The model.</value>
-    public AutoSquirrelModel? Model
-    {
-        get => _model;
-        set => this.RaiseAndSetIfChanged(ref _model, value);
     }
 
     /// <summary>

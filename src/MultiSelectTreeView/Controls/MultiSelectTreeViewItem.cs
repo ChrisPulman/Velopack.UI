@@ -297,11 +297,11 @@ public class MultiSelectTreeViewItem : HeaderedItemsControl
     {
         get
         {
-            for (ItemsControl itemsControl = ParentItemsControl;
+            for (var itemsControl = ParentItemsControl;
                 itemsControl != null;
                 itemsControl = ItemsControlFromItemContainer(itemsControl))
             {
-                MultiSelectTreeView treeView = itemsControl as MultiSelectTreeView;
+                var treeView = itemsControl as MultiSelectTreeView;
                 if (treeView != null)
                 {
                     return lastParentTreeView = treeView;
@@ -366,7 +366,7 @@ public class MultiSelectTreeViewItem : HeaderedItemsControl
         // The item has been selected through its IsSelected property. Update the SelectedItems
         // list accordingly (this is the authoritative collection). No PreviewSelectionChanged
         // event is fired - the item is already selected.
-        MultiSelectTreeViewItem item = d as MultiSelectTreeViewItem;
+        var item = d as MultiSelectTreeViewItem;
         if (item != null)
         {
             if ((bool)e.NewValue)
@@ -441,7 +441,7 @@ public class MultiSelectTreeViewItem : HeaderedItemsControl
         // Remove all items from the SelectedItems list that are no longer in the Items
         if (oldValue != null)
         {
-            MultiSelectTreeView parentTV = ParentTreeView;
+            var parentTV = ParentTreeView;
             if (parentTV == null)
                 parentTV = lastParentTreeView;
             if (parentTV != null)
@@ -478,7 +478,7 @@ public class MultiSelectTreeViewItem : HeaderedItemsControl
         if (e == null) return;
         base.OnMouseDoubleClick(e);
 
-        FrameworkElement itemContent = (FrameworkElement)Template.FindName("PART_Header", this);
+        var itemContent = (FrameworkElement)Template.FindName("PART_Header", this);
         if (itemContent == null || !((FrameworkElement)itemContent.Parent).IsMouseOver)
         {
             // A (probably disabled) child item was really clicked, do nothing here
@@ -494,7 +494,7 @@ public class MultiSelectTreeViewItem : HeaderedItemsControl
         base.OnKeyDown(e);
         if (!e.Handled)
         {
-            Key key = e.Key;
+            var key = e.Key;
             switch (key)
             {
                 case Key.Left:
@@ -625,7 +625,7 @@ public class MultiSelectTreeViewItem : HeaderedItemsControl
         //System.Diagnostics.Debug.WriteLine("MultiSelectTreeViewItem.OnMouseDown(Item = " + this.DisplayName + ", Button = " + e.ChangedButton + ")");
         base.OnMouseDown(e);
 
-        FrameworkElement itemContent = (FrameworkElement)Template.FindName("PART_Header", this);
+        var itemContent = (FrameworkElement)Template.FindName("PART_Header", this);
         if (itemContent == null || !((FrameworkElement)itemContent.Parent).IsMouseOver)
         {
             // A (probably disabled) child item was really clicked, do nothing here
