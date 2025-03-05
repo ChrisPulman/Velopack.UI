@@ -15,7 +15,7 @@
     <PackageReference Include="AWSSDK.S3" Version="3.7.415.11" />
     <PackageReference Include="CrissCross.WPF.UI" Version="2.2.6" />
     <PackageReference Include="DotNetProjects.Extended.Wpf.Toolkit" Version="5.0.124" />
-    <PackageReference Include="gong-wpf-dragdrop" Version="3.2.1" />
+    <PackageReference Include="gong-wpf-dragdrop" Version="4.0.0" />
     <PackageReference Include="FluentValidation" Version="11.11.0" />
   </ItemGroup>
 
