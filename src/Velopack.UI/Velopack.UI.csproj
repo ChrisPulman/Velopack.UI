@@ -10,7 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="ReactiveUI.SourceGenerators" Version="2.1.8" />
+    <PackageReference Include="ReactiveUI.SourceGenerators" Version="2.1.27" />
     <PackageReference Include="Velopack" Version="0.0.1053" />
     <PackageReference Include="AWSSDK.S3" Version="3.7.415.15" />
     <PackageReference Include="CrissCross.WPF.UI" Version="2.2.6" />
