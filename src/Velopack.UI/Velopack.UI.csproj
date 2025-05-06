@@ -12,7 +12,7 @@
   <ItemGroup>
     <PackageReference Include="ReactiveUI.SourceGenerators" Version="2.1.27" />
     <PackageReference Include="Velopack" Version="0.0.1053" />
-    <PackageReference Include="AWSSDK.S3" Version="3.7.416.10" />
+    <PackageReference Include="AWSSDK.S3" Version="3.7.416.22" />
     <PackageReference Include="CrissCross.WPF.UI" Version="2.4.1" />
     <PackageReference Include="DotNetProjects.Extended.Wpf.Toolkit" Version="5.0.124" />
     <PackageReference Include="gong-wpf-dragdrop" Version="4.0.0" />
