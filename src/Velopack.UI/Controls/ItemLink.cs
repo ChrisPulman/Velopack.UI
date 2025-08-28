@@ -5,6 +5,7 @@ using System.Runtime.Serialization;
 using System.Windows.Media;
 using ReactiveUI;
 using static Velopack.UI.IconHelper;
+using System.Text.Json.Serialization;
 
 namespace Velopack.UI;
 
@@ -46,6 +47,7 @@ public class ItemLink : CrissCross.RxObject
     /// Gets the file icon.
     /// </summary>
     /// <value>The file icon.</value>
+    [JsonIgnore]
     public ImageSource? FileIcon
     {
         get
@@ -120,6 +122,7 @@ public class ItemLink : CrissCross.RxObject
     /// <summary>
     /// Returns true if this object's Children have not yet been populated.
     /// </summary>
+    [JsonIgnore]
     public bool HasDummyChild => Children.Count == 1 && Children[0] == s_dummyChild;
 
     /// <summary>

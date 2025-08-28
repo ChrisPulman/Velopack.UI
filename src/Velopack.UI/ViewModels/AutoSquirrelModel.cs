@@ -14,14 +14,10 @@ using FluentValidation.Results;
 using GongSolutions.Wpf.DragDrop;
 using ReactiveUI;
 using ReactiveUI.SourceGenerators;
+using System.Text.Json.Serialization;
 
 namespace Velopack.UI;
 
-/// <summary>
-/// Auto Squirrel Model
-/// </summary>
-/// <seealso cref="AutoSquirrel.PropertyChangedBaseValidable"/>
-/// <seealso cref="GongSolutions.Wpf.DragDrop.IDropTarget"/>
 [DataContract]
 public partial class AutoSquirrelModel : WebConnectionBase, GongSolutions.Wpf.DragDrop.IDropTarget
 {
@@ -46,7 +42,7 @@ public partial class AutoSquirrelModel : WebConnectionBase, GongSolutions.Wpf.Dr
     [Reactive]
     private string? _description;
 
-    [DataMember] 
+    [DataMember]
     [Reactive]
     private string? _mainExePath;
 
@@ -54,7 +50,7 @@ public partial class AutoSquirrelModel : WebConnectionBase, GongSolutions.Wpf.Dr
     [Reactive]
     private string? _nupkgOutputPath;
 
-    [DataMember] 
+    [DataMember]
     [Reactive]
     private ObservableCollection<ItemLink> _packageFiles = [];
 
@@ -154,6 +150,7 @@ public partial class AutoSquirrelModel : WebConnectionBase, GongSolutions.Wpf.Dr
     /// Gets the icon source.
     /// </summary>
     /// <value>The icon source.</value>
+    [JsonIgnore]
     public ImageSource? IconSource
     {
         get
@@ -195,12 +192,14 @@ public partial class AutoSquirrelModel : WebConnectionBase, GongSolutions.Wpf.Dr
     /// Gets or sets the selected link.
     /// </summary>
     /// <value>The selected link.</value>
+    [JsonIgnore]
     public IList<ItemLink> SelectedLink { get; set; } = [];
 
     /// <summary>
     /// Gets the select splash command.
     /// </summary>
     /// <value>The select splash command.</value>
+    [JsonIgnore]
     public ICommand SelectSplashCmd =>
 _selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
 
@@ -240,6 +239,7 @@ _selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
     /// Gets the splash source.
     /// </summary>
     /// <value>The splash source.</value>
+    [JsonIgnore]
     public ImageSource? SplashSource
     {
         get
@@ -259,10 +259,15 @@ _selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
     /// Gets or sets the upload queue.
     /// </summary>
     /// <value>The upload queue.</value>
+    [JsonIgnore]
     public ObservableCollection<SingleFileUpload> UploadQueue
     {
         get => _uploadQueue;
-        set => this.RaisePropertyChanged(nameof(UploadQueue));
+        set
+        {
+            _uploadQueue = value ?? [];
+            this.RaisePropertyChanged(nameof(UploadQueue));
+        }
     }
 
     /// <summary>
@@ -538,9 +543,9 @@ _selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
 
         var releasesPath = SquirrelOutputPath;
 
-        if (!Directory.Exists(releasesPath))
+        if (string.IsNullOrWhiteSpace(releasesPath) || !Directory.Exists(releasesPath))
         {
-            throw new Exception("Releases directory " + releasesPath + "not found !");
+            throw new Exception("Releases directory " + releasesPath + " not found !");
         }
 
         if (SelectedConnection == null)
@@ -574,7 +579,7 @@ _selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
 
         foreach (var fp in fileToUpdate)
         {
-            var ffp = releasesPath + fp;
+            var ffp = Path.Combine(releasesPath, fp);
             if (!File.Exists(ffp))
             {
                 continue;
@@ -584,7 +589,6 @@ _selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
         }
 
         UploadQueue ??= [];
-
         UploadQueue.Clear();
 
         foreach (var connection in new List<WebConnectionBase>() { SelectedConnection })

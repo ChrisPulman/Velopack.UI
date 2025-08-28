@@ -127,6 +127,11 @@
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
 
+                            <RowDefinition Height="4" />
+
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+
                             <RowDefinition Height="Auto" />
 
                             <RowDefinition Height="Auto" />
@@ -418,6 +423,7 @@
                             AllowDrop="True"
                             Background="{x:Null}"
                             ItemsSource="{Binding PackageFiles}"
+                            SelectedItems="{Binding SelectedLink}"
                             Tag="{Binding DataContext, RelativeSource={RelativeSource Self}}">
                             <mstv:MultiSelectTreeView.Template>
                                 <ControlTemplate TargetType="{x:Type mstv:MultiSelectTreeView}">
@@ -490,7 +496,7 @@
                                     <Setter Property="ContextMenu">
                                         <Setter.Value>
                                             <ContextMenu StaysOpen="True">
-                                                <MenuItem Command="{Binding Path=Data.RefreshVersionNumberCommand}" Header="Refresh Version" />
+                                                <MenuItem Command="{Binding Path=Data.RefreshPackageVersionCommand}" Header="Refresh Version" />
                                                 <MenuItem Command="{Binding Path=Data.AddDirectoryCommand}" Header="Add Directory" />
                                                 <MenuItem Command="{Binding Path=Data.RemoveItemCommand}" Header="Remove Selected Items" />
                                                 <MenuItem Command="{Binding Path=Data.RemoveAllItemsCommand}" Header="Remove All Items" />
@@ -510,7 +516,6 @@
                             </mstv:MultiSelectTreeView.ItemContainerStyle>
 
                             <mstv:MultiSelectTreeView.Resources>
-
                                 <HierarchicalDataTemplate DataType="{x:Type local:ItemLink}" ItemsSource="{Binding Children}">
                                     <ui:StackPanel Orientation="Horizontal">
                                         <ui:Image
@@ -669,7 +674,7 @@
                         Margin="5"
                         Padding="0"
                         HorizontalAlignment="Center"
-                        Command="{Binding ElementName=mainView, Path=DataContext.PublishPackageOnlyUpdate}"
+                        Command="{Binding ElementName=mainView, Path=DataContext.PublishPackageOnlyUpdateCommand}"
                         Cursor="Hand">
                         <ui:StackPanel Orientation="Horizontal">
                             <ui:Image
@@ -692,7 +697,7 @@
                         Margin="5"
                         Padding="0"
                         HorizontalAlignment="Center"
-                        Command="{Binding ElementName=mainView, Path=DataContext.PublishPackageComplete}"
+                        Command="{Binding ElementName=mainView, Path=DataContext.PublishPackageCompleteCommand}"
                         Cursor="Hand">
                         <ui:StackPanel Orientation="Horizontal">
                             <ui:Image

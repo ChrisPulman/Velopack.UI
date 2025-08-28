@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reactive;
 using System.Text.Json;
+using System.Text.Json.Serialization.Metadata;
 using System.Windows;
 using CrissCross;
 using Microsoft.Win32;
@@ -110,6 +111,7 @@ public partial class MainViewModel : RxObject
     /// <summary>
     /// Creates the new project.
     /// </summary>
+    [ReactiveCommand]
     public void CreateNewProject()
     {
         var rslt = MessageBox.Show("Save current project?", "New Project", MessageBoxButton.YesNoCancel, MessageBoxImage.Question);
@@ -130,6 +132,7 @@ public partial class MainViewModel : RxObject
     /// <summary>
     /// Opens the project.
     /// </summary>
+    [ReactiveCommand]
     public void OpenProject()
     {
         try
@@ -265,6 +268,7 @@ public partial class MainViewModel : RxObject
     /// - Must be callable from command line, so i can optionally start this process from at the
     ///   end of visual studio release build
     /// </summary>
+    [ReactiveCommand]
     public void PublishPackageComplete()
     {
         _publishMode = 0;
@@ -274,6 +278,7 @@ public partial class MainViewModel : RxObject
     /// <summary>
     /// Publishes the package only update.
     /// </summary>
+    [ReactiveCommand]
     public void PublishPackageOnlyUpdate()
     {
         _publishMode = 1;
@@ -283,6 +288,7 @@ public partial class MainViewModel : RxObject
     /// <summary>
     /// Saves this instance.
     /// </summary>
+    [ReactiveCommand]
     public void Save()
     {
         if (string.IsNullOrWhiteSpace(FilePath))
@@ -300,8 +306,10 @@ public partial class MainViewModel : RxObject
             return;
         }
 
-        Model.NupkgOutputPath = FilePath + Path.DirectorySeparatorChar + Model.AppId + "_files" + PathFolderHelper.PackageDirectory;
-        Model.SquirrelOutputPath = FilePath + Path.DirectorySeparatorChar + Model.AppId + "_files" + PathFolderHelper.ReleasesDirectory;
+        // Build paths using Path.Combine to avoid malformed separators and quoting issues
+        var modelBaseDir = Path.Combine(FilePath!, Model.AppId + "_files");
+        Model.NupkgOutputPath = Path.Combine(modelBaseDir, PathFolderHelper.PackageDirectory);
+        Model.SquirrelOutputPath = Path.Combine(modelBaseDir, PathFolderHelper.ReleasesDirectory);
 
         if (!Directory.Exists(Model.NupkgOutputPath))
         {
@@ -314,7 +322,58 @@ public partial class MainViewModel : RxObject
         }
 
         var asProj = Path.Combine(FilePath!, $"{Model.AppId}{PathFolderHelper.ProjectFileExtension}");
-        File.WriteAllText(asProj, JsonSerializer.Serialize(Model));
+
+        // Serialize with a resolver that ignores non-persistable/runtime properties
+        var options = new JsonSerializerOptions
+        {
+            WriteIndented = false,
+            TypeInfoResolver = new DefaultJsonTypeInfoResolver
+            {
+                Modifiers =
+                {
+                    ti =>
+                    {
+                        if (ti.Type == typeof(AutoSquirrelModel))
+                        {
+                            var namesToRemove = new HashSet<string>
+                            {
+                                nameof(AutoSquirrelModel.IconSource),
+                                nameof(AutoSquirrelModel.SplashSource),
+                                nameof(AutoSquirrelModel.SelectSplashCmd),
+                                nameof(AutoSquirrelModel.SelectedLink),
+                                nameof(AutoSquirrelModel.UploadQueue),
+                                nameof(AutoSquirrelModel.SelectedConnection),
+                                nameof(AutoSquirrelModel.SelectedUploadItem)
+                            };
+                            foreach (var prop in ti.Properties.ToList())
+                            {
+                                if (namesToRemove.Contains(prop.Name))
+                                {
+                                    ti.Properties.Remove(prop);
+                                }
+                            }
+                        }
+                        else if (ti.Type == typeof(ItemLink))
+                        {
+                            var namesToRemove = new HashSet<string>
+                            {
+                                nameof(ItemLink.FileIcon),
+                                nameof(ItemLink.HasDummyChild)
+                            };
+                            foreach (var prop in ti.Properties.ToList())
+                            {
+                                if (namesToRemove.Contains(prop.Name))
+                                {
+                                    ti.Properties.Remove(prop);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        };
+
+        File.WriteAllText(asProj, JsonSerializer.Serialize(Model, options));
         Trace.WriteLine("FILE SAVED ! : " + FilePath);
 
         _isSaved = true;
@@ -326,6 +385,7 @@ public partial class MainViewModel : RxObject
     /// <summary>
     /// Saves as.
     /// </summary>
+    [ReactiveCommand]
     public void SaveAs()
     {
         var previousFilePath = FilePath;
@@ -510,13 +570,22 @@ public partial class MainViewModel : RxObject
                throw new Exception("Model is null");
         }
 
-        // vpk pack -u MyApp -v 1.0.0 -p path-to/publish/folder -r path-to/releases
-        var cmd = $" pack -u {Model.AppId} -v {Model.Version} -p \"{Model.NupkgOutputPath}\" -r \"{Model.SquirrelOutputPath}\"";
+        // vpk pack -u MyApp -v 1.0.0 -p path-to/publish/folder -o path-to/releases
+        var packDir = Path.GetFullPath(Model.NupkgOutputPath!);
+        var outDir = Path.GetFullPath(Model.SquirrelOutputPath!);
+        var cmd = $" pack -u {Model.AppId} -v {Model.Version} -p \"{packDir}\" -o \"{outDir}\"";
+
+        // If MainExePath is known (top-level exe), pass it to vpk to avoid auto-detection failures
+        if (!string.IsNullOrWhiteSpace(Model.MainExePath) && File.Exists(Model.MainExePath))
+        {
+            var exeName = Path.GetFileName(Model.MainExePath);
+            cmd += $" --mainExe \"{exeName}\"";
+        }
 
         if (File.Exists(Model.IconFilepath))
         {
+            // -i is the correct Velopack icon flag
             cmd += " -i \"" + Model.IconFilepath + "\"";
-            cmd += " --appIcon \"" + Model.IconFilepath + "\"";
         }
 
         if (File.Exists(Model.SplashFilepath))

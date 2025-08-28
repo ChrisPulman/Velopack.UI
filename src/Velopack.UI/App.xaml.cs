@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using System.IO;
 using System.Windows;
+using Velopack;
 
 namespace Velopack.UI;
 
@@ -11,6 +12,16 @@ public partial class App
 {
     protected override void OnStartup(StartupEventArgs e)
     {
+        // Ensure Velopack bootstrap is invoked very early so vpk can validate it
+        try
+        {
+            VelopackApp.Build().Run();
+        }
+        catch
+        {
+            // non-fatal at runtime; packaging will still validate presence
+        }
+
         base.OnStartup(e);
         TryPromptVelopackTool();
     }

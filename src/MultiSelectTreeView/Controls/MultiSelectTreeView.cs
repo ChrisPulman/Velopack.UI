@@ -476,7 +476,7 @@ public class MultiSelectTreeView : ItemsControl
             case NotifyCollectionChangedAction.Reset:
                 // If the items list has considerably changed, the selection is probably
                 // useless anyway, clear it entirely.
-                SelectedItems.Clear();
+                SelectedItems?.Clear();
                 break;
         }
 

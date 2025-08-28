@@ -32,8 +32,9 @@ public static class PathFolderHelper
     /// </summary>
     public static string ProgramBaseDirectory = "\\" + ProgramName;
 
-    internal const string PackageDirectory = "\\Packages\\";
-    internal const string ReleasesDirectory = "\\Releases\\";
+    // Use directory names without leading/trailing separators
+    internal const string PackageDirectory = "Packages";
+    internal const string ReleasesDirectory = "Releases";
     private const string ProjectDirectory = "\\Projects\\";
     private const string UserDataDirectory = "\\Data\\";
 
