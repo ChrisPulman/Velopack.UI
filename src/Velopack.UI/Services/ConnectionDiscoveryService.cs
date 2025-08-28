@@ -20,7 +20,12 @@ public class ConnectionDiscoveryService : IConnectionDiscoveryService
             Assembly
                 .GetExecutingAssembly()
                 .GetExportedTypes()
-                .Where(type => type.IsClass && !type.IsAbstract && typeof(WebConnectionBase).IsAssignableFrom(type))
+                .Where(type =>
+                    type.IsClass &&
+                    !type.IsAbstract &&
+                    typeof(WebConnectionBase).IsAssignableFrom(type) &&
+                    type != typeof(AutoSquirrelModel) && // exclude model to avoid recursion
+                    type.Name.EndsWith("Connection", StringComparison.Ordinal))
                 .Select(connType => (WebConnectionBase)Activator.CreateInstance(connType)!)
                 .Where(conn => !string.IsNullOrWhiteSpace(conn.ConnectionName))
                 .ToDictionary(conn => conn.ConnectionName!, conn => conn)).Values;
@@ -35,15 +40,17 @@ public class ConnectionDiscoveryService : IConnectionDiscoveryService
     /// </returns>
     public WebConnectionBase? GetByName(string connectionName)
     {
-        if (_availableConnections == null) {
+        // Ensure cache is populated
+        if (_availableConnections == null)
+        {
+            _ = AvailableConnections.ToList();
+        }
+
+        if (string.IsNullOrWhiteSpace(connectionName))
+        {
             return default;
         }
 
-        if (connectionName == null
-            || !_availableConnections.TryGetValue(connectionName, out var value)) {
-            return default;
-        }
-
-        return value;
+        return _availableConnections!.TryGetValue(connectionName, out var value) ? value : default;
     }
 }

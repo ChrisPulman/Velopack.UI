@@ -306,20 +306,23 @@ public partial class MainViewModel : RxObject
             return;
         }
 
-        // Build paths using Path.Combine to avoid malformed separators and quoting issues
-        var modelBaseDir = Path.Combine(FilePath!, Model.AppId + "_files");
-        Model.NupkgOutputPath = Path.Combine(modelBaseDir, PathFolderHelper.PackageDirectory);
-        Model.SquirrelOutputPath = Path.Combine(modelBaseDir, PathFolderHelper.ReleasesDirectory);
-
-        if (!Directory.Exists(Model.NupkgOutputPath))
+        // If FileSystem connection is selected with a path, prefer it for SquirrelOutputPath
+        string baseDir;
+        if (Model.SelectedConnection is FileSystemConnection fsc && !string.IsNullOrWhiteSpace(fsc.FileSystemPath))
         {
-            Directory.CreateDirectory(Model.NupkgOutputPath);
+            baseDir = fsc.FileSystemPath;
+        }
+        else
+        {
+            baseDir = Path.Combine(FilePath!, Model.AppId + "_files");
         }
 
-        if (!Directory.Exists(Model.SquirrelOutputPath))
-        {
-            Directory.CreateDirectory(Model.SquirrelOutputPath);
-        }
+        // Build output directories
+        Model.NupkgOutputPath = Path.Combine(baseDir, PathFolderHelper.PackageDirectory);
+        Model.SquirrelOutputPath = Path.Combine(baseDir, PathFolderHelper.ReleasesDirectory);
+
+        Directory.CreateDirectory(Model.NupkgOutputPath);
+        Directory.CreateDirectory(Model.SquirrelOutputPath);
 
         var asProj = Path.Combine(FilePath!, $"{Model.AppId}{PathFolderHelper.ProjectFileExtension}");
 

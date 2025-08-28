@@ -107,6 +107,8 @@ public partial class AutoSquirrelModel : WebConnectionBase, GongSolutions.Wpf.Dr
         PackageFiles = [];
         // Default to File System connection for ease of use
         SelectedConnectionString = "File System";
+        // Ensure default connection is resolved immediately
+        UpdateSelectedConnection(SelectedConnectionString);
     }
 
     /// <summary>
@@ -445,6 +447,12 @@ _selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
         }
 
         SquirrelOutputPath = dialog.SelectedPath;
+
+        // If FileSystem connection is selected, align its path and use it for uploads
+        if (SelectedConnection is FileSystemConnection fsc)
+        {
+            fsc.FileSystemPath = SquirrelOutputPath;
+        }
     }
 
     /// <summary>
@@ -542,6 +550,12 @@ _selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
         // ? -> Set IsEnabled = false on GUI to prevent change during upload ?
 
         var releasesPath = SquirrelOutputPath;
+
+        if (SelectedConnection is FileSystemConnection fsc && !string.IsNullOrWhiteSpace(fsc.FileSystemPath))
+        {
+            // Resolve to user-selected file system path first when using FileSystemConnection
+            releasesPath = fsc.FileSystemPath;
+        }
 
         if (string.IsNullOrWhiteSpace(releasesPath) || !Directory.Exists(releasesPath))
         {
@@ -1041,7 +1055,7 @@ _selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
         // Instantiate cache if null
         CachedConnection ??= [];
 
-        // Retrieve cached connection or take new isntance from connection service
+        // Retrieve cached connection or take new instance from connection service
         var con =
             CachedConnection.FirstOrDefault(c => c.ConnectionName == connectionType) ??
             _connectionDiscoveryService.GetByName(connectionType);
@@ -1053,6 +1067,12 @@ _selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
         }
 
         SelectedConnection = con;
+
+        // If FileSystem connection becomes active and has a path, sync SquirrelOutputPath for UI visibility
+        if (SelectedConnection is FileSystemConnection fsc && !string.IsNullOrWhiteSpace(fsc.FileSystemPath))
+        {
+            SquirrelOutputPath = fsc.FileSystemPath;
+        }
     }
 
     private class Validator : AbstractValidator<AutoSquirrelModel>

@@ -48,7 +48,7 @@ public class FileSystemConnection : WebConnectionBase
                 return "Missing Parameter";
             }
 
-            return FileSystemPath + "\\Setup.exe";
+            return System.IO.Path.Combine(FileSystemPath, "Setup.exe");
         }
     }
 
