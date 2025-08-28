@@ -15,12 +15,12 @@ public static class PathFolderHelper
     /// <summary>
     /// The program name
     /// </summary>
-    public const string ProgramName = "Auto.Squirrel";
+    public const string ProgramName = "Velopack.UI";
 
     /// <summary>
     /// The project file extension
     /// </summary>
-    public const string ProjectFileExtension = ".asproj";
+    public const string ProjectFileExtension = ".velo";
 
     /// <summary>
     /// The file dialog name

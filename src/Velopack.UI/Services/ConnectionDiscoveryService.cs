@@ -22,6 +22,7 @@ public class ConnectionDiscoveryService : IConnectionDiscoveryService
                 .GetExportedTypes()
                 .Where(type => type.IsClass && !type.IsAbstract && typeof(WebConnectionBase).IsAssignableFrom(type))
                 .Select(connType => (WebConnectionBase)Activator.CreateInstance(connType)!)
+                .Where(conn => !string.IsNullOrWhiteSpace(conn.ConnectionName))
                 .ToDictionary(conn => conn.ConnectionName!, conn => conn)).Values;
 
     /// <summary>
@@ -34,8 +35,12 @@ public class ConnectionDiscoveryService : IConnectionDiscoveryService
     /// </returns>
     public WebConnectionBase? GetByName(string connectionName)
     {
+        if (_availableConnections == null) {
+            return default;
+        }
+
         if (connectionName == null
-            || !_availableConnections!.TryGetValue(connectionName, out var value)) {
+            || !_availableConnections.TryGetValue(connectionName, out var value)) {
             return default;
         }
 

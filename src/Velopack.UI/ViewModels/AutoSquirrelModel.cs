@@ -30,6 +30,7 @@ public partial class AutoSquirrelModel : WebConnectionBase, GongSolutions.Wpf.Dr
 
     private readonly ConnectionDiscoveryService _connectionDiscoveryService = new();
     private readonly string _newFolderName = "NEW FOLDER";
+    private static readonly HashSet<string> s_excludedExtensions = new([".pdb", ".nupkg", ".msi", ".zip"], StringComparer.OrdinalIgnoreCase);
     private List<string> _availableUploadLocation;
     private string? _iconFilepath;
 
@@ -81,10 +82,36 @@ public partial class AutoSquirrelModel : WebConnectionBase, GongSolutions.Wpf.Dr
     private string? _version;
     private ReactiveCommand<Unit, Unit> _selectSplashCmd;
 
+    // Velopack options
+    [DataMember]
+    [Reactive]
+    private bool _generateDeltaPackages = true;
+
+    [DataMember]
+    [Reactive]
+    private bool _generateMsi;
+
+    [DataMember]
+    [Reactive]
+    private string? _msiBitness = "x64";
+
+    [DataMember]
+    [Reactive]
+    private string? _signParams;
+
+    [DataMember]
+    [Reactive]
+    private string? _signTemplate;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="AutoSquirrelModel"/> class.
     /// </summary>
-    public AutoSquirrelModel() => PackageFiles = [];
+    public AutoSquirrelModel()
+    {
+        PackageFiles = [];
+        // Default to File System connection for ease of use
+        SelectedConnectionString = "File System";
+    }
 
     /// <summary>
     /// Gets the available upload location.
@@ -318,7 +345,7 @@ _selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
             {
                 foreach (var filePath in (string[])dataObj.GetData(System.Windows.DataFormats.FileDrop))
                 {
-                    if (!filePath.Contains(".pdb") && !filePath.Contains(".nupkg") && !filePath.Contains(".vshost."))
+                    if (ShouldIncludeFile(filePath))
                     {
                         AddFile(filePath, targetItem);
                     }
@@ -330,8 +357,49 @@ _selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
     }
 
     /// <summary>
+    /// Choose files to add to package (multi-select)
+    /// </summary>
+    [ReactiveCommand]
+    private void AddFilesFromDialog()
+    {
+        var ofd = new Microsoft.Win32.OpenFileDialog
+        {
+            Multiselect = true,
+            CheckFileExists = true,
+            Title = "Select files to include"
+        };
+        if (ofd.ShowDialog() == true)
+        {
+            foreach (var f in ofd.FileNames)
+            {
+                if (ShouldIncludeFile(f))
+                {
+                    AddFile(f, null);
+                }
+            }
+            PackageFiles = OrderFileList(PackageFiles);
+        }
+    }
+
+    /// <summary>
+    /// Choose a folder (e.g. bin/Release) to include recursively
+    /// </summary>
+    [ReactiveCommand]
+    private void AddFolderFromDialog()
+    {
+        using var dialog = new FolderBrowserDialog();
+        var result = dialog.ShowDialog();
+        if (result == DialogResult.OK && Directory.Exists(dialog.SelectedPath))
+        {
+            AddFile(dialog.SelectedPath, null);
+            PackageFiles = OrderFileList(PackageFiles);
+        }
+    }
+
+    /// <summary>
     /// Selects the nupkg directory.
     /// </summary>
+    [ReactiveCommand]
     public void SelectNupkgDirectory()
     {
         var dialog = new FolderBrowserDialog();
@@ -354,6 +422,7 @@ _selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
     /// <summary>
     /// Selects the output directory.
     /// </summary>
+    [ReactiveCommand]
     public void SelectOutputDirectory()
     {
         var dialog = new FolderBrowserDialog();
@@ -495,6 +564,10 @@ _selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
         {
             fileToUpdate.Add($"{AppId}-{Version}-full.nupkg");
             fileToUpdate.Add("Setup.exe");
+            if (GenerateMsi && !string.IsNullOrWhiteSpace(MsiBitness))
+            {
+                fileToUpdate.Add($"{AppId}-{Version}-{MsiBitness}.msi");
+            }
         }
 
         var updatedFiles = new List<FileInfo>();
@@ -693,6 +766,33 @@ _selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
         IconFilepath = ofd.FileName;
     }
 
+    private static bool ShouldIncludeFile(string filePath)
+    {
+        if (string.IsNullOrWhiteSpace(filePath))
+        {
+            return false;
+        }
+
+        // Allow directories
+        if (Directory.Exists(filePath))
+        {
+            return true;
+        }
+
+        var ext = Path.GetExtension(filePath);
+        if (!string.IsNullOrEmpty(ext) && s_excludedExtensions.Contains(ext))
+        {
+            return false;
+        }
+
+        if (filePath.Contains(".vshost.", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        return true;
+    }
+
     private void AddFile(string filePath, ItemLink? targetItem)
     {
         var isDir = false;
@@ -740,7 +840,10 @@ _selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
 
             foreach (var f in files)
             {
-                AddFile(f.FullName, node);
+                if (ShouldIncludeFile(f.FullName))
+                {
+                    AddFile(f.FullName, node);
+                }
             }
 
             foreach (var f in subDirectory)

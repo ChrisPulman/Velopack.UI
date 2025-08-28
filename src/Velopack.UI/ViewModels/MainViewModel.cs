@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Reactive;
 using System.Text.Json;
 using System.Windows;
@@ -111,7 +112,7 @@ public partial class MainViewModel : RxObject
     /// </summary>
     public void CreateNewProject()
     {
-        var rslt = MessageBox.Show("Save current project ?", "New Project", MessageBoxButton.YesNoCancel, MessageBoxImage.Question);
+        var rslt = MessageBox.Show("Save current project?", "New Project", MessageBoxButton.YesNoCancel, MessageBoxImage.Question);
 
         if (rslt == MessageBoxResult.Cancel)
         {
@@ -137,7 +138,8 @@ public partial class MainViewModel : RxObject
             {
                 AddExtension = true,
                 DefaultExt = PathFolderHelper.ProjectFileExtension,
-                Filter = PathFolderHelper.FileDialogName
+                Filter = PathFolderHelper.FileDialogName,
+                Multiselect = false
             };
 
             var iniDir = PathFolderHelper.GetMyDirectory(MyDirectory.Project);
@@ -152,12 +154,10 @@ public partial class MainViewModel : RxObject
             }
 
             OpenProject(ofd.FileName);
-
-            //Save last folder path
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            MessageBox.Show("Loading File Error, file no more supported", "Error", MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.None);
+            MessageBox.Show($"Loading File Error: {ex}", "Error", MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.None);
         }
     }
 
@@ -190,9 +190,9 @@ public partial class MainViewModel : RxObject
             AddLastProject(filepath);
             this.RaisePropertyChanged(nameof(WindowTitle));
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            MessageBox.Show("Loading File Error, file no more supported", "Error", MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.None);
+            MessageBox.Show($"Loading File Error: {ex}", "Error", MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.None);
         }
     }
 
@@ -232,7 +232,7 @@ public partial class MainViewModel : RxObject
 
             Save();
 
-            // I proceed only if i created the project .asproj file and directory I need existing
+            // I proceed only if i created the project .velo file and directory I need existing
             // directory to create the packages.
 
             if (!_isSaved)
@@ -290,7 +290,7 @@ public partial class MainViewModel : RxObject
             SaveAs();
             return;
         }
-        if (FilePath.Contains(".asproj"))
+        if (FilePath.Contains(PathFolderHelper.ProjectFileExtension))
         {
             FilePath = Path.GetDirectoryName(FilePath);
         }
@@ -313,7 +313,7 @@ public partial class MainViewModel : RxObject
             Directory.CreateDirectory(Model.SquirrelOutputPath);
         }
 
-        var asProj = Path.Combine(FilePath!, $"{Model.AppId}.asproj");
+        var asProj = Path.Combine(FilePath!, $"{Model.AppId}{PathFolderHelper.ProjectFileExtension}");
         File.WriteAllText(asProj, JsonSerializer.Serialize(Model));
         Trace.WriteLine("FILE SAVED ! : " + FilePath);
 
@@ -369,34 +369,69 @@ public partial class MainViewModel : RxObject
     {
         try
         {
-            ActiveBackgroungWorker?.ReportProgress(20, "NUGET PACKAGE CREATING");
+            ActiveBackgroungWorker?.ReportProgress(20, "VELOPACK PACKAGE CREATING");
 
             if (ActiveBackgroungWorker?.CancellationPending == true)
             {
                 return;
             }
 
-            ActiveBackgroungWorker?.ReportProgress(40, "SQUIRREL PACKAGE CREATING");
-
-            // Releasify
             if (Model?.NupkgOutputPath == null)
             {
                 throw new Exception("NupkgOutputPath is null");
             }
 
-            Directory.EnumerateFiles(Model.NupkgOutputPath).ToList().ForEach(File.Delete);
-            foreach (var file in Model.PackageFiles)
+            // Clean output content dir
+            if (Directory.Exists(Model.NupkgOutputPath))
+            {
+                foreach (var f in Directory.EnumerateFiles(Model.NupkgOutputPath, "*", SearchOption.AllDirectories))
+                {
+                    try { File.SetAttributes(f, FileAttributes.Normal); File.Delete(f); } catch { }
+                }
+            }
+
+            // Copy all selected items preserving folder structure
+            void CopyNode(ItemLink node, List<string> parents)
             {
                 if (ActiveBackgroungWorker?.CancellationPending == true)
                 {
                     return;
                 }
 
-                File.Copy(file.Filename, Model.NupkgOutputPath + Path.DirectorySeparatorChar + Path.GetFileName(file.Filename), true);
+                if (node.IsDirectory)
+                {
+                    var dirName = string.IsNullOrWhiteSpace(node.Filename) ? "Folder" : node.Filename;
+                    var newParents = new List<string>(parents) { dirName };
+                    foreach (var child in node.Children)
+                    {
+                        CopyNode(child, newParents);
+                    }
+                }
+                else
+                {
+                    if (string.IsNullOrWhiteSpace(node.SourceFilepath) || !File.Exists(node.SourceFilepath))
+                    {
+                        return;
+                    }
+
+                    var relDir = Path.Combine(parents.ToArray());
+                    var targetDir = string.IsNullOrEmpty(relDir) ? Model!.NupkgOutputPath : Path.Combine(Model!.NupkgOutputPath, relDir);
+                    Directory.CreateDirectory(targetDir);
+                    var targetFile = Path.Combine(targetDir, node.Filename);
+                    File.Copy(node.SourceFilepath, targetFile, true);
+                }
             }
 
-            SquirrelReleasify();
-            Trace.WriteLine("CREATED SQUIRREL PACKAGE to : " + Model.SquirrelOutputPath);
+            ActiveBackgroungWorker?.ReportProgress(40, "COPYING CONTENT");
+            foreach (var node in Model!.PackageFiles.ToList())
+            {
+                CopyNode(node, new List<string>());
+            }
+
+            ActiveBackgroungWorker?.ReportProgress(60, "VELOPACK RELEASIFY");
+
+            VelopackPack();
+            Trace.WriteLine("CREATED VELOPACK PACKAGE to : " + Model.SquirrelOutputPath);
         }
         catch (Exception ex)
         {
@@ -468,75 +503,72 @@ public partial class MainViewModel : RxObject
         Model?.BeginUpdatedFiles(_publishMode);
     }
 
-    private void SquirrelReleasify()
+    private void VelopackPack()
     {
         if (Model == null)
         {
                throw new Exception("Model is null");
         }
 
-        /*
-        pack: Creates a Squirrel release from a folder containing application files
-              -r, --releaseDir=DIRECTORY      Output DIRECTORY for releasified packages
-              -u, --packId=ID                 Unique ID for release
-              -v, --packVersion=VERSION       Current VERSION for release
-              -p, --packDir=DIRECTORY         DIRECTORY containing application files for release
-                  --packTitle=NAME            Optional display/friendly NAME for release
-                  --packAuthors=AUTHORS       Optional company or list of release AUTHORS
-                  --includePdb                Add *.pdb files to release package
-                  --releaseNotes=PATH         PATH to file with markdown notes for version
-              -n, --signParams=PARAMETERS     Sign files via SignTool.exe using these PARAMETERS
-                  --signTemplate=COMMAND      Use a custom signing COMMAND. '{{file}}' will be
-                                                replaced by the path of the file to sign.
-                  --noDelta                   Skip the generation of delta packages
-              -f, --framework=RUNTIMES        List of required RUNTIMES to install during setup
-                                                example: 'net6,vcredist143'
-              -s, --splashImage=PATH          PATH to image/gif displayed during installation
-              -i, --icon=PATH                 PATH to .ico for Setup.exe and Update.exe
-                  --appIcon=PATH              PATH to .ico for 'Apps and Features' list
-                  --msi=BITNESS               Compile a .msi machine-wide deployment tool with the
-                                                specified BITNESS. (either 'x86' or 'x64')
-
-        releasify: Take an existing nuget package and convert it into a Squirrel release
-              -r, --releaseDir=DIRECTORY      Output DIRECTORY for releasified packages
-              -p, --package=PATH              PATH to a '.nupkg' package to releasify
-              -n, --signParams=PARAMETERS     Sign files via SignTool.exe using these PARAMETERS
-                  --signTemplate=COMMAND      Use a custom signing COMMAND. '{{file}}' will be
-                                                replaced by the path of the file to sign.
-                  --noDelta                   Skip the generation of delta packages
-              -f, --framework=RUNTIMES        List of required RUNTIMES to install during setup
-                                                example: 'net6,vcredist143'
-              -s, --splashImage=PATH          PATH to image/gif displayed during installation
-              -i, --icon=PATH                 PATH to .ico for Setup.exe and Update.exe
-                  --appIcon=PATH              PATH to .ico for 'Apps and Features' list
-                  --msi=BITNESS               Compile a .msi machine-wide deployment tool with the
-                                                specified BITNESS. (either 'x86' or 'x64')
-
-        Squirrel.exe pack --packId "YourApp" --packVersion "1.0.0" --packDirectory "path-to/publish/folder"
-        */
-        var cmd = $@" pack -u {Model.AppId} -v {Model.Version} -p {Model.NupkgOutputPath} -r {Model.SquirrelOutputPath}";
+        // vpk pack -u MyApp -v 1.0.0 -p path-to/publish/folder -r path-to/releases
+        var cmd = $" pack -u {Model.AppId} -v {Model.Version} -p \"{Model.NupkgOutputPath}\" -r \"{Model.SquirrelOutputPath}\"";
 
         if (File.Exists(Model.IconFilepath))
         {
-            cmd += @" -i " + Model.IconFilepath;
-            cmd += @" -setupIcon " + Model.IconFilepath;
+            cmd += " -i \"" + Model.IconFilepath + "\"";
+            cmd += " --appIcon \"" + Model.IconFilepath + "\"";
         }
 
         if (File.Exists(Model.SplashFilepath))
         {
-            cmd += @" -s " + Path.GetFullPath(Model.SplashFilepath);
+            cmd += " -s \"" + Path.GetFullPath(Model.SplashFilepath) + "\"";
+        }
+
+        if (Model.GenerateDeltaPackages == false)
+        {
+            cmd += " --no-delta";
+        }
+
+        if (Model.GenerateMsi && !string.IsNullOrWhiteSpace(Model.MsiBitness))
+        {
+            cmd += " --msi " + Model.MsiBitness;
+        }
+
+        if (!string.IsNullOrWhiteSpace(Model.SignParams))
+        {
+            cmd += " -n \"" + Model.SignParams + "\"";
+        }
+
+        if (!string.IsNullOrWhiteSpace(Model.SignTemplate))
+        {
+            cmd += " --signTemplate \"" + Model.SignTemplate + "\"";
         }
 
         var startInfo = new ProcessStartInfo
         {
             WindowStyle = ProcessWindowStyle.Hidden,
-            FileName = @"tools\Squirrel.exe",
-            Arguments = cmd
+            FileName = "vpk",
+            Arguments = cmd,
+            UseShellExecute = false,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            CreateNoWindow = true
         };
 
         using (_exeProcess = Process.Start(startInfo))
         {
-            _exeProcess?.WaitForExit();
+            var stdout = _exeProcess!.StandardOutput.ReadToEnd();
+            var stderr = _exeProcess!.StandardError.ReadToEnd();
+            _exeProcess!.WaitForExit();
+            Trace.WriteLine(stdout);
+            if (!string.IsNullOrWhiteSpace(stderr))
+            {
+                Trace.TraceError(stderr);
+            }
+            if (_exeProcess!.ExitCode != 0)
+            {
+                throw new Exception($"vpk exited with code {_exeProcess.ExitCode}.\n{stderr}\n{stdout}");
+            }
         }
     }
 }

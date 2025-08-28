@@ -9,7 +9,7 @@ public interface IConnectionDiscoveryService
     /// Gets the available connections.
     /// </summary>
     /// <value>The available connections.</value>
-    IEnumerable<WebConnectionBase> AvailableConnections { get; }
+    IEnumerable<WebConnectionBase>? AvailableConnections { get; }
 
     /// <summary>
     /// Gets the connection with specified name.

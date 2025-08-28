@@ -1,4 +1,5 @@
 ﻿using ReactiveUI;
+using ReactiveUI.SourceGenerators;
 using Splat;
 
 namespace Velopack.UI.Views;
@@ -6,6 +7,7 @@ namespace Velopack.UI.Views;
 /// <summary>
 /// Interaction logic for MainView.xaml
 /// </summary>
+[IViewFor<MainViewModel>]
 public partial class MainView
 {
     public MainView()

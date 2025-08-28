@@ -12,5 +12,5 @@ public class Preference
     /// The last opened project
     /// </summary>
     [DataMember]
-    public List<string> LastOpenedProject = new();
+    public List<string> LastOpenedProject = [];
 }

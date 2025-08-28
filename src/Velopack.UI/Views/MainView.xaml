@@ -8,11 +8,12 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:mstv="clr-namespace:System.Windows.Controls;assembly=MultiSelectTreeView"
     xmlns:rxui="http://reactiveui.net"
+    xmlns:sys="clr-namespace:System;assembly=mscorlib"
     xmlns:ui="https://github.com/reactivemarbles/CrissCross.ui"
     xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
     x:Name="mainView"
     Width="1024"
-    Height="768"
+    Height="910"
     MinWidth="525"
     MinHeight="400"
     d:DataContext="{d:DesignInstance Type=local:MainViewModel}"
@@ -78,7 +79,7 @@
                 Grid.Row="2"
                 DataContext="{Binding Model}">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" MinWidth="250" />
+                    <ColumnDefinition Width="Auto" MinWidth="320" />
                     <ColumnDefinition Width="7" />
                     <ColumnDefinition Width="*" MinWidth="300" />
                 </Grid.ColumnDefinitions>
@@ -125,6 +126,11 @@
 
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
+
+                            <RowDefinition Height="Auto" />
+
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
 
                             <RowDefinition Height="4" />
@@ -137,17 +143,17 @@
                         </Grid.RowDefinitions>
                         <Menu
                             Grid.ColumnSpan="3"
-                            Margin="0,0,0,20"
+                            Margin="0,0,0,12"
                             DataContext="{Binding ElementName=mainView, Path=DataContext}"
                             FontSize="16">
-                            <MenuItem Width="200" Header="Project File">
+                            <MenuItem Width="200" Header="Project">
                                 <MenuItem.Icon>
                                     <Image Source="/Velopack.UI;component/Images/folder_24.png" Stretch="UniformToFill" />
                                 </MenuItem.Icon>
-                                <MenuItem x:Name="CreateNewProject" Header="Create New" />
-                                <MenuItem x:Name="OpenProject" Header="Open" />
-                                <MenuItem x:Name="Save" Header="Save" />
-                                <MenuItem x:Name="SaveAs" Header="Save As" />
+                                <MenuItem Command="{Binding CreateNewProjectCommand}" Header="Create New" />
+                                <MenuItem Command="{Binding OpenProjectCommand}" Header="Open" />
+                                <MenuItem Command="{Binding SaveCommand}" Header="Save" />
+                                <MenuItem Command="{Binding SaveAsCommand}" Header="Save As" />
                             </MenuItem>
                         </Menu>
 
@@ -221,17 +227,14 @@
                             Grid.Column="0"
                             Style="{StaticResource ResourceKey=Label}"
                             Text="UPLOAD LOCATION" />
-                        <ComboBox
+                        <StackPanel
                             Grid.Row="18"
                             Grid.Column="0"
-                            Background="{x:Null}"
-                            ItemsSource="{Binding AvailableUploadLocation}"
-                            SelectedItem="{Binding SelectedConnectionString, ValidatesOnDataErrors=True}" />
-                        <StackPanel
-                            Grid.Row="19"
-                            Grid.Column="0"
-                            HorizontalAlignment="Right"
                             Orientation="Horizontal">
+                            <ComboBox
+                                Background="{x:Null}"
+                                ItemsSource="{Binding AvailableUploadLocation}"
+                                SelectedItem="{Binding SelectedConnectionString, ValidatesOnDataErrors=True}" />
                             <ui:Image
                                 Width="16"
                                 Height="16"
@@ -244,7 +247,77 @@
                                 FontSize="16" />
                         </StackPanel>
 
-                        <Grid Grid.Row="21">
+                        <GroupBox Grid.Row="21" Header="Velopack Options">
+                            <Grid Margin="4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <CheckBox
+                                    Grid.Row="0"
+                                    Grid.Column="0"
+                                    Margin="4"
+                                    Content="Generate Delta Packages"
+                                    IsChecked="{Binding GenerateDeltaPackages}" />
+                                <StackPanel
+                                    Grid.Row="1"
+                                    Grid.Column="0"
+                                    Margin="4"
+                                    Orientation="Horizontal">
+                                    <CheckBox Content="Generate MSI" IsChecked="{Binding GenerateMsi}" />
+                                    <TextBlock
+                                        Margin="12,0,4,0"
+                                        VerticalAlignment="Center"
+                                        Text=" Bitness:" />
+                                    <ComboBox Width="80" SelectedItem="{Binding MsiBitness}">
+                                        <sys:String>x86</sys:String>
+                                        <sys:String>x64</sys:String>
+                                    </ComboBox>
+                                </StackPanel>
+                                <StackPanel
+                                    Grid.Row="2"
+                                    Grid.ColumnSpan="2"
+                                    Margin="4"
+                                    Orientation="Horizontal">
+                                    <TextBlock
+                                        Width="100"
+                                        VerticalAlignment="Center"
+                                        Text="Sign Params:" />
+                                    <TextBox MinWidth="280" Text="{Binding SignParams}" />
+                                </StackPanel>
+                                <StackPanel
+                                    Grid.Row="3"
+                                    Grid.ColumnSpan="2"
+                                    Margin="4"
+                                    Orientation="Horizontal">
+                                    <TextBlock
+                                        Width="100"
+                                        VerticalAlignment="Center"
+                                        Text="Sign Template:" />
+                                    <TextBox MinWidth="280" Text="{Binding SignTemplate}" />
+                                </StackPanel>
+                                <StackPanel
+                                    Grid.Row="4"
+                                    Grid.ColumnSpan="2"
+                                    Margin="4"
+                                    Orientation="Horizontal">
+                                    <ui:Button
+                                        Margin="0,0,8,0"
+                                        Command="{Binding AddFolderFromDialogCommand}"
+                                        Content="Select Content Folder" />
+                                    <ui:Button Command="{Binding AddFilesFromDialogCommand}" Content="Select Content Files" />
+                                </StackPanel>
+                            </Grid>
+                        </GroupBox>
+
+                        <Grid Grid.Row="23">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition />
                                 <ColumnDefinition />
@@ -294,6 +367,28 @@
                                 </ui:Border>
                             </StackPanel>
                         </Grid>
+
+                        <StackPanel
+                            Grid.Row="25"
+                            Margin="0,8,0,0"
+                            HorizontalAlignment="Left"
+                            Orientation="Horizontal">
+                            <ui:Button
+                                Margin="0,0,8,0"
+                                Command="{Binding SelectNupkgDirectoryCommand}"
+                                Content="Output: Content Folder" />
+                            <ui:TextBlock VerticalAlignment="Center" Text="{Binding NupkgOutputPath}" />
+                        </StackPanel>
+                        <StackPanel
+                            Grid.Row="26"
+                            HorizontalAlignment="Left"
+                            Orientation="Horizontal">
+                            <ui:Button
+                                Margin="0,0,8,0"
+                                Command="{Binding SelectOutputDirectoryCommand}"
+                                Content="Output: Releases Folder" />
+                            <ui:TextBlock VerticalAlignment="Center" Text="{Binding SquirrelOutputPath}" />
+                        </StackPanel>
                     </Grid>
                 </GroupBox>
                 <GridSplitter
@@ -385,7 +480,9 @@
                             </mstv:MultiSelectTreeView.Template>
                             <mstv:MultiSelectTreeView.ContextMenu>
                                 <ContextMenu>
-                                    <MenuItem x:Name="AddDirectory" Header="Add Directory" />
+                                    <MenuItem Command="{Binding AddDirectoryCommand}" Header="Add Directory" />
+                                    <MenuItem Command="{Binding RemoveItemCommand}" Header="Remove Selected Items" />
+                                    <MenuItem Command="{Binding RemoveAllItemsCommand}" Header="Remove All Items" />
                                 </ContextMenu>
                             </mstv:MultiSelectTreeView.ContextMenu>
                             <mstv:MultiSelectTreeView.ItemContainerStyle>
@@ -572,6 +669,7 @@
                         Margin="5"
                         Padding="0"
                         HorizontalAlignment="Center"
+                        Command="{Binding ElementName=mainView, Path=DataContext.PublishPackageOnlyUpdate}"
                         Cursor="Hand">
                         <ui:StackPanel Orientation="Horizontal">
                             <ui:Image
@@ -594,6 +692,7 @@
                         Margin="5"
                         Padding="0"
                         HorizontalAlignment="Center"
+                        Command="{Binding ElementName=mainView, Path=DataContext.PublishPackageComplete}"
                         Cursor="Hand">
                         <ui:StackPanel Orientation="Horizontal">
                             <ui:Image
