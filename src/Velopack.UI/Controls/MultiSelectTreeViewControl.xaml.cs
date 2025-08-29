@@ -15,17 +15,25 @@ public partial class MultiSelectTreeViewControl : UserControl
     {
         InitializeComponent();
         SelectedItems = new ObservableCollection<object>();
-        PART_Tree.SelectedItemChanged += (s, e) => { /* ignore default single select */ };
-        // Ensure context menu can bind to same DataContext as control
-        PART_Tree.DataContext = this.DataContext;
-        this.DataContextChanged += (s, e) => PART_Tree.DataContext = e.NewValue;
+
+        // Ensure ContextMenus can find VM and SelectedItems via PlacementTarget.Tag
+        Loaded += (_, _) =>
+        {
+            PART_Tree.Tag = SelectedItems;
+        };
+
+        this.DataContextChanged += (_, __) =>
+        {
+            // update TreeViewItem Tag is bound via ancestor UserControl, so no action here
+            PART_Tree.Tag = SelectedItems;
+        };
     }
 
     public static readonly DependencyProperty ItemsSourceProperty = DependencyProperty.Register(
         nameof(ItemsSource), typeof(IEnumerable), typeof(MultiSelectTreeViewControl));
 
     public static readonly DependencyProperty SelectedItemsProperty = DependencyProperty.Register(
-        nameof(SelectedItems), typeof(IList), typeof(MultiSelectTreeViewControl), new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault));
+        nameof(SelectedItems), typeof(IList), typeof(MultiSelectTreeViewControl), new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault, OnSelectedItemsChanged));
 
     public static readonly DependencyProperty ItemTemplateProperty = DependencyProperty.Register(
         nameof(ItemTemplate), typeof(HierarchicalDataTemplate), typeof(MultiSelectTreeViewControl));
@@ -48,6 +56,15 @@ public partial class MultiSelectTreeViewControl : UserControl
         set => SetValue(ItemTemplateProperty, value);
     }
 
+    private static void OnSelectedItemsChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        var ctl = (MultiSelectTreeViewControl)d;
+        if (ctl.PART_Tree != null)
+        {
+            ctl.PART_Tree.Tag = ctl.SelectedItems;
+        }
+    }
+
     private static bool IsCtrlDown => (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control;
     private static bool IsShiftDown => (Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift;
 
@@ -65,14 +82,9 @@ public partial class MultiSelectTreeViewControl : UserControl
 
     private void OnTreeViewPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
-        // Ignore clicks on expanders so default expand/collapse works
         if (IsOnExpander(e.OriginalSource as DependencyObject)) return;
-
         var container = FindContainer(e.OriginalSource as DependencyObject);
-        if (container == null)
-        {
-            return;
-        }
+        if (container == null) return;
 
         var item = container.DataContext;
         if (!IsCtrlDown && !IsShiftDown)
@@ -83,15 +95,8 @@ public partial class MultiSelectTreeViewControl : UserControl
         }
         else if (IsCtrlDown)
         {
-            if (SelectedItems.Contains(item))
-            {
-                RemoveFromSelection(item);
-            }
-            else
-            {
-                AddToSelection(item);
-                _lastAnchor = item;
-            }
+            if (SelectedItems.Contains(item)) RemoveFromSelection(item);
+            else { AddToSelection(item); _lastAnchor = item; }
         }
         else if (IsShiftDown && _lastAnchor != null)
         {
@@ -102,36 +107,24 @@ public partial class MultiSelectTreeViewControl : UserControl
             {
                 if (a > b) (a, b) = (b, a);
                 ClearSelectionInternal();
-                for (int i = a; i <= b; i++)
-                {
-                    AddToSelection(((TreeViewItem)flat[i]).DataContext);
-                }
+                for (int i = a; i <= b; i++) AddToSelection(((TreeViewItem)flat[i]).DataContext);
             }
         }
-
         e.Handled = true;
     }
 
     private void OnTreeViewPreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
     {
         var container = FindContainer(e.OriginalSource as DependencyObject);
-        if (container == null)
-        {
-            return;
-        }
-
+        if (container == null) return;
         var item = container.DataContext;
         if (!SelectedItems.Contains(item))
         {
-            // Right-click selects the item under cursor while preserving multi-select with Ctrl
-            if (!IsCtrlDown)
-            {
-                ClearSelectionInternal();
-            }
+            if (!IsCtrlDown) ClearSelectionInternal();
             AddToSelection(item);
             _lastAnchor = item;
         }
-        e.Handled = false; // allow context menu to open
+        // allow context menu
     }
 
     private void OnTreeViewPreviewKeyDown(object sender, KeyEventArgs e)
@@ -139,10 +132,7 @@ public partial class MultiSelectTreeViewControl : UserControl
         if (e.Key == Key.A && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
         {
             ClearSelectionInternal();
-            foreach (var tvi in Flatten(PART_Tree))
-            {
-                AddToSelection(tvi.DataContext);
-            }
+            foreach (var tvi in Flatten(PART_Tree)) AddToSelection(tvi.DataContext);
             e.Handled = true;
         }
     }
@@ -193,10 +183,7 @@ public partial class MultiSelectTreeViewControl : UserControl
                 yield return tvi;
                 if (tvi.IsExpanded)
                 {
-                    foreach (var child in Flatten(tvi))
-                    {
-                        yield return child;
-                    }
+                    foreach (var child in Flatten(tvi)) yield return child;
                 }
             }
         }
