@@ -154,141 +154,95 @@ public class MultiSelectTreeViewItem : HeaderedItemsControl
     }
 
     public Brush BackgroundFocused
-    {
-        get { return (Brush)GetValue(BackgroundFocusedProperty); }
-        set { SetValue(BackgroundFocusedProperty, value); }
+    { get => (Brush)GetValue(BackgroundFocusedProperty); set => SetValue(BackgroundFocusedProperty, value);
     }
 
     public Brush BackgroundSelected
-    {
-        get { return (Brush)GetValue(BackgroundSelectedProperty); }
-        set { SetValue(BackgroundSelectedProperty, value); }
+    { get => (Brush)GetValue(BackgroundSelectedProperty); set => SetValue(BackgroundSelectedProperty, value);
     }
 
     public Brush ForegroundSelected
-    {
-        get { return (Brush)GetValue(ForegroundSelectedProperty); }
-        set { SetValue(ForegroundSelectedProperty, value); }
+    { get => (Brush)GetValue(ForegroundSelectedProperty); set => SetValue(ForegroundSelectedProperty, value);
     }
 
     public Brush BackgroundSelectedHovered
-    {
-        get { return (Brush)GetValue(BackgroundSelectedHoveredProperty); }
-        set { SetValue(BackgroundSelectedHoveredProperty, value); }
+    { get => (Brush)GetValue(BackgroundSelectedHoveredProperty); set => SetValue(BackgroundSelectedHoveredProperty, value);
     }
 
     public Brush BackgroundHovered
-    {
-        get { return (Brush)GetValue(BackgroundHoveredProperty); }
-        set { SetValue(BackgroundHoveredProperty, value); }
+    { get => (Brush)GetValue(BackgroundHoveredProperty); set => SetValue(BackgroundHoveredProperty, value);
     }
 
     public Brush BackgroundInactive
-    {
-        get { return (Brush)GetValue(BackgroundInactiveProperty); }
-        set { SetValue(BackgroundInactiveProperty, value); }
+    { get => (Brush)GetValue(BackgroundInactiveProperty); set => SetValue(BackgroundInactiveProperty, value);
     }
 
     public Brush ForegroundInactive
-    {
-        get { return (Brush)GetValue(ForegroundInactiveProperty); }
-        set { SetValue(ForegroundInactiveProperty, value); }
+    { get => (Brush)GetValue(ForegroundInactiveProperty); set => SetValue(ForegroundInactiveProperty, value);
     }
 
     public Brush BorderBrushInactive
-    {
-        get { return (Brush)GetValue(BorderBrushInactiveProperty); }
-        set { SetValue(BorderBrushInactiveProperty, value); }
+    { get => (Brush)GetValue(BorderBrushInactiveProperty); set => SetValue(BorderBrushInactiveProperty, value);
     }
 
     public Brush BorderBrushHovered
-    {
-        get { return (Brush)GetValue(BorderBrushHoveredProperty); }
-        set { SetValue(BorderBrushHoveredProperty, value); }
+    { get => (Brush)GetValue(BorderBrushHoveredProperty); set => SetValue(BorderBrushHoveredProperty, value);
     }
 
     public Brush BorderBrushFocused
-    {
-        get { return (Brush)GetValue(BorderBrushFocusedProperty); }
-        set { SetValue(BorderBrushFocusedProperty, value); }
+    { get => (Brush)GetValue(BorderBrushFocusedProperty); set => SetValue(BorderBrushFocusedProperty, value);
     }
 
     public Brush BorderBrushSelected
-    {
-        get { return (Brush)GetValue(BorderBrushSelectedProperty); }
-        set { SetValue(BorderBrushSelectedProperty, value); }
+    { get => (Brush)GetValue(BorderBrushSelectedProperty); set => SetValue(BorderBrushSelectedProperty, value);
     }
 
     public DataTemplate ContentTemplateEdit
-    {
-        get { return (DataTemplate)GetValue(ContentTemplateEditProperty); }
-        set { SetValue(ContentTemplateEditProperty, value); }
+    { get => (DataTemplate)GetValue(ContentTemplateEditProperty); set => SetValue(ContentTemplateEditProperty, value);
     }
 
     public bool IsExpanded
-    {
-        get { return (bool)GetValue(IsExpandedProperty); }
-        set { SetValue(IsExpandedProperty, value); }
+    { get => (bool)GetValue(IsExpandedProperty); set => SetValue(IsExpandedProperty, value);
     }
 
     public bool IsEditable
-    {
-        get { return (bool)GetValue(IsEditableProperty); }
-        set { SetValue(IsEditableProperty, value); }
+    { get => (bool)GetValue(IsEditableProperty); set => SetValue(IsEditableProperty, value);
     }
 
     public new bool IsVisible
-    {
-        get { return (bool)GetValue(IsVisibleProperty); }
-        set { SetValue(IsVisibleProperty, value); }
+    { get => (bool)GetValue(IsVisibleProperty); set => SetValue(IsVisibleProperty, value);
     }
 
     public bool IsEditing
-    {
-        get { return (bool)GetValue(IsEditingProperty); }
-        set { SetValue(IsEditingProperty, value); }
+    { get => (bool)GetValue(IsEditingProperty); set => SetValue(IsEditingProperty, value);
     }
 
     public bool IsSelected
-    {
-        get { return (bool)GetValue(IsSelectedProperty); }
-        set { SetValue(IsSelectedProperty, value); }
+    { get => (bool)GetValue(IsSelectedProperty); set => SetValue(IsSelectedProperty, value);
     }
 
     public string DisplayName
-    {
-        get { return (string)GetValue(DisplayNameProperty); }
-        set { SetValue(DisplayNameProperty, value); }
+    { get => (string)GetValue(DisplayNameProperty); set => SetValue(DisplayNameProperty, value);
     }
 
     public bool HoverHighlighting
-    {
-        get { return (bool)GetValue(HoverHighlightingProperty); }
-        set { SetValue(HoverHighlightingProperty, value); }
+    { get => (bool)GetValue(HoverHighlightingProperty); set => SetValue(HoverHighlightingProperty, value);
     }
 
     public int ItemIndent
-    {
-        get { return (int)GetValue(ItemIndentProperty); }
-        set { SetValue(ItemIndentProperty, value); }
+    { get => (int)GetValue(ItemIndentProperty); set => SetValue(ItemIndentProperty, value);
     }
 
     public bool IsKeyboardMode
-    {
-        get { return (bool)GetValue(IsKeyboardModeProperty); }
-        set { SetValue(IsKeyboardModeProperty, value); }
+    { get => (bool)GetValue(IsKeyboardModeProperty); set => SetValue(IsKeyboardModeProperty, value);
     }
 
     public string Remarks
-    {
-        get { return (string)GetValue(RemarksProperty); }
-        set { SetValue(RemarksProperty, value); }
+    { get => (string)GetValue(RemarksProperty); set => SetValue(RemarksProperty, value);
     }
 
     public DataTemplate RemarksTemplate
-    {
-        get { return (DataTemplate)GetValue(RemarksTemplateProperty); }
-        set { SetValue(RemarksTemplateProperty, value); }
+    { get => (DataTemplate)GetValue(RemarksTemplateProperty); set => SetValue(RemarksTemplateProperty, value);
     }
 
     private MultiSelectTreeView lastParentTreeView;

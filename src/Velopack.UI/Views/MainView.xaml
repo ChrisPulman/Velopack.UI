@@ -429,6 +429,7 @@
                             Background="{x:Null}"
                             ItemsSource="{Binding PackageFiles}"
                             SelectedItems="{Binding SelectedLink}"
+                            SelectionMode="MultiSelectEnabled"
                             Tag="{Binding DataContext, RelativeSource={RelativeSource Self}}">
                             <mstv:MultiSelectTreeView.Template>
                                 <ControlTemplate TargetType="{x:Type mstv:MultiSelectTreeView}">
@@ -490,7 +491,7 @@
                                 </ControlTemplate>
                             </mstv:MultiSelectTreeView.Template>
                             <mstv:MultiSelectTreeView.ContextMenu>
-                                <!-- Ensure ContextMenu sees the AutoSquirrelModel as DataContext -->
+                                <!--  Ensure ContextMenu sees the AutoSquirrelModel as DataContext  -->
                                 <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}">
                                     <MenuItem Command="{Binding AddDirectoryCommand}" Header="Add Directory" />
                                     <MenuItem Command="{Binding RemoveItemCommand}" Header="Remove Selected Items" />
@@ -501,8 +502,8 @@
                                 <Style TargetType="{x:Type mstv:MultiSelectTreeViewItem}">
                                     <Setter Property="ContextMenu">
                                         <Setter.Value>
-                                            <!-- Bind ContextMenu DataContext to the tree's DataContext via PlacementTarget -->
-                                            <ContextMenu StaysOpen="True" DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}">
+                                            <!--  Bind ContextMenu DataContext to the tree's DataContext via PlacementTarget  -->
+                                            <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}" StaysOpen="True">
                                                 <MenuItem Command="{Binding RefreshPackageVersionCommand}" Header="Refresh Version" />
                                                 <MenuItem Command="{Binding AddDirectoryCommand}" Header="Add Directory" />
                                                 <MenuItem Command="{Binding RemoveItemCommand}" Header="Remove Selected Items" />

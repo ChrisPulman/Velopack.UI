@@ -27,7 +27,7 @@ public partial class AutoSquirrelModel : WebConnectionBase, GongSolutions.Wpf.Dr
     private readonly ConnectionDiscoveryService _connectionDiscoveryService = new();
     private readonly string _newFolderName = "NEW FOLDER";
     private static readonly HashSet<string> s_excludedExtensions = new([".pdb", ".nupkg", ".msi", ".zip"], StringComparer.OrdinalIgnoreCase);
-    private List<string> _availableUploadLocation;
+    private List<string>? _availableUploadLocation;
     private string? _iconFilepath;
 
     [DataMember]
@@ -62,7 +62,7 @@ public partial class AutoSquirrelModel : WebConnectionBase, GongSolutions.Wpf.Dr
     private ItemLink _selectedItem = new();
 
     [Reactive]
-    private SingleFileUpload _selectedUploadItem;
+    private SingleFileUpload? _selectedUploadItem;
 
     [DataMember]
     [Reactive]
@@ -76,7 +76,7 @@ public partial class AutoSquirrelModel : WebConnectionBase, GongSolutions.Wpf.Dr
     private string? _splashFilepath;
     private ObservableCollection<SingleFileUpload> _uploadQueue = [];
     private string? _version;
-    private ReactiveCommand<Unit, Unit> _selectSplashCmd;
+    private ReactiveCommand<Unit, Unit>? _selectSplashCmd;
 
     // Velopack options
     [DataMember]
