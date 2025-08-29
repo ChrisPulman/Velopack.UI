@@ -547,14 +547,21 @@ _selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
     /// <exception cref="Exception"></exception>
     internal void BeginUpdatedFiles(int mode)
     {
-        // ? -> Set IsEnabled = false on GUI to prevent change during upload ?
-
+        // Determine the folder where vpk outputs artifacts
         var releasesPath = SquirrelOutputPath;
-
         if (SelectedConnection is FileSystemConnection fsc && !string.IsNullOrWhiteSpace(fsc.FileSystemPath))
         {
-            // Resolve to user-selected file system path first when using FileSystemConnection
-            releasesPath = fsc.FileSystemPath;
+            // Our Save() sets SquirrelOutputPath to <FileSystemPath>\\Releases when FileSystem is selected
+            // Be defensive and reconstruct it if not aligned
+            var expected = Path.Combine(fsc.FileSystemPath, PathFolderHelper.ReleasesDirectory);
+            if (!string.IsNullOrWhiteSpace(SquirrelOutputPath) && Directory.Exists(SquirrelOutputPath))
+            {
+                releasesPath = SquirrelOutputPath;
+            }
+            else
+            {
+                releasesPath = expected;
+            }
         }
 
         if (string.IsNullOrWhiteSpace(releasesPath) || !Directory.Exists(releasesPath))
@@ -567,12 +574,7 @@ _selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
             throw new Exception("No selected upload location !");
         }
 
-        /* I tried picking file to update, by their  LastWriteTime , but it doesn't works good. I don't know why.
-         *
-         * So i just pick these file by their name
-         *
-         */
-
+        // Build list of files to upload/copy from releases folder
         var fileToUpdate = new List<string>()
         {
             "RELEASES",
@@ -616,6 +618,8 @@ _selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
                     FileSize = BytesToString(file.Length),
                     Connection = connection,
                     FullPath = file.FullName,
+                    ProgressPercentage = 0,
+                    UploadStatus = FileUploadStatus.Queued,
                 });
             }
         }
@@ -913,7 +917,7 @@ _selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
 
         i.OnUploadCompleted -= Current_OnUploadCompleted;
 
-        Trace.WriteLine("Upload Complete " + i.Filename);
+        Trace.WriteLine("Upload Complete " + i.Filename + (i.DestinationPath != null ? $" -> {i.DestinationPath}" : string.Empty));
 
         ProcessNextUploadFile();
     }

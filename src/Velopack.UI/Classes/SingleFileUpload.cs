@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.IO;
 using System.Runtime.Serialization;
 using System.Windows;
 using System.Windows.Threading;
@@ -35,6 +36,26 @@ public class SingleFileUpload : RxObject
     /// </summary>
     /// <value>The connection.</value>
     public WebConnectionBase? Connection { get; internal set; }
+
+    /// <summary>
+    /// The absolute target path where the file will be placed (if applicable).
+    /// </summary>
+    public string? DestinationPath
+    {
+        get
+        {
+            if (Connection is FileSystemConnection)
+            {
+                // Files are already in the Releases folder produced by vpk; FullPath is the destination
+                return FullPath;
+            }
+            if (Connection is AmazonS3Connection s3 && !string.IsNullOrWhiteSpace(s3.BucketName) && !string.IsNullOrWhiteSpace(FullPath))
+            {
+                return $"s3://{s3.BucketName}/{Path.GetFileName(FullPath)}";
+            }
+            return null;
+        }
+    }
 
     /// <summary>
     /// Gets or sets the name of the connection.
@@ -117,6 +138,8 @@ public class SingleFileUpload : RxObject
                 throw new Exception("Internet Connection not available");
             }
 
+            UploadStatus = FileUploadStatus.InProgress;
+
             var amazonClient = new AmazonS3Client(amazonCon.AccessKey, amazonCon.SecretAccessKey, amazonCon.GetRegion());
 
             _fileTransferUtility = new TransferUtility(amazonClient);
@@ -132,6 +155,7 @@ public class SingleFileUpload : RxObject
                     BucketName = amazonCon.BucketName,
                     FilePath = FullPath,
                     CannedACL = S3CannedACL.PublicRead,
+                    Key = Path.GetFileName(FullPath)
                 };
 
             uploadRequest.UploadProgressEvent += uploadRequest_UploadPartProgressEvent;
@@ -140,8 +164,11 @@ public class SingleFileUpload : RxObject
 
             Trace.WriteLine("Start Upload : " + FullPath);
         }
-        else if (Connection is FileSystemConnection fileCon)
+        else if (Connection is FileSystemConnection)
         {
+            // For File System destination, vpk already wrote artifacts to the Releases folder.
+            // No copy is required; mark as completed so the queue reflects final state.
+            UploadStatus = FileUploadStatus.InProgress;
             uploadRequest_UploadPartProgressEvent(this, new UploadProgressArgs(100, 100, 100));
         }
     }

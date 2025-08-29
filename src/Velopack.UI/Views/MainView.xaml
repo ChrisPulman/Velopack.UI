@@ -632,11 +632,15 @@
                                         DisplayMemberBinding="{Binding Path=Filename}"
                                         Header="Filename" />
                                     <GridViewColumn
-                                        Width="170"
+                                        Width="220"
+                                        DisplayMemberBinding="{Binding Path=DestinationPath}"
+                                        Header="Destination" />
+                                    <GridViewColumn
+                                        Width="150"
                                         DisplayMemberBinding="{Binding Path=ConnectionName}"
                                         Header="Location" />
                                     <GridViewColumn
-                                        Width="150"
+                                        Width="120"
                                         DisplayMemberBinding="{Binding Path=FormattedStatus}"
                                         Header="Status" />
                                     <GridViewColumn
