@@ -1,4 +1,5 @@
 ﻿using System.Runtime.Serialization;
+using System.Text.Json.Serialization;
 
 namespace Velopack.UI;
 
@@ -12,5 +13,6 @@ public class Preference
     /// The last opened project
     /// </summary>
     [DataMember]
+    [JsonInclude]
     public List<string> LastOpenedProject = [];
 }

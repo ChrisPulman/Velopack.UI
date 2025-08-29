@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Windows;
 
@@ -107,8 +108,10 @@ public static class PathFolderHelper
         try {
             var path = GetMyDirectory(MyDirectory.Base) + "\\Preference.txt";
 
-            if (File.Exists(path)) {
-                var p = new Preference(); //// FileUtility.Deserialize<Preference>(path);
+            if (File.Exists(path)) {                
+                // Deserialize using System.Text.Json using the path
+                var jsonString = File.ReadAllText(path);
+                var p = JsonSerializer.Deserialize<Preference>(jsonString) ?? new Preference();
 
                 // Check if project files still exist.
 
@@ -135,9 +138,11 @@ public static class PathFolderHelper
     {
         try {
             var path = GetMyDirectory(MyDirectory.Base) + "\\Preference.txt";
-
-            ////FileUtility.SerializeToFile(path, userPreference);
-        } catch (Exception) {
+            // Serialize using System.Text.Json
+            var jsonString = JsonSerializer.Serialize(userPreference, new JsonSerializerOptions { WriteIndented = true });
+            File.WriteAllText(path, jsonString);
+        }
+        catch (Exception) {
             MessageBox.Show("Error on saving preference !");
         }
     }
