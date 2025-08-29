@@ -1,8 +1,10 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reactive;
+using System.Reactive.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
 using System.Windows;
@@ -27,10 +29,12 @@ public partial class MainViewModel : RxObject
     private int _publishMode;
     private Process? _exeProcess;
     private string? _filePath;
+    private IDisposable? _dirtySubscription;
 
     public MainViewModel()
     {
         Model = new AutoSquirrelModel();
+        SetupDirtyTracking();
 
         UserPreference = PathFolderHelper.LoadUserPreference();
 
@@ -43,6 +47,33 @@ public partial class MainViewModel : RxObject
 
         AbortPackageCreationCmd = ReactiveCommand.Create(() => AbortPackageCreation());
     }
+
+    private void SetupDirtyTracking()
+    {
+        _dirtySubscription?.Dispose();
+        if (Model == null)
+        {
+            return;
+        }
+
+        var dirtyStreams = new IObservable<Unit>[]
+        {
+            Model.WhenAnyValue(m => m.Title).Select(_ => Unit.Default),
+            Model.WhenAnyValue(m => m.Authors).Select(_ => Unit.Default),
+            Model.WhenAnyValue(m => m.Description).Select(_ => Unit.Default),
+            Model.WhenAnyValue(m => m.Version).Select(_ => Unit.Default),
+            Model.WhenAnyValue(m => m.AppId).Select(_ => Unit.Default),
+            Model.WhenAnyValue(m => m.SelectedConnectionString).Select(_ => Unit.Default),
+            Model.WhenAnyValue(m => m.NupkgOutputPath).Select(_ => Unit.Default),
+            Model.WhenAnyValue(m => m.SquirrelOutputPath).Select(_ => Unit.Default)
+        };
+        _dirtySubscription = Observable.Merge(dirtyStreams)
+            .Subscribe(_ => _hasUnsavedNonTreeChanges = true);
+    }
+
+    private bool _hasUnsavedNonTreeChanges;
+
+    public bool HasUnsavedChanges => (Model?.HasUnsavedTreeChanges ?? false) || _hasUnsavedNonTreeChanges || string.IsNullOrWhiteSpace(FilePath);
 
     /// <summary>
     /// Gets the abort package creation command.
@@ -124,6 +155,10 @@ public partial class MainViewModel : RxObject
         }
 
         Model = new AutoSquirrelModel();
+        SetupDirtyTracking();
+        _hasUnsavedNonTreeChanges = false;
+        Model.HasUnsavedTreeChanges = false;
+        this.RaisePropertyChanged(nameof(HasUnsavedChanges));
     }
 
     /// <summary>
@@ -185,10 +220,16 @@ public partial class MainViewModel : RxObject
             }
 
             Model = m;
+            SetupDirtyTracking();
             Model.PackageFiles = AutoSquirrelModel.OrderFileList(Model.PackageFiles);
             Model.RefreshPackageVersion();
             AddLastProject(filepath);
             this.RaisePropertyChanged(nameof(WindowTitle));
+
+            // opened from disk -> clean dirty flags
+            _hasUnsavedNonTreeChanges = false;
+            Model.HasUnsavedTreeChanges = false;
+            this.RaisePropertyChanged(nameof(HasUnsavedChanges));
         }
         catch (Exception ex)
         {
@@ -343,7 +384,8 @@ public partial class MainViewModel : RxObject
                                 nameof(AutoSquirrelModel.SelectedLink),
                                 nameof(AutoSquirrelModel.UploadQueue),
                                 nameof(AutoSquirrelModel.SelectedConnection),
-                                nameof(AutoSquirrelModel.SelectedUploadItem)
+                                nameof(AutoSquirrelModel.SelectedUploadItem),
+                                nameof(AutoSquirrelModel.HasUnsavedTreeChanges)
                             };
                             foreach (var prop in ti.Properties.ToList())
                             {
@@ -377,6 +419,11 @@ public partial class MainViewModel : RxObject
         Trace.WriteLine("FILE SAVED ! : " + FilePath);
 
         _isSaved = true;
+
+        // reset dirty flags
+        _hasUnsavedNonTreeChanges = false;
+        Model.HasUnsavedTreeChanges = false;
+        this.RaisePropertyChanged(nameof(HasUnsavedChanges));
 
         AddLastProject(asProj);
         this.RaisePropertyChanged(nameof(WindowTitle));
@@ -422,6 +469,7 @@ public partial class MainViewModel : RxObject
         {
             ActiveBackgroungWorker?.Dispose();
             _exeProcess?.Dispose();
+            _dirtySubscription?.Dispose();
         }
     }
 
