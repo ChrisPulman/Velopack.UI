@@ -26,7 +26,8 @@
         IsBusy="{Binding Path=IsBusy}">
         <xctk:BusyIndicator.BusyContentTemplate>
             <DataTemplate>
-                <StackPanel Width="250" Margin="4">
+                <!-- Ensure the Busy overlay binds to the window's DataContext (MainViewModel) -->
+                <StackPanel Width="250" Margin="4" DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType={x:Type xctk:BusyIndicator}}}">
                     <ui:TextBlock
                         HorizontalAlignment="Center"
                         FontSize="18"
@@ -445,8 +446,8 @@
                                                 x:Name="selectionBorder"
                                                 HorizontalAlignment="Left"
                                                 VerticalAlignment="Top"
-                                                Background="{Binding BackgroundSelectionRectangle, RelativeSource={RelativeSource FindAncestor, AncestorLevel=1, AncestorType={x:Type mstv:MultiSelectTreeView}}}"
-                                                BorderBrush="{Binding BorderBrushSelectionRectangle, RelativeSource={RelativeSource FindAncestor, AncestorLevel=1, AncestorType={x:Type mstv:MultiSelectTreeView}}}"
+                                                Background="{Binding BackgroundSelectionRectangle, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type mstv:MultiSelectTreeView}}}"
+                                                BorderBrush="{Binding BorderBrushSelectionRectangle, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type mstv:MultiSelectTreeView}}}"
                                                 BorderThickness="1"
                                                 Visibility="Collapsed" />
                                             <ui:TextBlock
@@ -491,8 +492,8 @@
                                 </ControlTemplate>
                             </mstv:MultiSelectTreeView.Template>
                             <mstv:MultiSelectTreeView.ContextMenu>
-                                <!--  Ensure ContextMenu sees the AutoSquirrelModel as DataContext  -->
-                                <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}">
+                                <!-- Bind ContextMenu to the tree's DataContext using RelativeSource Self -->
+                                <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
                                     <MenuItem Command="{Binding AddDirectoryCommand}" Header="Add Directory" />
                                     <MenuItem Command="{Binding RemoveItemCommand}" Header="Remove Selected Items" />
                                     <MenuItem Command="{Binding RemoveAllItemsCommand}" Header="Remove All Items" />
@@ -500,13 +501,15 @@
                             </mstv:MultiSelectTreeView.ContextMenu>
                             <mstv:MultiSelectTreeView.ItemContainerStyle>
                                 <Style TargetType="{x:Type mstv:MultiSelectTreeViewItem}">
+                                    <!-- expose VM via Tag so the per-item ContextMenu can bind to it -->
+                                    <Setter Property="Tag" Value="{Binding DataContext, RelativeSource={RelativeSource AncestorType={x:Type mstv:MultiSelectTreeView}}}" />
                                     <Setter Property="ContextMenu">
                                         <Setter.Value>
-                                            <!--  Bind ContextMenu DataContext to the tree's DataContext via PlacementTarget  -->
-                                            <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}" StaysOpen="True">
-                                                <MenuItem Command="{Binding RefreshPackageVersionCommand}" Header="Refresh Version" />
-                                                <MenuItem Command="{Binding AddDirectoryCommand}" Header="Add Directory" />
-                                                <MenuItem Command="{Binding RemoveItemCommand}" Header="Remove Selected Items" />
+                                            <!-- Bind ContextMenu DataContext to the VM stored on the container's Tag using RelativeSource Self -->
+                                            <ContextMenu StaysOpen="True" DataContext="{Binding PlacementTarget.Tag, RelativeSource={RelativeSource Self}}">
+                                                <MenuItem Command="{Binding RefreshPackageVersionCommand}" CommandParameter="{Binding}" Header="Refresh Version" />
+                                                <MenuItem Command="{Binding AddDirectoryCommand}" CommandParameter="{Binding}" Header="Add Directory" />
+                                                <MenuItem Command="{Binding RemoveItemCommand}" CommandParameter="{Binding}" Header="Remove Selected Items" />
                                                 <MenuItem Command="{Binding RemoveAllItemsCommand}" Header="Remove All Items" />
                                             </ContextMenu>
                                         </Setter.Value>
