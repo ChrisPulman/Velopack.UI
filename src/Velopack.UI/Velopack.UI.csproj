@@ -25,4 +25,8 @@
     <Resource Include="Images\**\*.*" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\MultiSelectTreeView\MultiSelectTreeView.csproj" />
+  </ItemGroup>
+
 </Project>
