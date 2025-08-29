@@ -22,13 +22,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\MultiSelectTreeView\MultiSelectTreeView.csproj" />
-    <Resource Include="Images\*\*.*" />
-    <Resource Include="Images\*.*" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="src\MultiSelectTreeView\Themes\" />
+    <Resource Include="Images\**\*.*" />
   </ItemGroup>
 
 </Project>

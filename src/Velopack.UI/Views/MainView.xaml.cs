@@ -13,6 +13,6 @@ public partial class MainView
     public MainView()
     {
         InitializeComponent();
-        this.WhenActivated(d => DataContext = ViewModel = Locator.Current.GetService<MainViewModel>());
+        this.WhenActivated(d => DataContext = ViewModel = Locator.Current.GetService<MainViewModel>()!);
     }
 }
