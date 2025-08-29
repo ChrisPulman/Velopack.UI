@@ -4,18 +4,21 @@ using System.IO;
 using System.Runtime.Serialization;
 using System.Windows.Media;
 using ReactiveUI;
+using ReactiveUI.SourceGenerators;
 using static Velopack.UI.IconHelper;
 using System.Text.Json.Serialization;
 
 namespace Velopack.UI;
 
-public class ItemLink : CrissCross.RxObject
+public partial class ItemLink : CrissCross.RxObject
 {
     private static readonly ItemLink s_dummyChild = new();
 
     [DataMember]
     private ObservableCollection<ItemLink> _children = [];
 
+    [DataMember]
+    [Reactive]
     private bool _isSelected;
     private string _sourceFilepath;
     private string _filename;
@@ -58,11 +61,11 @@ public class ItemLink : CrissCross.RxObject
 
                 if (IsDirectory && IsExpanded)
                 {
-                    icon = IconHelper.GetFolderIcon(IconSize.Large, FolderType.Open);
+                    icon = GetFolderIcon(IconSize.Large, FolderType.Open);
                 }
                 else if (IsDirectory && !IsExpanded)
                 {
-                    icon = IconHelper.GetFolderIcon(IconSize.Large, FolderType.Closed);
+                    icon = GetFolderIcon(IconSize.Large, FolderType.Closed);
                 }
                 else
                 {
@@ -72,7 +75,7 @@ public class ItemLink : CrissCross.RxObject
                     }
                     else
                     {
-                        return IconHelper.FindIconForFilename(Path.GetFileName(SourceFilepath), true);
+                        return FindIconForFilename(Path.GetFileName(SourceFilepath), true);
                     }
                 }
                 if (icon == null)
@@ -163,16 +166,6 @@ public class ItemLink : CrissCross.RxObject
     /// </summary>
     [DataMember]
     public bool IsRootBase { get; internal set; }
-
-    /// <summary>
-    /// Gets/sets whether the TreeViewItem associated with this object is selected.
-    /// </summary>
-    [DataMember]
-    public bool IsSelected
-    {
-        get => _isSelected;
-        set => this.RaiseAndSetIfChanged(ref _isSelected, value);
-    }
 
     /// <summary>
     /// Gets the last edit.

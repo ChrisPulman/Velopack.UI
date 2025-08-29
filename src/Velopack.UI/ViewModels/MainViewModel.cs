@@ -60,10 +60,7 @@ public partial class MainViewModel : RxObject
 
         set
         {
-            if (Model != null)
-            {
-                Model.CurrentFilePath = value;
-            }
+            Model?.CurrentFilePath = value;
             
             this.RaiseAndSetIfChanged(ref _filePath, value);
         }

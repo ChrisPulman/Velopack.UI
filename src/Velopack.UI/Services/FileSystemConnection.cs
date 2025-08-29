@@ -1,7 +1,9 @@
 ﻿using System.Runtime.Serialization;
 using FluentValidation;
 using FluentValidation.Results;
+using Microsoft.Win32;
 using ReactiveUI;
+using ReactiveUI.SourceGenerators;
 
 namespace Velopack.UI;
 
@@ -10,7 +12,7 @@ namespace Velopack.UI;
 /// Credentials are stored in clear format.
 /// </summary>
 [DataContract]
-public class FileSystemConnection : WebConnectionBase
+public partial class FileSystemConnection : WebConnectionBase
 {
     private string? _fileSystemPath;
 
@@ -30,7 +32,6 @@ public class FileSystemConnection : WebConnectionBase
 
         set
         {
-            _fileSystemPath = value;
             this.RaiseAndSetIfChanged(ref _fileSystemPath, value);
             this.RaisePropertyChanged(nameof(SetupDownloadUrl));
         }
@@ -64,6 +65,23 @@ public class FileSystemConnection : WebConnectionBase
         }
 
         return base.Validate();
+    }
+
+    [ReactiveCommand]
+    private void SelectFolder()
+    {
+        // show Directory Picker
+        var dialog = new OpenFolderDialog
+        {
+            Title = "Select a folder for your Application Installer",
+            InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+            Multiselect = false
+        };
+
+        if (dialog.ShowDialog() == true)
+        {
+            FileSystemPath = dialog.FolderName;
+        }
     }
 
     private class Validator : AbstractValidator<FileSystemConnection>

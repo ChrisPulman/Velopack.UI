@@ -418,7 +418,7 @@ _selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
 
         var result = dialog.ShowDialog();
 
-        if (result != System.Windows.Forms.DialogResult.OK)
+        if (result != DialogResult.OK)
         {
             return;
         }
@@ -441,7 +441,7 @@ _selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
 
         var result = dialog.ShowDialog();
 
-        if (result != System.Windows.Forms.DialogResult.OK)
+        if (result != DialogResult.OK)
         {
             return;
         }
@@ -469,7 +469,7 @@ _selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
 
         var o = ofd.ShowDialog();
 
-        if (o != System.Windows.Forms.DialogResult.OK || !File.Exists(ofd.FileName))
+        if (o != DialogResult.OK || !File.Exists(ofd.FileName))
         {
             return;
         }

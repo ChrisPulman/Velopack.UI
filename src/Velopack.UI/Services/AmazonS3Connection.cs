@@ -3,6 +3,7 @@ using Amazon;
 using FluentValidation;
 using FluentValidation.Results;
 using ReactiveUI;
+using ReactiveUI.SourceGenerators;
 
 namespace Velopack.UI;
 
@@ -11,8 +12,10 @@ namespace Velopack.UI;
 /// Credentials are stored in clear format.
 /// </summary>
 [DataContract]
-public class AmazonS3Connection : WebConnectionBase
+public partial class AmazonS3Connection : WebConnectionBase
 {
+    [DataMember]
+    [Reactive]
     private string? _accessKey;
     private List<string>? _availableRegionList;
 
@@ -20,23 +23,15 @@ public class AmazonS3Connection : WebConnectionBase
     private string? _bucketName;
 
     private string? _regionName;
+
+    [DataMember]
+    [Reactive]
     private string? _secretAccessKey;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="AmazonS3Connection"/> class.
     /// </summary>
     public AmazonS3Connection() => ConnectionName = "Amazon S3";
-
-    /// <summary>
-    /// Gets or sets the access key.
-    /// </summary>
-    /// <value>The access key.</value>
-    [DataMember]
-    public string? AccessKey
-    {
-        get => _accessKey;
-        set => this.RaiseAndSetIfChanged(ref _accessKey, value);
-    }
 
     /// <summary>
     /// Gets the available region list.
@@ -93,17 +88,6 @@ public class AmazonS3Connection : WebConnectionBase
             this.RaiseAndSetIfChanged(ref _regionName, value);
             this.RaisePropertyChanged(nameof(SetupDownloadUrl));
         }
-    }
-
-    /// <summary>
-    /// Gets or sets the secret access key.
-    /// </summary>
-    /// <value>The secret access key.</value>
-    [DataMember]
-    public string? SecretAccessKey
-    {
-        get => _secretAccessKey;
-        set => this.RaiseAndSetIfChanged(ref _secretAccessKey, value);
     }
 
     /// <summary>

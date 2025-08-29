@@ -1,6 +1,4 @@
-﻿using System;
-using System.IO;
-using System.Linq;
+﻿using System.IO;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -32,6 +30,7 @@ public static class PathFolderHelper
     /// The program base directory
     /// </summary>
     public static string ProgramBaseDirectory = "\\" + ProgramName;
+    private static JsonSerializerOptions jsonOptions = new() { WriteIndented = true };
 
     // Use directory names without leading/trailing separators
     internal const string PackageDirectory = "Packages";
@@ -51,7 +50,8 @@ public static class PathFolderHelper
         var filePath = $"{path}\\{filename}.{fileExt}";
 
         var fileC = 0;
-        while (File.Exists(filePath)) {
+        while (File.Exists(filePath))
+        {
             filePath = $"{path}\\{filename}_{fileC}.{fileExt}";
             fileC++;
         }
@@ -69,7 +69,8 @@ public static class PathFolderHelper
     {
         var folderPath = string.Empty;
 
-        switch (directory) {
+        switch (directory)
+        {
             //case MyDirectory.PackageDir:
             //    folderPath = GetMyDirectory(MyDirectory.Base) + PackageDirectory;
             //    break;
@@ -83,11 +84,13 @@ public static class PathFolderHelper
                 break;
         }
 
-        if (string.IsNullOrWhiteSpace(folderPath)) {
+        if (string.IsNullOrWhiteSpace(folderPath))
+        {
             throw new NotImplementedException("GetMyFilepath");
         }
 
-        if (!Directory.Exists(folderPath)) {
+        if (!Directory.Exists(folderPath))
+        {
             Directory.CreateDirectory(folderPath);
         }
 
@@ -105,10 +108,12 @@ public static class PathFolderHelper
 
     internal static Preference LoadUserPreference()
     {
-        try {
+        try
+        {
             var path = GetMyDirectory(MyDirectory.Base) + "\\Preference.txt";
 
-            if (File.Exists(path)) {                
+            if (File.Exists(path))
+            {
                 // Deserialize using System.Text.Json using the path
                 var jsonString = File.ReadAllText(path);
                 var p = JsonSerializer.Deserialize<Preference>(jsonString) ?? new Preference();
@@ -119,8 +124,10 @@ public static class PathFolderHelper
 
                 p.LastOpenedProject.Clear();
 
-                foreach (var fp in temp) {
-                    if (File.Exists(fp)) {
+                foreach (var fp in temp)
+                {
+                    if (File.Exists(fp))
+                    {
                         p.LastOpenedProject.Add(fp);
                     }
                 }
@@ -129,20 +136,24 @@ public static class PathFolderHelper
             }
 
             return new Preference();
-        } catch (Exception) {
+        }
+        catch (Exception)
+        {
             return new Preference();
         }
     }
 
     internal static void SavePreference(Preference userPreference)
     {
-        try {
+        try
+        {
             var path = GetMyDirectory(MyDirectory.Base) + "\\Preference.txt";
             // Serialize using System.Text.Json
-            var jsonString = JsonSerializer.Serialize(userPreference, new JsonSerializerOptions { WriteIndented = true });
+            var jsonString = JsonSerializer.Serialize(userPreference, jsonOptions);
             File.WriteAllText(path, jsonString);
         }
-        catch (Exception) {
+        catch (Exception)
+        {
             MessageBox.Show("Error on saving preference !");
         }
     }

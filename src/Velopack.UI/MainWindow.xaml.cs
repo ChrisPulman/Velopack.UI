@@ -16,10 +16,7 @@ public partial class MainWindow
     {
         SystemThemeWatcher.Watch(this);
         InitializeComponent();
-        this.WhenActivated(d =>
-        {
-            this.NavigateToView<MainViewModel>();
-        });
+        this.WhenActivated(d => this.NavigateToView<MainViewModel>());
 
         Closing += OnClosing;
     }
