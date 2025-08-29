@@ -5,6 +5,7 @@ using System.Text;
 using CrissCross;
 using FluentValidation.Results;
 using ReactiveUI;
+using ReactiveUI.SourceGenerators;
 
 namespace Velopack.UI;
 
@@ -12,20 +13,11 @@ namespace Velopack.UI;
 /// Web Connection Base
 /// </summary>
 /// <seealso cref="AutoSquirrel.PropertyChangedBaseValidable"/>
-public abstract class WebConnectionBase : RxObject, IDataErrorInfo
+public abstract partial class WebConnectionBase : RxObject, IDataErrorInfo
 {
-    private string? _connectionName;
-
-    /// <summary>
-    /// Gets or sets the name of the connection.
-    /// </summary>
-    /// <value>The name of the connection.</value>
     [DataMember]
-    public string? ConnectionName
-    {
-        get => _connectionName;
-        set => this.RaiseAndSetIfChanged(ref _connectionName, value);
-    }
+    [Reactive]
+    private string? _connectionName;
 
     /// <summary>
     /// Gets an error message indicating what is wrong with this object.

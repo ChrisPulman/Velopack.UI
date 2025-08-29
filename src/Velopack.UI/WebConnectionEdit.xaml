@@ -133,7 +133,6 @@
                     <ui:TextBox
                         Grid.Row="6"
                         Grid.Column="1"
-                        Background="Bisque"
                         FontWeight="Bold"
                         IsReadOnly="True"
                         Text="{Binding Path=SetupDownloadUrl, Mode=OneWay}" />
@@ -141,6 +140,13 @@
                         Grid.Row="7"
                         Grid.Column="1"
                         Text="Copy this link for Setup.Exe location" />
+                    <Button
+                        Grid.Row="8"
+                        Grid.Column="1"
+                        Margin="0,25,0,5"
+                        HorizontalAlignment="Left"
+                        Command="{Binding SelectFolderCommand}"
+                        Content="Select Folder" />
                 </ui:Grid>
             </DataTemplate>
         </ui:Grid.Resources>
@@ -156,7 +162,7 @@
             VerticalAlignment="Center"
             FontSize="16"
             Foreground="Red"
-            Text="Credentials are stored in plain text! Do not add *.asproj files to public source control" />
+            Text="Credentials are stored in plain text! Do not add *.velo files to public source control" />
         <ui:Button
             Grid.Row="2"
             Width="250"

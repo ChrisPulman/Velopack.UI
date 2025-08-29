@@ -1,6 +1,4 @@
 using System.Collections;
-using System.Collections.ObjectModel;
-using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -9,7 +7,7 @@ using System.Windows.Media;
 
 namespace Velopack.UI.MultiSelectTreeView.Controls;
 
-public partial class MultiSelectTreeViewControl : UserControl
+public partial class MultiSelectTreeViewControl
 {
     public MultiSelectTreeViewControl()
     {
@@ -19,18 +17,12 @@ public partial class MultiSelectTreeViewControl : UserControl
         // Ensure ContextMenus can find VM and SelectedItems via PlacementTarget.Tag
         Loaded += (_, _) =>
         {
-            if (PART_Tree != null)
-            {
-                PART_Tree.Tag = SelectedItems;
-            }
+            PART_Tree?.Tag = SelectedItems;
         };
 
         DataContextChanged += (_, __) =>
         {
-            if (PART_Tree != null)
-            {
-                PART_Tree.Tag = SelectedItems;
-            }
+            PART_Tree?.Tag = SelectedItems;
         };
     }
 
@@ -64,10 +56,7 @@ public partial class MultiSelectTreeViewControl : UserControl
     private static void OnSelectedItemsChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         var ctl = (MultiSelectTreeViewControl)d;
-        if (ctl.PART_Tree != null)
-        {
-            ctl.PART_Tree.Tag = ctl.SelectedItems;
-        }
+        ctl.PART_Tree?.Tag = ctl.SelectedItems;
     }
 
     private static bool IsCtrlDown => (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control;
@@ -107,13 +96,13 @@ public partial class MultiSelectTreeViewControl : UserControl
         else if (IsShiftDown && _lastAnchor != null)
         {
             var flat = Flatten(PART_Tree).ToList();
-            int a = flat.FindIndex(x => Equals((x as TreeViewItem)?.DataContext, _lastAnchor));
-            int b = flat.FindIndex(x => Equals((x as TreeViewItem)?.DataContext, item));
+            var a = flat.FindIndex(x => Equals((x as TreeViewItem)?.DataContext, _lastAnchor));
+            var b = flat.FindIndex(x => Equals((x as TreeViewItem)?.DataContext, item));
             if (a >= 0 && b >= 0)
             {
                 if (a > b) (a, b) = (b, a);
                 ClearSelectionInternal();
-                for (int i = a; i <= b; i++) AddToSelection(((TreeViewItem)flat[i]).DataContext);
+                for (var i = a; i <= b; i++) AddToSelection(((TreeViewItem)flat[i]).DataContext);
             }
         }
         e.Handled = true;
