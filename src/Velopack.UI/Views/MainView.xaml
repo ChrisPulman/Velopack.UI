@@ -132,6 +132,11 @@
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
 
+                            <RowDefinition Height="4" />
+
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+
                             <RowDefinition Height="Auto" />
 
                             <RowDefinition Height="Auto" />
@@ -485,7 +490,8 @@
                                 </ControlTemplate>
                             </mstv:MultiSelectTreeView.Template>
                             <mstv:MultiSelectTreeView.ContextMenu>
-                                <ContextMenu>
+                                <!-- Ensure ContextMenu sees the AutoSquirrelModel as DataContext -->
+                                <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}">
                                     <MenuItem Command="{Binding AddDirectoryCommand}" Header="Add Directory" />
                                     <MenuItem Command="{Binding RemoveItemCommand}" Header="Remove Selected Items" />
                                     <MenuItem Command="{Binding RemoveAllItemsCommand}" Header="Remove All Items" />
@@ -495,11 +501,12 @@
                                 <Style TargetType="{x:Type mstv:MultiSelectTreeViewItem}">
                                     <Setter Property="ContextMenu">
                                         <Setter.Value>
-                                            <ContextMenu StaysOpen="True">
-                                                <MenuItem Command="{Binding Path=Data.RefreshPackageVersionCommand}" Header="Refresh Version" />
-                                                <MenuItem Command="{Binding Path=Data.AddDirectoryCommand}" Header="Add Directory" />
-                                                <MenuItem Command="{Binding Path=Data.RemoveItemCommand}" Header="Remove Selected Items" />
-                                                <MenuItem Command="{Binding Path=Data.RemoveAllItemsCommand}" Header="Remove All Items" />
+                                            <!-- Bind ContextMenu DataContext to the tree's DataContext via PlacementTarget -->
+                                            <ContextMenu StaysOpen="True" DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}">
+                                                <MenuItem Command="{Binding RefreshPackageVersionCommand}" Header="Refresh Version" />
+                                                <MenuItem Command="{Binding AddDirectoryCommand}" Header="Add Directory" />
+                                                <MenuItem Command="{Binding RemoveItemCommand}" Header="Remove Selected Items" />
+                                                <MenuItem Command="{Binding RemoveAllItemsCommand}" Header="Remove All Items" />
                                             </ContextMenu>
                                         </Setter.Value>
                                     </Setter>
@@ -569,7 +576,7 @@
                                         Grid.Row="0"
                                         Grid.Column="2"
                                         Margin="4,0"
-                                        Text="{Binding SourceFilepath}"
+                                        Text="{Binding DataContext.Model.SquirrelOutputPath, ElementName=mainView}"
                                         TextWrapping="Wrap" />
 
                                     <ui:TextBlock

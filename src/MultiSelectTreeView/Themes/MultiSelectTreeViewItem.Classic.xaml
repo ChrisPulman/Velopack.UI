@@ -68,8 +68,9 @@
         <Setter Property="VirtualizingStackPanel.VirtualizationMode" Value="{Binding (VirtualizingStackPanel.VirtualizationMode), RelativeSource={RelativeSource AncestorType={x:Type Controls:MultiSelectTreeView}}, FallbackValue=Standard}" />
         <Setter Property="VirtualizingStackPanel.IsVirtualizing" Value="False" />
         <Setter Property="Panel.Background" Value="#00FFFFFF" />
-        <Setter Property="Control.HorizontalContentAlignment" Value="{Binding Path=HorizontalContentAlignment, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ItemsControl, AncestorLevel=1}, FallbackValue=Left}" />
-        <Setter Property="Control.VerticalContentAlignment" Value="{Binding Path=VerticalContentAlignment, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ItemsControl, AncestorLevel=1}, FallbackValue=Center}" />
+        <!-- Avoid ancestor bindings for alignment to remove warnings; use defaults instead -->
+        <Setter Property="Control.HorizontalContentAlignment" Value="Left" />
+        <Setter Property="Control.VerticalContentAlignment" Value="Center" />
         <Setter Property="Control.Padding" Value="1" />
         <Setter Property="BorderBrush" Value="Transparent" />
         <Setter Property="BorderThickness" Value="1" />
@@ -78,9 +79,10 @@
         <Setter Property="FrameworkElement.FocusVisualStyle" Value="{x:Null}" />
 
         <!--  Pass on the MultiSelectTreeView' HoverHighlighting value to each item because we couldn't access it otherwise in the triggers  -->
-        <Setter Property="HoverHighlighting" Value="{Binding Path=HoverHighlighting, RelativeSource={RelativeSource AncestorType={x:Type Controls:MultiSelectTreeView}}, Mode=OneWay, FallbackValue=False}" />
-        <Setter Property="ItemIndent" Value="{Binding Path=ItemIndent, RelativeSource={RelativeSource AncestorType={x:Type Controls:MultiSelectTreeView}}, Mode=OneWay, FallbackValue=13}" />
-        <Setter Property="IsKeyboardMode" Value="{Binding Path=IsKeyboardMode, RelativeSource={RelativeSource AncestorType={x:Type Controls:MultiSelectTreeView}}, Mode=OneWay, FallbackValue=False}" />
+        <!-- Replace ancestor bindings with defaults to avoid warnings -->
+        <Setter Property="HoverHighlighting" Value="False" />
+        <Setter Property="ItemIndent" Value="13" />
+        <Setter Property="IsKeyboardMode" Value="False" />
 
         <Setter Property="Control.Template">
             <Setter.Value>
@@ -189,7 +191,7 @@
                             </StackPanel>
                             <!--  endregion Element grid  -->
                         </Grid>
-                        <Grid Name="ItemsHostGrid" Margin="{TemplateBinding ItemIndent, Converter={StaticResource ThicknessLeftConverter}}">
+                        <Grid Name="ItemsHostGrid" Margin="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=ItemIndent, Converter={StaticResource ThicknessLeftConverter}}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="*" />

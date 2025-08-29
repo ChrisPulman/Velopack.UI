@@ -467,7 +467,7 @@ public class MultiSelectTreeViewItem : HeaderedItemsControl
     protected override void OnInitialized(EventArgs e)
     {
         base.OnInitialized(e);
-        if (ParentTreeView != null && ParentTreeView.SelectedItems.Contains(DataContext))
+        if (ParentTreeView != null && ParentTreeView.SelectedItems?.Contains(DataContext) == true)
         {
             IsSelected = true;
         }
