@@ -14,18 +14,23 @@ public partial class MultiSelectTreeViewControl : UserControl
     public MultiSelectTreeViewControl()
     {
         InitializeComponent();
-        SelectedItems = new ObservableCollection<object>();
+        // Do NOT set SelectedItems here; it breaks external TwoWay binding.
 
         // Ensure ContextMenus can find VM and SelectedItems via PlacementTarget.Tag
         Loaded += (_, _) =>
         {
-            PART_Tree.Tag = SelectedItems;
+            if (PART_Tree != null)
+            {
+                PART_Tree.Tag = SelectedItems;
+            }
         };
 
-        this.DataContextChanged += (_, __) =>
+        DataContextChanged += (_, __) =>
         {
-            // update TreeViewItem Tag is bound via ancestor UserControl, so no action here
-            PART_Tree.Tag = SelectedItems;
+            if (PART_Tree != null)
+            {
+                PART_Tree.Tag = SelectedItems;
+            }
         };
     }
 
@@ -44,9 +49,9 @@ public partial class MultiSelectTreeViewControl : UserControl
         set => SetValue(ItemsSourceProperty, value);
     }
 
-    public IList SelectedItems
+    public IList? SelectedItems
     {
-        get => (IList)GetValue(SelectedItemsProperty)!;
+        get => (IList?)GetValue(SelectedItemsProperty);
         set => SetValue(SelectedItemsProperty, value);
     }
 
@@ -85,6 +90,7 @@ public partial class MultiSelectTreeViewControl : UserControl
         if (IsOnExpander(e.OriginalSource as DependencyObject)) return;
         var container = FindContainer(e.OriginalSource as DependencyObject);
         if (container == null) return;
+        if (SelectedItems == null) return;
 
         var item = container.DataContext;
         if (!IsCtrlDown && !IsShiftDown)
@@ -117,6 +123,7 @@ public partial class MultiSelectTreeViewControl : UserControl
     {
         var container = FindContainer(e.OriginalSource as DependencyObject);
         if (container == null) return;
+        if (SelectedItems == null) return;
         var item = container.DataContext;
         if (!SelectedItems.Contains(item))
         {
@@ -131,6 +138,7 @@ public partial class MultiSelectTreeViewControl : UserControl
     {
         if (e.Key == Key.A && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
         {
+            if (SelectedItems == null) return;
             ClearSelectionInternal();
             foreach (var tvi in Flatten(PART_Tree)) AddToSelection(tvi.DataContext);
             e.Handled = true;
@@ -139,6 +147,7 @@ public partial class MultiSelectTreeViewControl : UserControl
 
     private void ClearSelectionInternal()
     {
+        if (SelectedItems == null) return;
         foreach (var obj in SelectedItems.Cast<object>().ToList())
         {
             SetItemSelected(obj, false);
@@ -148,6 +157,7 @@ public partial class MultiSelectTreeViewControl : UserControl
 
     private void AddToSelection(object obj)
     {
+        if (SelectedItems == null) return;
         if (!SelectedItems.Contains(obj))
         {
             SelectedItems.Add(obj);
@@ -157,6 +167,7 @@ public partial class MultiSelectTreeViewControl : UserControl
 
     private void RemoveFromSelection(object obj)
     {
+        if (SelectedItems == null) return;
         if (SelectedItems.Contains(obj))
         {
             SelectedItems.Remove(obj);
