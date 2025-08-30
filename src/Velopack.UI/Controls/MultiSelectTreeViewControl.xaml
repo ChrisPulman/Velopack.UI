@@ -111,7 +111,7 @@
                             <ContextMenu DataContext="{Binding PlacementTarget.Tag, RelativeSource={RelativeSource Self}}">
                                 <MenuItem Command="{Binding RefreshPackageVersionCommand}" Header="Refresh Version" />
                                 <MenuItem Command="{Binding AddDirectoryCommand}" Header="Add Directory" />
-                                <MenuItem Command="{Binding RemoveItemCommand}" Header="Remove Selected Items" />
+                                <MenuItem Command="{Binding RemoveItemCommand}" Header="Remove Selected Item" />
                                 <MenuItem Command="{Binding RemoveAllItemsCommand}" Header="Remove All Items" />
                             </ContextMenu>
                         </Setter.Value>
