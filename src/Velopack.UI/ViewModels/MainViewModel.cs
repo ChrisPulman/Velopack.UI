@@ -24,7 +24,7 @@ public partial class MainViewModel : RxObject
     [Reactive]
     private bool _isBusy;
     [Reactive]
-    private AutoSquirrelModel? _model;
+    private VelopackModel? _model;
     private bool _isSaved;
     private int _publishMode;
     private Process? _exeProcess;
@@ -33,7 +33,7 @@ public partial class MainViewModel : RxObject
 
     public MainViewModel()
     {
-        Model = new AutoSquirrelModel();
+        Model = new VelopackModel();
         SetupDirtyTracking();
 
         UserPreference = PathFolderHelper.LoadUserPreference();
@@ -154,7 +154,7 @@ public partial class MainViewModel : RxObject
             Save();
         }
 
-        Model = new AutoSquirrelModel();
+        Model = new VelopackModel();
         SetupDirtyTracking();
         _hasUnsavedNonTreeChanges = false;
         Model.HasUnsavedTreeChanges = false;
@@ -212,7 +212,7 @@ public partial class MainViewModel : RxObject
 
             FilePath = filepath;
 
-            var m = JsonSerializer.Deserialize<AutoSquirrelModel>(File.ReadAllText(filepath));
+            var m = JsonSerializer.Deserialize<VelopackModel>(File.ReadAllText(filepath));
 
             if (m == null)
             {
@@ -221,7 +221,7 @@ public partial class MainViewModel : RxObject
 
             Model = m;
             SetupDirtyTracking();
-            Model.PackageFiles = AutoSquirrelModel.OrderFileList(Model.PackageFiles);
+            Model.PackageFiles = VelopackModel.OrderFileList(Model.PackageFiles);
             Model.RefreshPackageVersion();
             AddLastProject(filepath);
             this.RaisePropertyChanged(nameof(WindowTitle));
@@ -374,18 +374,18 @@ public partial class MainViewModel : RxObject
                 {
                     ti =>
                     {
-                        if (ti.Type == typeof(AutoSquirrelModel))
+                        if (ti.Type == typeof(VelopackModel))
                         {
                             var namesToRemove = new HashSet<string>
                             {
-                                nameof(AutoSquirrelModel.IconSource),
-                                nameof(AutoSquirrelModel.SplashSource),
-                                nameof(AutoSquirrelModel.SelectSplashCmd),
-                                nameof(AutoSquirrelModel.SelectedLink),
-                                nameof(AutoSquirrelModel.UploadQueue),
-                                nameof(AutoSquirrelModel.SelectedConnection),
-                                nameof(AutoSquirrelModel.SelectedUploadItem),
-                                nameof(AutoSquirrelModel.HasUnsavedTreeChanges)
+                                nameof(VelopackModel.IconSource),
+                                nameof(VelopackModel.SplashSource),
+                                nameof(VelopackModel.SelectSplashCmd),
+                                nameof(VelopackModel.SelectedLink),
+                                nameof(VelopackModel.UploadQueue),
+                                nameof(VelopackModel.SelectedConnection),
+                                nameof(VelopackModel.SelectedUploadItem),
+                                nameof(VelopackModel.HasUnsavedTreeChanges)
                             };
                             foreach (var prop in ti.Properties.ToList())
                             {

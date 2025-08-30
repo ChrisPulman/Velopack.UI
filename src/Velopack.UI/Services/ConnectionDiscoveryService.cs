@@ -24,7 +24,7 @@ public class ConnectionDiscoveryService : IConnectionDiscoveryService
                     type.IsClass &&
                     !type.IsAbstract &&
                     typeof(WebConnectionBase).IsAssignableFrom(type) &&
-                    type != typeof(AutoSquirrelModel) && // exclude model to avoid recursion
+                    type != typeof(VelopackModel) && // exclude model to avoid recursion
                     type.Name.EndsWith("Connection", StringComparison.Ordinal))
                 .Select(connType => (WebConnectionBase)Activator.CreateInstance(connType)!)
                 .Where(conn => !string.IsNullOrWhiteSpace(conn.ConnectionName))

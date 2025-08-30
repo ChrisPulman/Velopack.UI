@@ -7,7 +7,7 @@ namespace Velopack.UI;
 /// <summary>
 /// WebConnectionEdit.
 /// </summary>
-/// <seealso cref="System.Windows.Window" />
+/// <seealso cref="Window" />
 /// <seealso cref="System.Windows.Markup.IComponentConnector" />
 /// <seealso cref="System.Windows.Markup.IStyleConnector" />
 public partial class WebConnectionEdit
