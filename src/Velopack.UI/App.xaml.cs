@@ -1,6 +1,8 @@
 ﻿using System.Diagnostics;
 using System.IO;
+using System.Reactive.Concurrency;
 using System.Windows;
+using ReactiveUI;
 using Velopack;
 
 namespace Velopack.UI;
@@ -24,6 +26,7 @@ public partial class App
 
         base.OnStartup(e);
         TryPromptVelopackTool();
+        RxApp.TaskpoolScheduler.Schedule(async () => await UpdateMyApp("D:\\Installers\\Releases"));
     }
 
     private static void TryPromptVelopackTool()
@@ -71,5 +74,23 @@ public partial class App
         {
             // non-fatal
         }
+    }
+
+    private static async Task UpdateMyApp(string updatePath)
+    {
+        var mgr = new UpdateManager(updatePath);
+        if (mgr.IsInstalled == false)
+            return; // not installed with Velopack, so skip update check
+
+        // check for new version
+        var newVersion = await mgr.CheckForUpdatesAsync();
+        if (newVersion == null)
+            return; // no update available
+
+        // download new version
+        await mgr.DownloadUpdatesAsync(newVersion);
+
+        // install new version and restart app
+        mgr.ApplyUpdatesAndRestart(newVersion);
     }
 }

@@ -18,7 +18,7 @@ using System.Text.Json.Serialization;
 namespace Velopack.UI;
 
 [DataContract]
-public partial class AutoSquirrelModel : WebConnectionBase, GongSolutions.Wpf.DragDrop.IDropTarget
+public partial class VelopackModel : WebConnectionBase, IDropTarget
 {
     [JsonIgnore]
     public bool HasUnsavedTreeChanges { get; set; }
@@ -102,9 +102,9 @@ public partial class AutoSquirrelModel : WebConnectionBase, GongSolutions.Wpf.Dr
     private string? _signTemplate;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="AutoSquirrelModel"/> class.
+    /// Initializes a new instance of the <see cref="VelopackModel"/> class.
     /// </summary>
-    public AutoSquirrelModel()
+    public VelopackModel()
     {
         PackageFiles = [];
         // Default to File System connection for ease of use
@@ -121,7 +121,7 @@ public partial class AutoSquirrelModel : WebConnectionBase, GongSolutions.Wpf.Dr
     {
         get
         {
-            _availableUploadLocation ??= new List<string>(_connectionDiscoveryService.AvailableConnections.Select(connection => connection.ConnectionName!));
+            _availableUploadLocation ??= [.. _connectionDiscoveryService.AvailableConnections.Select(connection => connection.ConnectionName!)];
             return _availableUploadLocation;
         }
     }
@@ -394,7 +394,7 @@ _selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
 
         // FILE ADDED FROM FILE SYSTEM
 
-        if (dropInfo.Data is System.Windows.DataObject dataObj)
+        if (dropInfo.Data is DataObject dataObj)
         {
             if (dataObj.GetDataPresent(System.Windows.DataFormats.FileDrop))
             {
@@ -1030,7 +1030,7 @@ _selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
         }
     }
 
-    private class Validator : AbstractValidator<AutoSquirrelModel>
+    private class Validator : AbstractValidator<VelopackModel>
     {
         public Validator()
         {
@@ -1084,10 +1084,10 @@ _selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
             {
                 var destDir = fsConn.FileSystemPath;
                 Directory.CreateDirectory(destDir);
-                var destPath = Path.Combine(destDir, Path.GetFileName(item.FullPath));
+                var destPath = Path.Combine(destDir, Path.GetFileName(item.FullPath)!);
 
                 // If source and destination are the same, skip copying
-                if (!string.Equals(Path.GetFullPath(item.FullPath), Path.GetFullPath(destPath), StringComparison.OrdinalIgnoreCase))
+                if (!string.Equals(Path.GetFullPath(item.FullPath!), Path.GetFullPath(destPath), StringComparison.OrdinalIgnoreCase))
                 {
                     File.Copy(item.FullPath!, destPath, true);
                 }
