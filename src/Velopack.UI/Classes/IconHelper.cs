@@ -1,8 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
+﻿using System.Drawing;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Media;
@@ -14,6 +13,7 @@ namespace Velopack.UI;
 /// Icon Helper
 /// </summary>
 [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1060:Move pinvokes to native methods class", Justification = "intended")]
+[SupportedOSPlatform("windows10.0.19041.0")]
 public static class IconHelper
 {
     /// <summary>
@@ -88,8 +88,13 @@ public static class IconHelper
     /// <param name="fileName">any filename</param>
     /// <param name="large">16x16 or 32x32 icon</param>
     /// <returns>null if path is null, otherwise - an icon</returns>
-    public static ImageSource? FindIconForFilename(string fileName, bool large)
+    public static ImageSource? FindIconForFilename(string? fileName, bool large)
     {
+        if (fileName == null)
+        {
+            return null;
+        }
+
         var extension = Path.GetExtension(fileName);
         if (extension == null)
         {
@@ -103,7 +108,7 @@ public static class IconHelper
         }
 
         icon = IconReader.GetFileIcon(fileName, large ? IconReader.IconSize.Large : IconReader.IconSize.Small, false).ToImageSource();
-        cache.Add(extension, icon);
+        cache.Add(extension, icon!);
         return icon;
     }
 
@@ -143,7 +148,7 @@ public static class IconHelper
 
         if (res == IntPtr.Zero)
         {
-            throw Marshal.GetExceptionForHR(Marshal.GetHRForLastWin32Error());
+            throw Marshal.GetExceptionForHR(Marshal.GetHRForLastWin32Error())!;
         }
 
         // Load the icon from an HICON handle
@@ -196,7 +201,7 @@ public static class IconHelper
     /// </summary>
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1815:Override equals and operator equals on value types", Justification = "Not required")]
-    public struct SHFILEINFO
+    public record struct SHFILEINFO
     {
         /// <summary>
         /// The h icon
@@ -224,10 +229,6 @@ public static class IconHelper
         /// </summary>
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 80)]
         public string szTypeName;
-
-        public static bool operator ==(SHFILEINFO left, SHFILEINFO right) => left.Equals(right);
-
-        public static bool operator !=(SHFILEINFO left, SHFILEINFO right) => !(left == right);
     }
 
     /// <summary>

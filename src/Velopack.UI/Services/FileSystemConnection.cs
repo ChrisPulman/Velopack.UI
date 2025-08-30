@@ -1,4 +1,5 @@
 ﻿using System.Runtime.Serialization;
+using System.Runtime.Versioning;
 using FluentValidation;
 using FluentValidation.Results;
 using Microsoft.Win32;
@@ -12,6 +13,7 @@ namespace Velopack.UI;
 /// Credentials are stored in clear format.
 /// </summary>
 [DataContract]
+[SupportedOSPlatform("windows10.0.19041.0")]
 public partial class FileSystemConnection : WebConnectionBase
 {
     private string? _fileSystemPath;

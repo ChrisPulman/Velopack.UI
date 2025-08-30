@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Runtime.Versioning;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -7,6 +8,7 @@ using System.Windows.Media;
 
 namespace Velopack.UI.MultiSelectTreeView.Controls;
 
+[SupportedOSPlatform("windows10.0.19041.0")]
 public partial class MultiSelectTreeViewControl
 {
     public MultiSelectTreeViewControl()

@@ -1,7 +1,9 @@
 using System.Collections;
+using System.Runtime.Versioning;
 
 namespace Velopack.UI.MultiSelectTreeView.Controls;
 
+[SupportedOSPlatform("windows10.0.19041.0")]
 public class ItemInListConverter : System.Windows.Data.IMultiValueConverter
 {
     public object Convert(object[] values, Type targetType, object parameter, System.Globalization.CultureInfo culture)

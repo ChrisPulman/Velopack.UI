@@ -2,14 +2,16 @@
 using System.Drawing;
 using System.IO;
 using System.Runtime.Serialization;
+using System.Runtime.Versioning;
+using System.Text.Json.Serialization;
 using System.Windows.Media;
 using ReactiveUI;
 using ReactiveUI.SourceGenerators;
 using static Velopack.UI.IconHelper;
-using System.Text.Json.Serialization;
 
 namespace Velopack.UI;
 
+[SupportedOSPlatform("windows10.0.19041.0")]
 public partial class ItemLink : CrissCross.RxObject
 {
     private static readonly ItemLink s_dummyChild = new();
@@ -20,8 +22,8 @@ public partial class ItemLink : CrissCross.RxObject
     [DataMember]
     [Reactive]
     private bool _isSelected;
-    private string _sourceFilepath;
-    private string _filename;
+    private string? _sourceFilepath;
+    private string? _filename;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ItemLink"/> class.
@@ -172,20 +174,20 @@ public partial class ItemLink : CrissCross.RxObject
     /// </summary>
     /// <value>The last edit.</value>
     [DataMember]
-    public string LastEdit { get; internal set; }
+    public string? LastEdit { get; internal set; }
 
     /// <summary>
     /// Gets the output filename.
     /// </summary>
     /// <value>The output filename.</value>
     [DataMember]
-    public string OutputFilename { get; internal set; }
+    public string? OutputFilename { get; internal set; }
 
     /// <summary>
     /// Filepath of linked source file. Absolute ?
     /// </summary>
     [DataMember]
-    public string SourceFilepath
+    public string? SourceFilepath
     {
         get => _sourceFilepath;
 
@@ -193,6 +195,11 @@ public partial class ItemLink : CrissCross.RxObject
         {
             _sourceFilepath = value;
             this.RaisePropertyChanged(nameof(SourceFilepath));
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return;
+            }
+
             this.RaisePropertyChanged(nameof(Filename));
             try
             {

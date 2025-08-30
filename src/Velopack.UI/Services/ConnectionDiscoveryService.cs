@@ -1,10 +1,12 @@
 using System.Reflection;
+using System.Runtime.Versioning;
 
 namespace Velopack.UI;
 
 /// <summary>
 /// The connection discovery service.
 /// </summary>
+[SupportedOSPlatform("windows10.0.19041.0")]
 public class ConnectionDiscoveryService : IConnectionDiscoveryService
 {
     private Dictionary<string, WebConnectionBase>? _availableConnections;

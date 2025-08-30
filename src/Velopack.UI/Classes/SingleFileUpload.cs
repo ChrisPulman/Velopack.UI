@@ -1,7 +1,7 @@
-﻿using System;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.IO;
 using System.Runtime.Serialization;
+using System.Runtime.Versioning;
 using System.Windows;
 using System.Windows.Threading;
 using Amazon.S3;
@@ -17,6 +17,7 @@ namespace Velopack.UI;
 /// Used in Upload queue list. I don't need serialization for this class.
 /// </summary>
 [DataContract]
+[SupportedOSPlatform("windows10.0.19041.0")]
 public class SingleFileUpload : RxObject
 {
     private string? _connection;

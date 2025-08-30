@@ -3,7 +3,10 @@ using System.Diagnostics;
 using System.IO;
 using System.Net.Cache;
 using System.Reactive;
+using System.Reactive.Linq;
 using System.Runtime.Serialization;
+using System.Runtime.Versioning;
+using System.Text.Json.Serialization;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -13,11 +16,11 @@ using FluentValidation.Results;
 using GongSolutions.Wpf.DragDrop;
 using ReactiveUI;
 using ReactiveUI.SourceGenerators;
-using System.Text.Json.Serialization;
 
 namespace Velopack.UI;
 
 [DataContract]
+[SupportedOSPlatform("windows10.0.19041.0")]
 public partial class VelopackModel : WebConnectionBase, IDropTarget
 {
     [JsonIgnore]
@@ -50,7 +53,7 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
 
     [DataMember]
     [Reactive]
-    private string? _nupkgOutputPath;
+    private string? _packageFilesOutputPath;
 
     [DataMember]
     [Reactive]
@@ -68,7 +71,7 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
 
     [DataMember]
     [Reactive]
-    private string? _squirrelOutputPath;
+    private string? _velopackOutputPath;
 
     [DataMember]
     [Reactive]
@@ -100,6 +103,19 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
     [DataMember]
     [Reactive]
     private string? _signTemplate;
+
+    // Persisted base path for FileSystem connection so it can be saved/restored in *.velo
+    [DataMember]
+    [Reactive]
+    private string? _fileSystemBasePath;
+
+    // Track subscription to FileSystemConnection.FileSystemPath changes
+    private IDisposable? _fileSystemConnPathSub;
+
+    /// <summary>
+    /// After JSON load, resync selected connection and mirror any saved FileSystemBasePath.
+    /// </summary>
+    internal void ResyncAfterLoad() => UpdateSelectedConnection(SelectedConnectionString);
 
     /// <summary>
     /// Initializes a new instance of the <see cref="VelopackModel"/> class.
@@ -244,11 +260,12 @@ _selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
             // Keep SelectedConnection in sync
             SelectedConnection = conn;
 
-            // If editing a FileSystem connection, mirror path into model for visibility
+            // If editing a FileSystem connection, mirror path into model for visibility/persistence
             if (conn is FileSystemConnection fsc && !string.IsNullOrWhiteSpace(fsc.FileSystemPath))
             {
+                FileSystemBasePath = fsc.FileSystemPath;
                 // Show the base path; Save() will derive Nupkg/Releases paths
-                SquirrelOutputPath = fsc.FileSystemPath;
+                VelopackOutputPath = fsc.FileSystemPath;
             }
         }
     }
@@ -459,9 +476,9 @@ _selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
     {
         var dialog = new System.Windows.Forms.FolderBrowserDialog();
 
-        if (Directory.Exists(NupkgOutputPath))
+        if (Directory.Exists(PackageFilesOutputPath))
         {
-            dialog.SelectedPath = NupkgOutputPath;
+            dialog.SelectedPath = PackageFilesOutputPath;
         }
 
         var result = dialog.ShowDialog();
@@ -471,7 +488,7 @@ _selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
             return;
         }
 
-        NupkgOutputPath = dialog.SelectedPath;
+        PackageFilesOutputPath = dialog.SelectedPath;
     }
 
     /// <summary>
@@ -482,9 +499,9 @@ _selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
     {
         var dialog = new System.Windows.Forms.FolderBrowserDialog();
 
-        if (Directory.Exists(SquirrelOutputPath))
+        if (Directory.Exists(VelopackOutputPath))
         {
-            dialog.SelectedPath = SquirrelOutputPath;
+            dialog.SelectedPath = VelopackOutputPath;
         }
 
         var result = dialog.ShowDialog();
@@ -494,12 +511,13 @@ _selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
             return;
         }
 
-        SquirrelOutputPath = dialog.SelectedPath;
+        VelopackOutputPath = dialog.SelectedPath;
 
         // If FileSystem connection is selected, align its path and use it for uploads
         if (SelectedConnection is FileSystemConnection fsc)
         {
-            fsc.FileSystemPath = SquirrelOutputPath;
+            fsc.FileSystemPath = VelopackOutputPath;
+            FileSystemBasePath = fsc.FileSystemPath;
         }
     }
 
@@ -523,6 +541,29 @@ _selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
         }
 
         SplashFilepath = ofd.FileName;
+    }
+
+    /// <summary>
+    /// Choose an application icon file and update IconFilepath.
+    /// </summary>
+    [ReactiveCommand]
+    private void SelectIcon()
+    {
+        var ofd = new System.Windows.Forms.OpenFileDialog
+        {
+            AddExtension = true,
+            DefaultExt = ".ico",
+            Filter = "Icon or Image|*.ico;*.png;*.jpg;*.jpeg;*.bmp|All Files|*.*",
+            Title = "Select application icon"
+        };
+
+        var result = ofd.ShowDialog();
+        if (result != System.Windows.Forms.DialogResult.OK || !File.Exists(ofd.FileName))
+        {
+            return;
+        }
+
+        IconFilepath = ofd.FileName;
     }
 
     /// <summary>
@@ -596,15 +637,15 @@ _selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
     internal void BeginUpdatedFiles(int mode)
     {
         // Determine the folder where vpk outputs artifacts
-        var releasesPath = SquirrelOutputPath;
+        var releasesPath = VelopackOutputPath;
         if (SelectedConnection is FileSystemConnection fsc && !string.IsNullOrWhiteSpace(fsc.FileSystemPath))
         {
             // Our Save() sets SquirrelOutputPath to <FileSystemPath>\\Releases when FileSystem is selected
             // Be defensive and reconstruct it if not aligned
             var expected = Path.Combine(fsc.FileSystemPath, PathFolderHelper.ReleasesDirectory);
-            if (!string.IsNullOrWhiteSpace(SquirrelOutputPath) && Directory.Exists(SquirrelOutputPath))
+            if (!string.IsNullOrWhiteSpace(VelopackOutputPath) && Directory.Exists(VelopackOutputPath))
             {
-                releasesPath = SquirrelOutputPath;
+                releasesPath = VelopackOutputPath;
             }
             else
             {
@@ -1023,10 +1064,34 @@ _selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
 
         SelectedConnection = con;
 
-        // If FileSystem connection becomes active and has a path, sync SquirrelOutputPath for UI visibility
-        if (SelectedConnection is FileSystemConnection fsc && !string.IsNullOrWhiteSpace(fsc.FileSystemPath))
+        // Remove previous subscription
+        _fileSystemConnPathSub?.Dispose();
+        _fileSystemConnPathSub = null;
+
+        // If FileSystem connection becomes active, sync paths both ways for persistence and UI visibility
+        if (SelectedConnection is FileSystemConnection fsc)
         {
-            SquirrelOutputPath = fsc.FileSystemPath;
+            if (!string.IsNullOrWhiteSpace(FileSystemBasePath))
+            {
+                // Prefer restored model value when available
+                fsc.FileSystemPath = FileSystemBasePath;
+            }
+            else if (!string.IsNullOrWhiteSpace(fsc.FileSystemPath))
+            {
+                // If connection already has a path, mirror to model
+                FileSystemBasePath = fsc.FileSystemPath;
+            }
+
+            VelopackOutputPath = fsc.FileSystemPath;
+
+            // Observe changes to the connection path and propagate into model for persistence/dirty tracking
+            _fileSystemConnPathSub = fsc
+                .WhenAnyValue(x => x.FileSystemPath)
+                .Subscribe(path =>
+                {
+                    FileSystemBasePath = path;
+                    VelopackOutputPath = path;
+                });
         }
     }
 
@@ -1134,6 +1199,8 @@ _selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
                     try { u?.Dispose(); } catch { }
                 }
             }
+            _fileSystemConnPathSub?.Dispose();
+            _fileSystemConnPathSub = null;
         }
     }
 }

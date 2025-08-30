@@ -1,10 +1,9 @@
-﻿using System;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Runtime.Serialization;
+using System.Runtime.Versioning;
 using System.Text;
 using CrissCross;
 using FluentValidation.Results;
-using ReactiveUI;
 using ReactiveUI.SourceGenerators;
 
 namespace Velopack.UI;
@@ -13,6 +12,7 @@ namespace Velopack.UI;
 /// Web Connection Base
 /// </summary>
 /// <seealso cref="AutoSquirrel.PropertyChangedBaseValidable"/>
+[SupportedOSPlatform("windows10.0.19041.0")]
 public abstract partial class WebConnectionBase : RxObject, IDataErrorInfo
 {
     [DataMember]

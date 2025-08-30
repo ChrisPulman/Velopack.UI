@@ -4,12 +4,14 @@ using ReactiveUI;
 using System.ComponentModel;
 using System.Windows;
 using Splat;
+using System.Runtime.Versioning;
 
 namespace Velopack.UI;
 
 /// <summary>
 /// Interaction logic for MainWindow.xaml
 /// </summary>
+[SupportedOSPlatform("windows10.0.19041.0")]
 public partial class MainWindow
 {
     public MainWindow()

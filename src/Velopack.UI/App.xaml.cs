@@ -1,9 +1,7 @@
 ﻿using System.Diagnostics;
-using System.IO;
 using System.Reactive.Concurrency;
 using System.Windows;
 using ReactiveUI;
-using Velopack;
 
 namespace Velopack.UI;
 
