@@ -22,21 +22,21 @@ public static class PathFolderHelper
     public const string ProjectFileExtension = ".velo";
 
     /// <summary>
-    /// The file dialog name
-    /// </summary>
-    public static string FileDialogName = ProgramName + " | *" + ProjectFileExtension;
-
-    /// <summary>
     /// The program base directory
     /// </summary>
-    public static string ProgramBaseDirectory = "\\" + ProgramName;
-    private static JsonSerializerOptions jsonOptions = new() { WriteIndented = true };
+    public const string ProgramBaseDirectory = "\\" + ProgramName;
+
+    /// <summary>
+    /// The file dialog name
+    /// </summary>
+    public const string FileDialogName = ProgramName + " | *" + ProjectFileExtension;
 
     // Use directory names without leading/trailing separators
-    internal const string PackageDirectory = "Packages";
+    internal const string PackageFilesDirectory = "PackageFiles";
     internal const string ReleasesDirectory = "Releases";
     private const string ProjectDirectory = "\\Projects\\";
-    private const string UserDataDirectory = "\\Data\\";
+
+    private static readonly JsonSerializerOptions jsonOptions = new() { WriteIndented = true };
 
     /// <summary>
     /// Gets the correct filepath.
@@ -71,10 +71,6 @@ public static class PathFolderHelper
 
         switch (directory)
         {
-            //case MyDirectory.PackageDir:
-            //    folderPath = GetMyDirectory(MyDirectory.Base) + PackageDirectory;
-            //    break;
-
             case MyDirectory.Project:
                 folderPath = GetMyDirectory(MyDirectory.Base) + ProjectDirectory;
                 break;
@@ -148,7 +144,6 @@ public static class PathFolderHelper
         try
         {
             var path = GetMyDirectory(MyDirectory.Base) + "\\Preference.txt";
-            // Serialize using System.Text.Json
             var jsonString = JsonSerializer.Serialize(userPreference, jsonOptions);
             File.WriteAllText(path, jsonString);
         }

@@ -1,4 +1,5 @@
 ﻿using System.Runtime.Serialization;
+using System.Runtime.Versioning;
 using Amazon;
 using FluentValidation;
 using FluentValidation.Results;
@@ -12,6 +13,7 @@ namespace Velopack.UI;
 /// Credentials are stored in clear format.
 /// </summary>
 [DataContract]
+[SupportedOSPlatform("windows10.0.19041.0")]
 public partial class AmazonS3Connection : WebConnectionBase
 {
     [DataMember]

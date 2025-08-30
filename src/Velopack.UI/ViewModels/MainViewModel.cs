@@ -1,10 +1,9 @@
-﻿using System;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Reactive;
 using System.Reactive.Linq;
+using System.Runtime.Versioning;
 using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
 using System.Windows;
@@ -15,9 +14,11 @@ using ReactiveUI.SourceGenerators;
 
 namespace Velopack.UI;
 
+[SupportedOSPlatform("windows10.0.19041.0")]
 public partial class MainViewModel : RxObject
 {
     internal BackgroundWorker? ActiveBackgroungWorker;
+    private readonly JsonSerializerOptions _saveOptions;
     private bool _abortPackageFlag;
     [Reactive]
     private string? _currentPackageCreationStage;
@@ -30,9 +31,60 @@ public partial class MainViewModel : RxObject
     private Process? _exeProcess;
     private string? _filePath;
     private IDisposable? _dirtySubscription;
+    private bool _hasUnsavedNonTreeChanges;
 
     public MainViewModel()
     {
+        _saveOptions = new JsonSerializerOptions
+        {
+            WriteIndented = false,
+            TypeInfoResolver = new DefaultJsonTypeInfoResolver
+            {
+                Modifiers =
+                {
+                    ti =>
+                    {
+                        if (ti.Type == typeof(VelopackModel))
+                        {
+                            var namesToRemove = new HashSet<string>
+                            {
+                                nameof(VelopackModel.IconSource),
+                                nameof(VelopackModel.SplashSource),
+                                nameof(VelopackModel.SelectSplashCmd),
+                                nameof(VelopackModel.SelectedLink),
+                                nameof(VelopackModel.UploadQueue),
+                                nameof(VelopackModel.SelectedConnection),
+                                nameof(VelopackModel.SelectedUploadItem),
+                                nameof(VelopackModel.HasUnsavedTreeChanges)
+                            };
+                            foreach (var prop in ti.Properties.ToList())
+                            {
+                                if (namesToRemove.Contains(prop.Name))
+                                {
+                                    ti.Properties.Remove(prop);
+                                }
+                            }
+                        }
+                        else if (ti.Type == typeof(ItemLink))
+                        {
+                            var namesToRemove = new HashSet<string>
+                            {
+                                nameof(ItemLink.FileIcon),
+                                nameof(ItemLink.HasDummyChild)
+                            };
+                            foreach (var prop in ti.Properties.ToList())
+                            {
+                                if (namesToRemove.Contains(prop.Name))
+                                {
+                                    ti.Properties.Remove(prop);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        };
+
         Model = new VelopackModel();
         SetupDirtyTracking();
 
@@ -45,7 +97,7 @@ public partial class MainViewModel : RxObject
             OpenProject(last);
         }
 
-        AbortPackageCreationCmd = ReactiveCommand.Create(() => AbortPackageCreation());
+        AbortPackageCreationCmd = ReactiveCommand.Create(AbortPackageCreation);
     }
 
     private void SetupDirtyTracking()
@@ -64,14 +116,13 @@ public partial class MainViewModel : RxObject
             Model.WhenAnyValue(m => m.Version).Select(_ => Unit.Default),
             Model.WhenAnyValue(m => m.AppId).Select(_ => Unit.Default),
             Model.WhenAnyValue(m => m.SelectedConnectionString).Select(_ => Unit.Default),
-            Model.WhenAnyValue(m => m.NupkgOutputPath).Select(_ => Unit.Default),
-            Model.WhenAnyValue(m => m.SquirrelOutputPath).Select(_ => Unit.Default)
+            Model.WhenAnyValue(m => m.PackageFilesOutputPath).Select(_ => Unit.Default),
+            Model.WhenAnyValue(m => m.VelopackOutputPath).Select(_ => Unit.Default),
+            Model.WhenAnyValue(m => m.FileSystemBasePath).Select(_ => Unit.Default)
         };
         _dirtySubscription = Observable.Merge(dirtyStreams)
             .Subscribe(_ => _hasUnsavedNonTreeChanges = true);
     }
-
-    private bool _hasUnsavedNonTreeChanges;
 
     public bool HasUnsavedChanges => (Model?.HasUnsavedTreeChanges ?? false) || _hasUnsavedNonTreeChanges || string.IsNullOrWhiteSpace(FilePath);
 
@@ -220,6 +271,8 @@ public partial class MainViewModel : RxObject
             }
 
             Model = m;
+            // Resync connection instances and mirror saved FileSystemBasePath into the active FileSystemConnection
+            Model.ResyncAfterLoad();
             SetupDirtyTracking();
             Model.PackageFiles = VelopackModel.OrderFileList(Model.PackageFiles);
             Model.RefreshPackageVersion();
@@ -349,6 +402,8 @@ public partial class MainViewModel : RxObject
         if (Model.SelectedConnection is FileSystemConnection fsc && !string.IsNullOrWhiteSpace(fsc.FileSystemPath))
         {
             baseDir = fsc.FileSystemPath;
+            // persist base into model so it is saved in *.velo and restored later
+            Model.FileSystemBasePath = fsc.FileSystemPath;
         }
         else
         {
@@ -356,66 +411,17 @@ public partial class MainViewModel : RxObject
         }
 
         // Build output directories
-        Model.NupkgOutputPath = Path.Combine(baseDir, PathFolderHelper.PackageDirectory);
-        Model.SquirrelOutputPath = Path.Combine(baseDir, PathFolderHelper.ReleasesDirectory);
+        Model.PackageFilesOutputPath = Path.Combine(baseDir, PathFolderHelper.PackageFilesDirectory);
+        Model.VelopackOutputPath = Path.Combine(baseDir, PathFolderHelper.ReleasesDirectory);
 
-        Directory.CreateDirectory(Model.NupkgOutputPath);
-        Directory.CreateDirectory(Model.SquirrelOutputPath);
+        Directory.CreateDirectory(Model.PackageFilesOutputPath);
+        Directory.CreateDirectory(Model.VelopackOutputPath);
 
         var asProj = Path.Combine(FilePath!, $"{Model.AppId}{PathFolderHelper.ProjectFileExtension}");
 
         // Serialize with a resolver that ignores non-persistable/runtime properties
-        var options = new JsonSerializerOptions
-        {
-            WriteIndented = false,
-            TypeInfoResolver = new DefaultJsonTypeInfoResolver
-            {
-                Modifiers =
-                {
-                    ti =>
-                    {
-                        if (ti.Type == typeof(VelopackModel))
-                        {
-                            var namesToRemove = new HashSet<string>
-                            {
-                                nameof(VelopackModel.IconSource),
-                                nameof(VelopackModel.SplashSource),
-                                nameof(VelopackModel.SelectSplashCmd),
-                                nameof(VelopackModel.SelectedLink),
-                                nameof(VelopackModel.UploadQueue),
-                                nameof(VelopackModel.SelectedConnection),
-                                nameof(VelopackModel.SelectedUploadItem),
-                                nameof(VelopackModel.HasUnsavedTreeChanges)
-                            };
-                            foreach (var prop in ti.Properties.ToList())
-                            {
-                                if (namesToRemove.Contains(prop.Name))
-                                {
-                                    ti.Properties.Remove(prop);
-                                }
-                            }
-                        }
-                        else if (ti.Type == typeof(ItemLink))
-                        {
-                            var namesToRemove = new HashSet<string>
-                            {
-                                nameof(ItemLink.FileIcon),
-                                nameof(ItemLink.HasDummyChild)
-                            };
-                            foreach (var prop in ti.Properties.ToList())
-                            {
-                                if (namesToRemove.Contains(prop.Name))
-                                {
-                                    ti.Properties.Remove(prop);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        };
 
-        File.WriteAllText(asProj, JsonSerializer.Serialize(Model, options));
+        File.WriteAllText(asProj, JsonSerializer.Serialize(Model, _saveOptions));
         Trace.WriteLine("FILE SAVED ! : " + FilePath);
 
         _isSaved = true;
@@ -484,15 +490,15 @@ public partial class MainViewModel : RxObject
                 return;
             }
 
-            if (Model?.NupkgOutputPath == null)
+            if (Model?.PackageFilesOutputPath == null)
             {
-                throw new Exception("NupkgOutputPath is null");
+                throw new Exception("PackageFilesOutputPath is null");
             }
 
             // Clean output content dir
-            if (Directory.Exists(Model.NupkgOutputPath))
+            if (Directory.Exists(Model.PackageFilesOutputPath))
             {
-                foreach (var f in Directory.EnumerateFiles(Model.NupkgOutputPath, "*", SearchOption.AllDirectories))
+                foreach (var f in Directory.EnumerateFiles(Model.PackageFilesOutputPath, "*", SearchOption.AllDirectories))
                 {
                     try { File.SetAttributes(f, FileAttributes.Normal); File.Delete(f); } catch { }
                 }
@@ -522,8 +528,8 @@ public partial class MainViewModel : RxObject
                         return;
                     }
 
-                    var relDir = Path.Combine(parents.ToArray());
-                    var targetDir = string.IsNullOrEmpty(relDir) ? Model!.NupkgOutputPath : Path.Combine(Model!.NupkgOutputPath, relDir);
+                    var relDir = Path.Combine([.. parents]);
+                    var targetDir = string.IsNullOrEmpty(relDir) ? Model!.PackageFilesOutputPath : Path.Combine(Model!.PackageFilesOutputPath, relDir);
                     Directory.CreateDirectory(targetDir);
                     var targetFile = Path.Combine(targetDir, node.Filename);
                     File.Copy(node.SourceFilepath, targetFile, true);
@@ -533,13 +539,13 @@ public partial class MainViewModel : RxObject
             ActiveBackgroungWorker?.ReportProgress(40, "COPYING CONTENT");
             foreach (var node in Model!.PackageFiles.ToList())
             {
-                CopyNode(node, new List<string>());
+                CopyNode(node, []);
             }
 
             ActiveBackgroungWorker?.ReportProgress(60, "VELOPACK RELEASIFY");
 
             VelopackPack();
-            Trace.WriteLine("CREATED VELOPACK PACKAGE to : " + Model.SquirrelOutputPath);
+            Trace.WriteLine("CREATED VELOPACK PACKAGE to : " + Model.VelopackOutputPath);
         }
         catch (Exception ex)
         {
@@ -619,8 +625,8 @@ public partial class MainViewModel : RxObject
         }
 
         // vpk pack -u MyApp -v 1.0.0 -p path-to/publish/folder -o path-to/releases
-        var packDir = Path.GetFullPath(Model.NupkgOutputPath!);
-        var outDir = Path.GetFullPath(Model.SquirrelOutputPath!);
+        var packDir = Path.GetFullPath(Model.PackageFilesOutputPath!);
+        var outDir = Path.GetFullPath(Model.VelopackOutputPath!);
         var cmd = $" pack -u {Model.AppId} -v {Model.Version} -p \"{packDir}\" -o \"{outDir}\"";
 
         // If MainExePath is known (top-level exe), pass it to vpk to avoid auto-detection failures

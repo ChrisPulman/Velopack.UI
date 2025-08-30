@@ -260,7 +260,7 @@
                                 FontSize="16" />
                         </ui:StackPanel>
 
-                        <ui:GroupBox Grid.Row="21" Header="Velopack Options">
+                        <ui:GroupBox Grid.Row="23" Header="Velopack Options">
                             <ui:Grid Margin="4">
                                 <ui:Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
@@ -316,21 +316,10 @@
                                         Text="Sign Template:" />
                                     <ui:TextBox MinWidth="280" Text="{Binding SignTemplate}" />
                                 </ui:StackPanel>
-                                <ui:StackPanel
-                                    Grid.Row="4"
-                                    Grid.ColumnSpan="2"
-                                    Margin="4"
-                                    Orientation="Horizontal">
-                                    <ui:Button
-                                        Margin="0,0,8,0"
-                                        Command="{Binding AddFolderFromDialogCommand}"
-                                        Content="Select Content Folder" />
-                                    <ui:Button Command="{Binding AddFilesFromDialogCommand}" Content="Select Content Files" />
-                                </ui:StackPanel>
                             </ui:Grid>
                         </ui:GroupBox>
 
-                        <ui:Grid Grid.Row="23">
+                        <ui:Grid Grid.Row="21">
                             <ui:Grid.ColumnDefinitions>
                                 <ColumnDefinition />
                                 <ColumnDefinition />
@@ -390,7 +379,7 @@
                                 Margin="0,0,8,0"
                                 Command="{Binding SelectNupkgDirectoryCommand}"
                                 Content="Output: Content Folder" />
-                            <ui:TextBlock VerticalAlignment="Center" Text="{Binding NupkgOutputPath}" />
+                            <ui:TextBlock VerticalAlignment="Center" Text="{Binding PackageFilesOutputPath}" />
                         </ui:StackPanel>
                         <ui:StackPanel
                             Grid.Row="26"
@@ -400,7 +389,7 @@
                                 Margin="0,0,8,0"
                                 Command="{Binding SelectOutputDirectoryCommand}"
                                 Content="Output: Releases Folder" />
-                            <ui:TextBlock VerticalAlignment="Center" Text="{Binding SquirrelOutputPath}" />
+                            <ui:TextBlock VerticalAlignment="Center" Text="{Binding VelopackOutputPath}" />
                         </ui:StackPanel>
                     </ui:Grid>
                 </ui:GroupBox>
@@ -472,7 +461,7 @@
                                         Grid.Row="0"
                                         Grid.Column="2"
                                         Margin="4,0"
-                                        Text="{Binding DataContext.Model.SquirrelOutputPath, ElementName=mainView}"
+                                        Text="{Binding DataContext.Model.VelopackOutputPath, ElementName=mainView}"
                                         TextWrapping="Wrap" />
 
                                     <ui:TextBlock
