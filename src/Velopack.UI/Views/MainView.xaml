@@ -6,10 +6,9 @@
     xmlns:dd="clr-namespace:GongSolutions.Wpf.DragDrop;assembly=GongSolutions.Wpf.DragDrop"
     xmlns:local="clr-namespace:Velopack.UI"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:rxui="http://reactiveui.net"
     xmlns:sys="clr-namespace:System;assembly=mscorlib"
     xmlns:ui="https://github.com/reactivemarbles/CrissCross.ui"
-    xmlns:vtv="clr-namespace:Velopack.UI.MultiSelectTreeView.Controls"
+    xmlns:vtv="clr-namespace:Velopack.UI.Controls"
     xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
     x:Name="mainView"
     Width="1024"
@@ -25,7 +24,6 @@
         IsBusy="{Binding Path=IsBusy}">
         <xctk:BusyIndicator.BusyContentTemplate>
             <DataTemplate>
-                <!--  Ensure the Busy overlay binds to the window's DataContext (MainViewModel)  -->
                 <ui:StackPanel
                     Width="250"
                     Margin="4"
@@ -219,10 +217,12 @@
                         <ui:TextBox
                             Grid.Row="12"
                             Grid.Column="0"
+                            Width="410"
                             Height="50"
                             AcceptsReturn="True"
                             Background="{x:Null}"
-                            Text="{Binding Description, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged}" />
+                            Text="{Binding Description, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged}"
+                            TextWrapping="Wrap" />
 
                         <ui:TextBlock
                             Grid.Row="14"
@@ -411,7 +411,7 @@
                             <RowDefinition Height="*" />
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
-                        <vtv:MultiSelectTreeViewControl
+                        <vtv:VelopackUITreeViewControl
                             x:Name="PackageTreeview"
                             dd:DragDrop.DropHandler="{Binding}"
                             dd:DragDrop.IsDragSource="True"

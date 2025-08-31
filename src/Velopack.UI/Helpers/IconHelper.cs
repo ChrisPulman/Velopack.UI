@@ -7,14 +7,14 @@ using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
-namespace Velopack.UI;
+namespace Velopack.UI.Helpers;
 
 /// <summary>
 /// Icon Helper
 /// </summary>
 [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1060:Move pinvokes to native methods class", Justification = "intended")]
 [SupportedOSPlatform("windows10.0.19041.0")]
-public static class IconHelper
+internal static class IconHelper
 {
     /// <summary>
     /// The file attribute directory
@@ -146,7 +146,7 @@ public static class IconHelper
             (uint)Marshal.SizeOf(shfi),
             flags);
 
-        if (res == IntPtr.Zero)
+        if (res == nint.Zero)
         {
             throw Marshal.GetExceptionForHR(Marshal.GetHRForLastWin32Error())!;
         }
@@ -172,7 +172,7 @@ public static class IconHelper
     /// <param name="uFlags">The u flags.</param>
     /// <returns></returns>
     [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
-    internal static extern IntPtr SHGetFileInfo(string pszPath, uint dwFileAttributes, out SHFILEINFO psfi, uint cbFileInfo, uint uFlags);
+    internal static extern nint SHGetFileInfo(string pszPath, uint dwFileAttributes, out SHFILEINFO psfi, uint cbFileInfo, uint uFlags);
 
     /// <summary>
     /// To the image source.
@@ -194,7 +194,7 @@ public static class IconHelper
 
     [DllImport("user32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
-    private static extern bool DestroyIcon(IntPtr hIcon);
+    private static extern bool DestroyIcon(nint hIcon);
 
     /// <summary>
     /// SH FILE INFO
@@ -206,7 +206,7 @@ public static class IconHelper
         /// <summary>
         /// The h icon
         /// </summary>
-        public IntPtr hIcon;
+        public nint hIcon;
 
         /// <summary>
         /// The i icon
@@ -315,7 +315,7 @@ public static class IconHelper
 
         // use passed dwFileAttribute
         [DllImport("Shell32.dll", CharSet = CharSet.Unicode)]
-        public static extern IntPtr SHGetFileInfo(
+        public static extern nint SHGetFileInfo(
             string pszPath,
             uint dwFileAttributes,
             ref Shfileinfo psfi,
@@ -327,7 +327,7 @@ public static class IconHelper
         public struct Shfileinfo
         {
             private const int Namesize = 80;
-            public readonly IntPtr hIcon;
+            public readonly nint hIcon;
             private readonly int _iIcon;
             private readonly uint _dwAttributes;
 
@@ -353,6 +353,6 @@ public static class IconHelper
         /// <param name="hIcon">Pointer to icon handle.</param>
         /// <returns>N/A</returns>
         [DllImport("User32.dll")]
-        public static extern int DestroyIcon(IntPtr hIcon);
+        public static extern int DestroyIcon(nint hIcon);
     }
 }

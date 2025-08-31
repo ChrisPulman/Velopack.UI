@@ -1,10 +1,10 @@
 <UserControl
-    x:Class="Velopack.UI.MultiSelectTreeView.Controls.MultiSelectTreeViewControl"
+    x:Class="Velopack.UI.Controls.VelopackUITreeViewControl"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:dd="clr-namespace:GongSolutions.Wpf.DragDrop;assembly=GongSolutions.Wpf.DragDrop"
-    xmlns:local="clr-namespace:Velopack.UI.MultiSelectTreeView.Controls"
+    xmlns:local="clr-namespace:Velopack.UI.Controls"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:ui="https://github.com/reactivemarbles/CrissCross.ui"
     x:Name="Root"
@@ -12,8 +12,6 @@
     d:DesignWidth="400"
     mc:Ignorable="d">
     <UserControl.Resources>
-        
-        <!--  Default item template with icon and filename, inherit theme foreground  -->
         <HierarchicalDataTemplate x:Key="DefaultItemTemplate" ItemsSource="{Binding Children}">
             <ui:Border
                 x:Name="bd"
@@ -29,7 +27,6 @@
                             <DataTrigger Binding="{Binding IsSelected}" Value="True">
                                 <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}" />
                                 <Setter Property="BorderBrush" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}" />
-                                <!--  Ensure readable text in both light/dark when selected  -->
                                 <Setter Property="TextElement.Foreground" Value="{DynamicResource {x:Static SystemColors.HighlightTextBrushKey}}" />
                             </DataTrigger>
                         </Style.Triggers>
@@ -103,11 +100,9 @@
                     <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
                     <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
                     <Setter Property="FontWeight" Value="Normal" />
-                    <!--  Flow VM to item via Tag  -->
                     <Setter Property="Tag" Value="{Binding DataContext, RelativeSource={RelativeSource AncestorType=UserControl}}" />
                     <Setter Property="ContextMenu">
                         <Setter.Value>
-                            <!-- Bind commands to VM; no parameters (ReactiveCommand<Unit,Unit>) -->
                             <ContextMenu DataContext="{Binding PlacementTarget.Tag, RelativeSource={RelativeSource Self}}">
                                 <MenuItem Command="{Binding RefreshPackageVersionCommand}" Header="Refresh Version" />
                                 <MenuItem Command="{Binding AddDirectoryCommand}" Header="Add Directory" />
@@ -124,7 +119,6 @@
                 </Style>
             </TreeView.Resources>
             <TreeView.ContextMenu>
-                <!--  Tree-level menu: VM from PlacementTarget.DataContext; no parameters  -->
                 <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
                     <MenuItem Command="{Binding RefreshPackageVersionCommand}" Header="Refresh Version" />
                     <MenuItem Command="{Binding AddDirectoryCommand}" Header="Add Directory" />

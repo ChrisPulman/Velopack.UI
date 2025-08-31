@@ -6,49 +6,75 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 
-namespace Velopack.UI.MultiSelectTreeView.Controls;
+namespace Velopack.UI.Controls;
 
+/// <summary>
+/// VelopackUITreeViewControl.
+/// </summary>
+/// <seealso cref="System.Windows.Controls.UserControl" />
+/// <seealso cref="System.Windows.Markup.IComponentConnector" />
 [SupportedOSPlatform("windows10.0.19041.0")]
-public partial class MultiSelectTreeViewControl
+public partial class VelopackUITreeViewControl
 {
-    public MultiSelectTreeViewControl()
+    /// <summary>
+    /// Initializes a new instance of the <see cref="VelopackUITreeViewControl"/> class.
+    /// </summary>
+    public VelopackUITreeViewControl()
     {
         InitializeComponent();
-        // Do NOT set SelectedItems here; it breaks external TwoWay binding.
+        Loaded += (_, _) => PART_Tree?.Tag = SelectedItems;
 
-        // Ensure ContextMenus can find VM and SelectedItems via PlacementTarget.Tag
-        Loaded += (_, _) =>
-        {
-            PART_Tree?.Tag = SelectedItems;
-        };
-
-        DataContextChanged += (_, __) =>
-        {
-            PART_Tree?.Tag = SelectedItems;
-        };
+        DataContextChanged += (_, __) => PART_Tree?.Tag = SelectedItems;
     }
 
+    /// <summary>
+    /// The items source property.
+    /// </summary>
     public static readonly DependencyProperty ItemsSourceProperty = DependencyProperty.Register(
-        nameof(ItemsSource), typeof(IEnumerable), typeof(MultiSelectTreeViewControl));
+        nameof(ItemsSource), typeof(IEnumerable), typeof(VelopackUITreeViewControl));
 
+    /// <summary>
+    /// The selected items property.
+    /// </summary>
     public static readonly DependencyProperty SelectedItemsProperty = DependencyProperty.Register(
-        nameof(SelectedItems), typeof(IList), typeof(MultiSelectTreeViewControl), new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault, OnSelectedItemsChanged));
+        nameof(SelectedItems), typeof(IList), typeof(VelopackUITreeViewControl), new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault, OnSelectedItemsChanged));
 
+    /// <summary>
+    /// The item template property.
+    /// </summary>
     public static readonly DependencyProperty ItemTemplateProperty = DependencyProperty.Register(
-        nameof(ItemTemplate), typeof(HierarchicalDataTemplate), typeof(MultiSelectTreeViewControl));
+        nameof(ItemTemplate), typeof(HierarchicalDataTemplate), typeof(VelopackUITreeViewControl));
 
+    /// <summary>
+    /// Gets or sets the items source.
+    /// </summary>
+    /// <value>
+    /// The items source.
+    /// </value>
     public IEnumerable? ItemsSource
     {
         get => (IEnumerable?)GetValue(ItemsSourceProperty);
         set => SetValue(ItemsSourceProperty, value);
     }
 
+    /// <summary>
+    /// Gets or sets the selected items.
+    /// </summary>
+    /// <value>
+    /// The selected items.
+    /// </value>
     public IList? SelectedItems
     {
         get => (IList?)GetValue(SelectedItemsProperty);
         set => SetValue(SelectedItemsProperty, value);
     }
 
+    /// <summary>
+    /// Gets or sets the item template.
+    /// </summary>
+    /// <value>
+    /// The item template.
+    /// </value>
     public HierarchicalDataTemplate? ItemTemplate
     {
         get => (HierarchicalDataTemplate?)GetValue(ItemTemplateProperty);
@@ -57,7 +83,7 @@ public partial class MultiSelectTreeViewControl
 
     private static void OnSelectedItemsChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
-        var ctl = (MultiSelectTreeViewControl)d;
+        var ctl = (VelopackUITreeViewControl)d;
         ctl.PART_Tree?.Tag = ctl.SelectedItems;
     }
 
