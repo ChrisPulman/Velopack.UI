@@ -3,6 +3,10 @@ using System.Runtime.Versioning;
 
 namespace Velopack.UI.MultiSelectTreeView.Controls;
 
+/// <summary>
+/// ItemInListConverter.
+/// </summary>
+/// <seealso cref="System.Windows.Data.IMultiValueConverter" />
 [SupportedOSPlatform("windows10.0.19041.0")]
 public class ItemInListConverter : System.Windows.Data.IMultiValueConverter
 {

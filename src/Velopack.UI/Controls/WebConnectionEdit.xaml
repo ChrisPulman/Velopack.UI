@@ -38,9 +38,6 @@
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
                     </ui:Grid.RowDefinitions>
-                    <!--<TextBlock Text="Connection Name : " Grid.Row="0" Grid.Column="0" />
-            <TextBox Text="{Binding Path=ConnectionName,ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged}" Grid.Row="0" Grid.Column="1" />-->
-
                     <ui:TextBlock
                         Grid.Row="1"
                         Grid.Column="0"
@@ -169,7 +166,7 @@
             Margin="5"
             Click="Button_Click">
             <ui:StackPanel Orientation="Horizontal">
-                <ui:Image Margin="10,0" Source="Images/check_black_24.png" />
+                <ui:Image Margin="10,0" Source="../Images/check_black_24.png" />
                 <ui:TextBlock
                     x:Name="Save"
                     FontSize="25"

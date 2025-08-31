@@ -16,6 +16,8 @@ using FluentValidation.Results;
 using GongSolutions.Wpf.DragDrop;
 using ReactiveUI;
 using ReactiveUI.SourceGenerators;
+using Velopack.UI.Helpers;
+using Velopack.UI.Models;
 
 namespace Velopack.UI;
 
@@ -932,6 +934,9 @@ _selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
         }
         else
         {
+            // Also clean PackageFiles folder on disk
+            TryDeleteDirectoryContents(PackageFilesOutputPath);
+
             _packageFiles.Clear();
             this.RaisePropertyChanged(nameof(PackageFiles));
             MainExePath = string.Empty;
@@ -987,11 +992,18 @@ _selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
         // Element is in the treeview root.
         if (parent == null)
         {
+            // Clear disk mirror under PackageFiles root
+            TryDeleteDirectoryContents(PackageFilesOutputPath);
+
             _packageFiles.Clear();
             this.RaisePropertyChanged(nameof(PackageFiles));
         }
         else
         {
+            // Remove all children from disk under this parent's directory
+            var parentPath = BuildDirectoryFullPath(parent);
+            TryDeleteDirectoryContents(parentPath);
+
             //Remove it from children list
             parent.Children.Clear();
         }
@@ -1009,6 +1021,9 @@ _selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
             MainExePath = string.Empty;
             RefreshPackageVersion();
         }
+
+        // Delete corresponding file/folder from disk mirror
+        TryDeleteNodeFromDisk(item);
 
         // Element is in the treeview root.
         if (parent == null)
@@ -1184,6 +1199,121 @@ _selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
 
         // Continue with any remaining items
         ProcessNextUploadFile();
+    }
+
+    // -------- Disk sync helpers for PackageFiles mirror --------
+    private string? BuildDirectoryFullPath(ItemLink? node)
+    {
+        if (node == null || string.IsNullOrWhiteSpace(PackageFilesOutputPath)) return null;
+        var parts = new List<string>();
+        // collect ancestors up to root
+        var current = node;
+        while (true)
+        {
+            var parent = current.GetParent(PackageFiles);
+            if (parent == null)
+            {
+                // current is at root level
+                parts.Add(current.Filename);
+                break;
+            }
+            parts.Add(current.Filename);
+            current = parent;
+        }
+        parts.Reverse();
+        return Path.Combine(PackageFilesOutputPath!, Path.Combine([.. parts]));
+    }
+
+    private string? BuildParentsDirectoryFullPath(ItemLink? node)
+    {
+        if (node == null || string.IsNullOrWhiteSpace(PackageFilesOutputPath)) return null;
+        var stack = new Stack<string>();
+        var current = node.GetParent(PackageFiles);
+        while (current != null)
+        {
+            stack.Push(current.Filename);
+            current = current.GetParent(PackageFiles);
+        }
+        return stack.Count == 0
+            ? PackageFilesOutputPath
+            : Path.Combine(PackageFilesOutputPath!, Path.Combine(stack.ToArray()));
+    }
+
+    private void TryDeleteNodeFromDisk(ItemLink item)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(PackageFilesOutputPath)) return;
+
+            if (item.IsDirectory)
+            {
+                var dir = BuildDirectoryFullPath(item);
+                TryDeleteDirectory(dir);
+            }
+            else
+            {
+                var parentDir = BuildParentsDirectoryFullPath(item);
+                if (string.IsNullOrWhiteSpace(parentDir)) return;
+                var filePath = Path.Combine(parentDir!, item.Filename);
+                TryDeleteFile(filePath);
+            }
+        }
+        catch
+        {
+            // ignore
+        }
+    }
+
+    private static void TryDeleteFile(string? path)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(path) || !File.Exists(path)) return;
+            File.SetAttributes(path, FileAttributes.Normal);
+            File.Delete(path);
+        }
+        catch
+        {
+            // ignore
+        }
+    }
+
+    private static void TryDeleteDirectory(string? path)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(path) || !Directory.Exists(path)) return;
+            // ensure files are deletable
+            foreach (var f in Directory.EnumerateFiles(path!, "*", SearchOption.AllDirectories))
+            {
+                try { File.SetAttributes(f, FileAttributes.Normal); } catch { }
+            }
+            Directory.Delete(path!, true);
+        }
+        catch
+        {
+            // ignore
+        }
+    }
+
+    private static void TryDeleteDirectoryContents(string? path)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(path) || !Directory.Exists(path)) return;
+            foreach (var file in Directory.EnumerateFiles(path!, "*", SearchOption.TopDirectoryOnly))
+            {
+                TryDeleteFile(file);
+            }
+            foreach (var dir in Directory.EnumerateDirectories(path!, "*", SearchOption.TopDirectoryOnly))
+            {
+                TryDeleteDirectory(dir);
+            }
+        }
+        catch
+        {
+            // ignore
+        }
     }
 
     protected override void Dispose(bool disposing)

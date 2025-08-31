@@ -2,6 +2,7 @@
 using System.Reactive.Concurrency;
 using System.Windows;
 using ReactiveUI;
+using Velopack.UI.Helpers;
 
 namespace Velopack.UI;
 
@@ -21,6 +22,9 @@ public partial class App
         {
             // non-fatal at runtime; packaging will still validate presence
         }
+
+        //// Generate application icons (PNG + ICO) under Images
+        ////AppIconGenerator.EnsureAppIcons();
 
         base.OnStartup(e);
         TryPromptVelopackTool();

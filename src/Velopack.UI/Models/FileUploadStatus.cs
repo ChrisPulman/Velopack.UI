@@ -1,4 +1,4 @@
-﻿namespace Velopack.UI;
+﻿namespace Velopack.UI.Models;
 
 /// <summary>
 /// File Upload Status

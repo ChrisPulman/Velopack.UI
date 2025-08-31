@@ -7,7 +7,8 @@ using System.Text.Json.Serialization;
 using System.Windows.Media;
 using ReactiveUI;
 using ReactiveUI.SourceGenerators;
-using static Velopack.UI.IconHelper;
+using Velopack.UI.Helpers;
+using static Velopack.UI.Helpers.IconHelper;
 
 namespace Velopack.UI;
 

@@ -4,12 +4,12 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Windows;
 
-namespace Velopack.UI;
+namespace Velopack.UI.Helpers;
 
 /// <summary>
 /// Path Folder Helper
 /// </summary>
-public static class PathFolderHelper
+internal static class PathFolderHelper
 {
     /// <summary>
     /// The program name

@@ -17,6 +17,8 @@
     x:TypeArguments="local:MainWindowViewModel"
     ExtendsContentIntoTitleBar="True"
     Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+    Icon="/Images/Application.png"
+    TitleIcon="/Images/Application.png"
     WindowBackdropType="Mica"
     WindowCornerPreference="Round"
     mc:Ignorable="d" />

@@ -11,6 +11,7 @@ using CrissCross;
 using Microsoft.Win32;
 using ReactiveUI;
 using ReactiveUI.SourceGenerators;
+using Velopack.UI.Helpers;
 
 namespace Velopack.UI;
 

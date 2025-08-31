@@ -10,6 +10,8 @@ using Amazon.S3.Transfer;
 using Amazon.S3.Util;
 using CrissCross;
 using ReactiveUI;
+using ReactiveUI.SourceGenerators;
+using Velopack.UI.Models;
 
 namespace Velopack.UI;
 
@@ -18,12 +20,8 @@ namespace Velopack.UI;
 /// </summary>
 [DataContract]
 [SupportedOSPlatform("windows10.0.19041.0")]
-public class SingleFileUpload : RxObject
+public partial class SingleFileUpload : RxObject
 {
-    private string? _connection;
-    private string? _filename;
-    private string? _fileSize;
-    private double _progressPercentage;
     private FileUploadStatus _uploadStatus;
     private TransferUtility? _fileTransferUtility;
 
@@ -63,34 +61,24 @@ public class SingleFileUpload : RxObject
     /// </summary>
     /// <value>The name of the connection.</value>
     [DataMember]
-    public string? ConnectionName
-    {
-        get => _connection;
-        set => this.RaiseAndSetIfChanged(ref _connection, value);
-    }
+    [Reactive]
+    public partial string? ConnectionName { get; set; }
 
     /// <summary>
     /// Gets or sets the filename.
     /// </summary>
     /// <value>The filename.</value>
     [DataMember]
-    public string? Filename
-    {
-        get => _filename;
-
-        set => this.RaiseAndSetIfChanged(ref _filename, value);
-    }
+    [Reactive]
+    public partial string? Filename { get; set; }
 
     /// <summary>
     /// Gets or sets the size of the file.
     /// </summary>
     /// <value>The size of the file.</value>
     [DataMember]
-    public string? FileSize
-    {
-        get => _fileSize;
-        set => this.RaiseAndSetIfChanged(ref _fileSize, value);
-    }
+    [Reactive]
+    public partial string? FileSize { get; set; }
 
     /// <summary>
     /// Gets the formatted status.
@@ -109,11 +97,8 @@ public class SingleFileUpload : RxObject
     /// </summary>
     /// <value>The progress percentage.</value>
     [DataMember]
-    public double ProgressPercentage
-    {
-        get => _progressPercentage;
-        set => this.RaiseAndSetIfChanged(ref _progressPercentage, value);
-    }
+    [Reactive]
+    public partial double ProgressPercentage { get; set; }
 
     /// <summary>
     /// Gets or sets the upload status.
