@@ -2,7 +2,7 @@
 
 <img alt="Velopack.UI Application Logo" src="src/Velopack.UI/Images/Application.png" width="128" />
 
-A simple, focused desktop UI for building and publishing Windows application installers powered by Velopack.
+A simple, focused desktop UI for building and publishing .NET application installers powered by Velopack.
 
 Velopack.UI helps you:
 - Configure metadata (App ID, Version, Title, Description, Authors)
@@ -14,8 +14,9 @@ Velopack.UI helps you:
 Important: Do not run Velopack.UI as Administrator. Windows drag and drop is restricted in elevated apps and will not work.
 
 
-Contents
-- Quick start
+## Contents
+- Create your .NET application to package
+- Quick start for Velopack.UI
 - Features overview
 - Packaging workflow with Velopack.UI
 - Prepare a third‑party app for packaging
@@ -23,8 +24,15 @@ Contents
 - Publishing destinations
 - Tips, troubleshooting, and FAQs
 
+### Create your .NET application to package
+Before using Velopack.UI, ensure your application is built and ready for packaging:
+- Build your app in Release mode for the target runtime (framework‑dependent or self‑contained).
+- Add the Velopack NuGet package to your project `<PackageReference Include="Velopack" Version="0.0.1298" />`.
+- Add an `UpdateManager` to your app to handle updates.
+- Add the Velopack bootstrapper/setup to your project `VelopackApp.Build().Run()` [see Velopack docs](https://docs.velopack.io/getting-started/csharp).
+- Collect the output: the main EXE plus all required DLLs/content.
 
-Quick start
+### Quick start for Velopack.UI
 1) Prerequisites
    - Windows 10/11
    - .NET 9 Desktop Runtime (for running) and SDK if you build Velopack.UI from source
@@ -34,10 +42,10 @@ Quick start
    - Running as Admin disables drag and drop.
 3) Create or open a project
    - Project menu → Create New or Open. Save regularly.
-4) Fill out Package Details
-   - App ID, Version (or enable Set Version Manually), Title, Description, Authors.
-5) Add application assets
+4) Add application assets
    - Use the Installer Package Content panel and drag in your built files/folders. Ensure your main executable is included at the root of the content.
+5) Modify / Fill out Package Details
+   - App ID, Version (or enable Set Version Manually), Title, Description, Authors. This information will be read automatically from the EXE if it exists and the fields are left blank.
 6) Choose output folders
    - Output: Content Folder → where Velopack builds the nupkg content.
    - Output: Releases Folder → where final releases (RELEASES, packages, MSI) are written.
@@ -48,9 +56,16 @@ Quick start
 9) Publish
    - Publish Only Update Files → push update artifacts only.
    - Publish Complete Setup → push full bootstrapper/setup as well as update artifacts.
+10) Always publish to the same content folder to maintain update continuity.
+   - Increment the version for each release. Do not reuse versions.
+   - The base folder for the installers can contain multiple apps (different App IDs).
+   - Velopack.UI creates a folder per `App ID` under the content folder i.e. `AppID_Files`
+   - Velopack.UI creates two folders for the releases `AppID_Files\Releases` and `AppID_Files\PackageFiles`
+   - The `AppID_Files\Releases` folder contains the RELEASES file and the setup.exe, this is the folder you point your users to for downloading the installer and should be retained for future updates.
+   - The `AppID_Files\PackageFiles` folder contains the project files ready for publishing, this folder can be deleted after publishing if required.
 
 
-Features overview
+### Features overview
 - Package Details editor
   - App ID, Versioning (manual toggle), Title, Description, Authors
 - Content authoring
@@ -69,7 +84,7 @@ Features overview
   - New, Open, Save, Save As
 
 
-Packaging workflow with Velopack.UI
+### Packaging workflow with Velopack.UI
 1) Define Package Details
    - App ID: A unique, stable identifier for your app (do not change once released).
    - Version: Semantic-like version string. If Set Version Manually is off, the tool may infer version from your files or previous releases; turn it on to specify explicitly.
@@ -91,7 +106,7 @@ Packaging workflow with Velopack.UI
    - Use Publish Complete Setup when you want to distribute the full installer as well.
 
 
-Prepare a third‑party app for packaging
+### Prepare a third‑party app for packaging
 Use this checklist to make an external application ready for packaging with Velopack.UI:
 - Build the app in Release mode for the target runtime (framework‑dependent or self‑contained as needed).
 - Collect the output: the main EXE plus all required DLLs/content.
@@ -111,8 +126,10 @@ Use this checklist to make an external application ready for packaging with Velo
   6. Publish.
 
 
-Code signing (Sign Params and Sign Template)
+### Code signing (Sign Params and Sign Template)
 Velopack supports customizable signing to ensure the shipped binaries and installers are trusted by Windows SmartScreen and not tampered with. In Velopack.UI you’ll see two inputs:
+
+[Velopack Signing Docs](https://docs.velopack.io/packaging/signing)
 
 - Sign Params
   - A parameter string used by the underlying signing tool. Typical values include digest algorithms, certificate details, and timestamp servers.
@@ -126,24 +143,25 @@ Velopack supports customizable signing to ensure the shipped binaries and instal
 - Sign Template
   - An advanced template allowing fine‑grained control over which files are signed and how. This is useful when you want to sign only specific file types (e.g., .exe, .dll, .msi) or customize commands per artifact.
   - Keep your template in source control without secrets. Substitute secrets at build time via environment variables or your CI.
-  - See the official Velopack packaging docs for template structure and supported variables: https://docs.velopack.io/category/packaging
+  - See the official Velopack packaging docs for template structure and supported variables:  [Velopack Packaging](https://docs.velopack.io/category/packaging)
 
-Tips
+#### Tips
 - Sign your binaries and also the installer artifacts to minimize SmartScreen prompts.
 - If you use a hardware token or cloud signing (e.g., Azure Code Signing), adapt Sign Params/Template to your provider’s CLI.
 - Test locally first; then replicate in CI using the same parameters.
 
 
-Publishing destinations
+### Publishing destinations
 Velopack supports multiple publishing options. In Velopack.UI, set the Upload Location and Edit Connection accordingly. Common destinations include:
 - GitHub Releases: publish packages, RELEASES, and setup artifacts to a GitHub repository release.
 - Cloud object storage (e.g., S3, Azure Blob, DigitalOcean Spaces): host your releases behind HTTPS.
 - Generic web/FTP server: publish to a web directory that your app will use for updates.
+- Local/network folder: useful for testing / internal / self distribution.
 
-For exact configuration strings and provider‑specific options, refer to the Velopack packaging docs: https://docs.velopack.io/category/packaging
+For exact configuration strings and provider‑specific options, refer to the Velopack packaging docs: [Velopack Packaging](https://docs.velopack.io/category/packaging)
 
 
-Tips, troubleshooting, and FAQs
+### Tips, troubleshooting, and FAQs
 - Drag & drop not working
   - Ensure Velopack.UI is not running as Administrator.
 - Versioning mistakes
@@ -155,6 +173,6 @@ Tips, troubleshooting, and FAQs
 - Upload errors
   - Validate credentials/permissions and that the destination path exists. Check network/firewall and retry.
 
+---
 
-Attribution
 Velopack.UI by Chris Pulman. Built to streamline packaging and publishing with Velopack for .Net applications.
