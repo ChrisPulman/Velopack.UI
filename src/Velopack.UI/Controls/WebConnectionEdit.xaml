@@ -10,7 +10,7 @@
     Width="640"
     Height="330"
     MinWidth="500"
-    MinHeight="330"
+    MinHeight="380"
     ui:Design.Background="{DynamicResource ApplicationBackgroundBrush}"
     ui:Design.Foreground="{DynamicResource TextFillColorPrimaryBrush}"
     ExtendsContentIntoTitleBar="True"
@@ -144,6 +144,93 @@
                         HorizontalAlignment="Left"
                         Command="{Binding SelectFolderCommand}"
                         Content="Select Folder" />
+                </ui:Grid>
+            </DataTemplate>
+            <!--  New GitHub Releases template  -->
+            <DataTemplate DataType="{x:Type local:GitHubReleasesConnection}">
+                <ui:Grid>
+                    <ui:Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition />
+                    </ui:Grid.ColumnDefinitions>
+                    <ui:Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </ui:Grid.RowDefinitions>
+                    <ui:TextBlock
+                        Grid.Row="0"
+                        Grid.Column="0"
+                        Text="Owner:" />
+                    <ui:TextBox
+                        Grid.Row="0"
+                        Grid.Column="1"
+                        Text="{Binding Owner, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+
+                    <ui:TextBlock
+                        Grid.Row="1"
+                        Grid.Column="0"
+                        Text="Repository:" />
+                    <ui:TextBox
+                        Grid.Row="1"
+                        Grid.Column="1"
+                        Text="{Binding Repository, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+
+                    <ui:TextBlock
+                        Grid.Row="2"
+                        Grid.Column="0"
+                        Text="Tag Name:" />
+                    <ui:TextBox
+                        Grid.Row="2"
+                        Grid.Column="1"
+                        Text="{Binding TagName, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+
+                    <ui:TextBlock
+                        Grid.Row="3"
+                        Grid.Column="0"
+                        Text="Release Name:" />
+                    <ui:TextBox
+                        Grid.Row="3"
+                        Grid.Column="1"
+                        Text="{Binding ReleaseName, UpdateSourceTrigger=PropertyChanged}" />
+
+                    <ui:TextBlock
+                        Grid.Row="4"
+                        Grid.Column="0"
+                        Text="Token:" />
+                    <ui:TextBox
+                        Grid.Row="4"
+                        Grid.Column="1"
+                        Text="{Binding Token, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+
+                    <CheckBox
+                        Grid.Row="5"
+                        Grid.Column="1"
+                        Content="Prerelease"
+                        IsChecked="{Binding Prerelease}" />
+                    <CheckBox
+                        Grid.Row="6"
+                        Grid.Column="1"
+                        Content="Draft"
+                        IsChecked="{Binding Draft}" />
+
+                    <ui:TextBlock
+                        Grid.Row="7"
+                        Grid.Column="0"
+                        VerticalAlignment="Center"
+                        FontWeight="Bold"
+                        Text="Setup Link Url : " />
+                    <ui:TextBox
+                        Grid.Row="7"
+                        Grid.Column="1"
+                        FontWeight="Bold"
+                        IsReadOnly="True"
+                        Text="{Binding SetupDownloadUrl, Mode=OneWay}" />
                 </ui:Grid>
             </DataTemplate>
         </ui:Grid.Resources>

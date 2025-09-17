@@ -524,7 +524,7 @@
                                         DisplayMemberBinding="{Binding Path=Filename}"
                                         Header="Filename" />
                                     <GridViewColumn
-                                        Width="220"
+                                        Width="230"
                                         DisplayMemberBinding="{Binding Path=DestinationPath}"
                                         Header="Destination" />
                                     <GridViewColumn

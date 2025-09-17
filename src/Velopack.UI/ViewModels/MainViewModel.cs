@@ -398,7 +398,7 @@ public partial class MainViewModel : RxObject
             return;
         }
 
-        // If FileSystem connection is selected with a path, prefer it for SquirrelOutputPath
+        // If FileSystem connection is selected with a path, prefer it for FileSystemBasePath
         string baseDir;
         if (Model.SelectedConnection is FileSystemConnection fsc && !string.IsNullOrWhiteSpace(fsc.FileSystemPath))
         {
