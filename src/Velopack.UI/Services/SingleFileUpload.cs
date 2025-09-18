@@ -1,9 +1,11 @@
 ﻿using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Runtime.Serialization;
 using System.Runtime.Versioning;
 using System.Windows;
 using System.Windows.Threading;
+using System.Threading;
 using Amazon.S3;
 using Amazon.S3.Model;
 using Amazon.S3.Transfer;
@@ -12,11 +14,12 @@ using CrissCross;
 using ReactiveUI;
 using ReactiveUI.SourceGenerators;
 using Velopack.UI.Models;
+using Octokit;
 
 namespace Velopack.UI;
 
 /// <summary>
-/// Used in Upload queue list. I don't need serialization for this class.
+/// Used in Upload queue list.
 /// </summary>
 [DataContract]
 [SupportedOSPlatform("windows10.0.19041.0")]
@@ -24,6 +27,10 @@ public partial class SingleFileUpload : RxObject
 {
     private FileUploadStatus _uploadStatus;
     private TransferUtility? _fileTransferUtility;
+
+    // Cache resolved GitHub release IDs to prevent duplicate release creation across assets
+    private static readonly SemaphoreSlim s_releaseLock = new(1, 1);
+    private static readonly Dictionary<string, long> s_releaseIdCache = new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
     /// Occurs when [on upload completed].
@@ -51,6 +58,10 @@ public partial class SingleFileUpload : RxObject
             if (Connection is AmazonS3Connection s3 && !string.IsNullOrWhiteSpace(s3.BucketName) && !string.IsNullOrWhiteSpace(FullPath))
             {
                 return $"s3://{s3.BucketName}/{Path.GetFileName(FullPath)}";
+            }
+            if (Connection is GitHubReleasesConnection gh && !string.IsNullOrWhiteSpace(gh.Owner) && !string.IsNullOrWhiteSpace(gh.Repository) && !string.IsNullOrWhiteSpace(gh.TagName) && !string.IsNullOrWhiteSpace(FullPath))
+            {
+                return $"github://{gh.Owner}/{gh.Repository}/releases/{gh.TagName}/{Path.GetFileName(FullPath)}";
             }
             return null;
         }
@@ -157,6 +168,140 @@ public partial class SingleFileUpload : RxObject
             UploadStatus = FileUploadStatus.InProgress;
             uploadRequest_UploadPartProgressEvent(this, new UploadProgressArgs(100, 100, 100));
         }
+        else if (Connection is GitHubReleasesConnection ghCon)
+        {
+            if (!CheckInternetConnection.IsConnectedToInternet())
+            {
+                throw new Exception("Internet Connection not available");
+            }
+
+            if (string.IsNullOrWhiteSpace(ghCon.Token) || string.IsNullOrWhiteSpace(ghCon.Owner) || string.IsNullOrWhiteSpace(ghCon.Repository) || string.IsNullOrWhiteSpace(ghCon.TagName) || string.IsNullOrWhiteSpace(FullPath))
+            {
+                throw new Exception("Missing GitHub configuration");
+            }
+
+            UploadStatus = FileUploadStatus.InProgress;
+            ProgressPercentage = 5; // coarse update
+
+            var client = new GitHubClient(new ProductHeaderValue("Velopack.UI"))
+            {
+                Credentials = new Credentials(ghCon.Token)
+            };
+
+            var owner = ghCon.Owner!.Trim();
+            var repo = ghCon.Repository!.Trim();
+            var tag = ghCon.TagName!.Trim();
+            var cacheKey = $"{owner}/{repo}@{tag}";
+
+            // Resolve or create release ID only once per (owner,repo,tag)
+            long releaseId;
+            await s_releaseLock.WaitAsync();
+            try
+            {
+                if (!s_releaseIdCache.TryGetValue(cacheKey, out releaseId))
+                {
+                    // Fetch repo for default branch
+                    var repoInfo = await client.Repository.Get(owner, repo);
+                    var defaultBranch = string.IsNullOrWhiteSpace(repoInfo.DefaultBranch) ? "main" : repoInfo.DefaultBranch;
+
+                    // Find or create the release by tag, then re-fetch by ID to ensure upload URL is usable
+                    try
+                    {
+                        var byTag = await client.Repository.Release.Get(owner, repo, tag);
+                        releaseId = byTag.Id;
+                    }
+                    catch (NotFoundException)
+                    {
+                        try
+                        {
+                            var newRelease = new NewRelease(tag)
+                            {
+                                Name = string.IsNullOrWhiteSpace(ghCon.ReleaseName) ? tag : ghCon.ReleaseName,
+                                Prerelease = ghCon.Prerelease,
+                                Draft = ghCon.Draft,
+                                TargetCommitish = defaultBranch,
+                            };
+                            var created = await client.Repository.Release.Create(owner, repo, newRelease);
+                            releaseId = created.Id;
+                        }
+                        catch (ApiValidationException)
+                        {
+                            // Create lightweight tag at default branch head, then create release
+                            var head = await client.Git.Reference.Get(owner, repo, $"heads/{defaultBranch}");
+                            var newRef = new NewReference($"refs/tags/{tag}", head.Object.Sha);
+                            try { await client.Git.Reference.Create(owner, repo, newRef); } catch { }
+
+                            var created = await client.Repository.Release.Create(owner, repo, new NewRelease(tag)
+                            {
+                                Name = string.IsNullOrWhiteSpace(ghCon.ReleaseName) ? tag : ghCon.ReleaseName,
+                                Prerelease = ghCon.Prerelease,
+                                Draft = ghCon.Draft,
+                                TargetCommitish = defaultBranch,
+                            });
+                            releaseId = created.Id;
+                        }
+                    }
+
+                    s_releaseIdCache[cacheKey] = releaseId;
+                }
+            }
+            finally
+            {
+                s_releaseLock.Release();
+            }
+
+            // Work against the resolved release
+            var release = await client.Repository.Release.Get(owner, repo, releaseId);
+
+            ProgressPercentage = 25;
+
+            var fileName = Path.GetFileName(FullPath);
+
+            // Ensure we have up-to-date assets, delete existing if name matches
+            try
+            {
+                var assets = await client.Repository.Release.GetAllAssets(owner, repo, release.Id);
+                var existing = assets.FirstOrDefault(a => string.Equals(a.Name, fileName, StringComparison.OrdinalIgnoreCase));
+                if (existing != null)
+                {
+                    try { await client.Repository.Release.DeleteAsset(owner, repo, existing.Id); } catch { }
+                }
+            }
+            catch { /* ignore */ }
+
+            // Upload asset with one retry on NotFound or ApiValidationException
+            async Task UploadOnceAsync()
+            {
+                await using var fs = File.OpenRead(FullPath);
+                var upload = new ReleaseAssetUpload
+                {
+                    FileName = fileName,
+                    ContentType = "application/octet-stream",
+                    RawData = fs
+                };
+                _ = await client.Repository.Release.UploadAsset(release, upload);
+            }
+
+            try
+            {
+                await UploadOnceAsync();
+            }
+            catch (NotFoundException)
+            {
+                await Task.Delay(1000);
+                release = await client.Repository.Release.Get(owner, repo, release.Id);
+                await UploadOnceAsync();
+            }
+            catch (ApiValidationException)
+            {
+                await Task.Delay(1000);
+                release = await client.Repository.Release.Get(owner, repo, release.Id);
+                await UploadOnceAsync();
+            }
+
+            ProgressPercentage = 100;
+            RequesteUploadComplete(new UploadCompleteEventArgs(this));
+        }
     }
 
     private static async Task CreateABucketAsync(AmazonS3Client client, string? bucketName)
@@ -185,13 +330,13 @@ public partial class SingleFileUpload : RxObject
 
         if (e.PercentDone == 100)
         {
-            if (Application.Current.Dispatcher.CheckAccess())
+            if (System.Windows.Application.Current.Dispatcher.CheckAccess())
             {
                 RequesteUploadComplete(new UploadCompleteEventArgs(this));
             }
             else
             {
-                Application.Current.Dispatcher.BeginInvoke(
+                System.Windows.Application.Current.Dispatcher.BeginInvoke(
                   DispatcherPriority.Background,
                   new Action(() => RequesteUploadComplete(new UploadCompleteEventArgs(this))));
             }

@@ -13,22 +13,18 @@ public partial class App
 {
     protected override void OnStartup(StartupEventArgs e)
     {
-        // Ensure Velopack bootstrap is invoked very early so vpk can validate it
-        try
-        {
-            VelopackApp.Build().Run();
-        }
-        catch
-        {
-            // non-fatal at runtime; packaging will still validate presence
-        }
-
-        //// Generate application icons (PNG + ICO) under Images
-        ////AppIconGenerator.EnsureAppIcons();
-
         base.OnStartup(e);
         TryPromptVelopackTool();
-        RxApp.TaskpoolScheduler.Schedule(async () => await UpdateMyApp("D:\\Installers\\Releases"));
+        RxApp.TaskpoolScheduler.Schedule(async () => await UpdateMyApp("https://github.com/ChrisPulman/Velopack.UI/releases"));
+    }
+
+    [STAThread]
+    private static void Main(string[] args)
+    {
+        VelopackApp.Build().Run();
+        App app = new();
+        app.InitializeComponent();
+        app.Run();
     }
 
     private static void TryPromptVelopackTool()
