@@ -56,7 +56,7 @@ public partial class GitHubReleasesConnection : WebConnectionBase
             {
                 return "Missing Parameter";
             }
-            return $"https://github.com/{Owner}/{Repository}/releases/download/{TagName}/***Setup.exe";
+            return $"https://github.com/{Owner}/{Repository}/releases/download/{TagName}/Setup.exe";
         }
     }
 

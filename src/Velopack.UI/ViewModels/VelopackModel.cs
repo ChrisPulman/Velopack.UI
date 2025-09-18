@@ -642,8 +642,6 @@ _selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
         var releasesPath = VelopackOutputPath;
         if (SelectedConnection is FileSystemConnection fsc && !string.IsNullOrWhiteSpace(fsc.FileSystemPath))
         {
-            // Our Save() sets SquirrelOutputPath to <FileSystemPath>\\Releases when FileSystem is selected
-            // Be defensive and reconstruct it if not aligned
             var expected = Path.Combine(fsc.FileSystemPath, PathFolderHelper.ReleasesDirectory);
             if (!string.IsNullOrWhiteSpace(VelopackOutputPath) && Directory.Exists(VelopackOutputPath))
             {
@@ -665,35 +663,24 @@ _selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
             throw new Exception("No selected upload location !");
         }
 
-        // Build list of files to upload/copy from releases folder
-        var fileToUpdate = new List<string>()
-        {
-            "RELEASES",
-            $"{AppId}-{Version}-delta.nupkg",
-        };
+        // Gather all artifacts from releases folder (top-level only)
+        var allFiles = Directory.EnumerateFiles(releasesPath, "*", SearchOption.TopDirectoryOnly).ToList();
 
-        if (mode == 0)
+        // Filter for OnlyUpdate mode (mode == 1). mode == 0 => full publish
+        if (mode == 1)
         {
-            fileToUpdate.Add($"{AppId}-{Version}-full.nupkg");
-            fileToUpdate.Add("Setup.exe");
-            if (GenerateMsi && !string.IsNullOrWhiteSpace(MsiBitness))
+            allFiles = allFiles.Where(p =>
             {
-                fileToUpdate.Add($"{AppId}-{Version}-{MsiBitness}.msi");
-            }
+                var name = Path.GetFileName(p);
+                var ext = Path.GetExtension(p);
+                if (name.Equals("Setup.exe", StringComparison.OrdinalIgnoreCase)) return false;
+                if (ext.Equals(".msi", StringComparison.OrdinalIgnoreCase)) return false;
+                if (name.Contains("-full.nupkg", StringComparison.OrdinalIgnoreCase)) return false;
+                return true;
+            }).ToList();
         }
 
-        var updatedFiles = new List<FileInfo>();
-
-        foreach (var fp in fileToUpdate)
-        {
-            var ffp = Path.Combine(releasesPath, fp);
-            if (!File.Exists(ffp))
-            {
-                continue;
-            }
-
-            updatedFiles.Add(new FileInfo(ffp));
-        }
+        var updatedFiles = allFiles.Where(File.Exists).Select(p => new FileInfo(p)).ToList();
 
         UploadQueue ??= [];
         UploadQueue.Clear();

@@ -183,47 +183,119 @@ public partial class SingleFileUpload : RxObject
                 Credentials = new Credentials(ghCon.Token)
             };
 
-            // Find or create the release by tag
+            var owner = ghCon.Owner!.Trim();
+            var repo = ghCon.Repository!.Trim();
+            var tag = ghCon.TagName!.Trim();
+
+            // Fetch repo for default branch
+            var repoInfo = await client.Repository.Get(owner, repo);
+            var defaultBranch = string.IsNullOrWhiteSpace(repoInfo.DefaultBranch) ? "main" : repoInfo.DefaultBranch;
+
+            // Find or create the release by tag, then re-fetch by ID to ensure upload URL is usable
             Release release;
             try
             {
-                release = await client.Repository.Release.Get(ghCon.Owner, ghCon.Repository, ghCon.TagName);
+                var byTag = await client.Repository.Release.Get(owner, repo, tag);
+                release = await client.Repository.Release.Get(owner, repo, byTag.Id);
             }
-            catch
+            catch (NotFoundException)
             {
-                var newRelease = new NewRelease(ghCon.TagName)
+                try
                 {
-                    Name = string.IsNullOrWhiteSpace(ghCon.ReleaseName) ? ghCon.TagName : ghCon.ReleaseName,
-                    Prerelease = ghCon.Prerelease,
-                    Draft = ghCon.Draft,
-                };
-                release = await client.Repository.Release.Create(ghCon.Owner, ghCon.Repository, newRelease);
+                    var newRelease = new NewRelease(tag)
+                    {
+                        Name = string.IsNullOrWhiteSpace(ghCon.ReleaseName) ? tag : ghCon.ReleaseName,
+                        Prerelease = ghCon.Prerelease,
+                        Draft = ghCon.Draft,
+                        TargetCommitish = defaultBranch,
+                    };
+                    var created = await client.Repository.Release.Create(owner, repo, newRelease);
+                    await Task.Delay(750); // allow propagation
+                    release = await client.Repository.Release.Get(owner, repo, created.Id);
+                }
+                catch (ApiValidationException ave)
+                {
+                    // If the tag doesn't exist and release isn't draft, create a lightweight tag at default branch head then create release again
+                    try
+                    {
+                        // ensure refs/tags/{tag} exists
+                        var head = await client.Git.Reference.Get(owner, repo, $"heads/{defaultBranch}");
+                        var newRef = new NewReference($"refs/tags/{tag}", head.Object.Sha);
+                        try { await client.Git.Reference.Create(owner, repo, newRef); } catch { /* tag may already exist */ }
+
+                        var newRelease = new NewRelease(tag)
+                        {
+                            Name = string.IsNullOrWhiteSpace(ghCon.ReleaseName) ? tag : ghCon.ReleaseName,
+                            Prerelease = ghCon.Prerelease,
+                            Draft = ghCon.Draft,
+                            TargetCommitish = defaultBranch,
+                        };
+                        var created = await client.Repository.Release.Create(owner, repo, newRelease);
+                        await Task.Delay(750);
+                        release = await client.Repository.Release.Get(owner, repo, created.Id);
+                    }
+                    catch
+                    {
+                        // As a final fallback, create as draft if allowed
+                        var draftRelease = new NewRelease(tag)
+                        {
+                            Name = string.IsNullOrWhiteSpace(ghCon.ReleaseName) ? tag : ghCon.ReleaseName,
+                            Prerelease = ghCon.Prerelease,
+                            Draft = true,
+                            TargetCommitish = defaultBranch,
+                        };
+                        var created = await client.Repository.Release.Create(owner, repo, draftRelease);
+                        await Task.Delay(750);
+                        release = await client.Repository.Release.Get(owner, repo, created.Id);
+                    }
+                }
             }
 
             ProgressPercentage = 25;
 
-            // Upload/replace asset
             var fileName = Path.GetFileName(FullPath);
 
+            // Ensure we have up-to-date assets, delete existing if name matches
             try
             {
-                // If asset exists, delete to replace
-                var existing = release.Assets.FirstOrDefault(a => string.Equals(a.Name, fileName, StringComparison.OrdinalIgnoreCase));
+                var assets = await client.Repository.Release.GetAllAssets(owner, repo, release.Id);
+                var existing = assets.FirstOrDefault(a => string.Equals(a.Name, fileName, StringComparison.OrdinalIgnoreCase));
                 if (existing != null)
                 {
-                    await client.Repository.Release.DeleteAsset(ghCon.Owner, ghCon.Repository, existing.Id);
+                    try { await client.Repository.Release.DeleteAsset(owner, repo, existing.Id); } catch { }
                 }
             }
             catch { /* ignore */ }
 
-            await using var fs = File.OpenRead(FullPath);
-            var upload = new ReleaseAssetUpload
+            // Upload asset with one retry on NotFound or ApiValidationException
+            async Task UploadOnceAsync()
             {
-                FileName = fileName,
-                ContentType = "application/octet-stream",
-                RawData = fs
-            };
-            _ = await client.Repository.Release.UploadAsset(release, upload);
+                await using var fs = File.OpenRead(FullPath);
+                var upload = new ReleaseAssetUpload
+                {
+                    FileName = fileName,
+                    ContentType = "application/octet-stream",
+                    RawData = fs
+                };
+                _ = await client.Repository.Release.UploadAsset(release, upload);
+            }
+
+            try
+            {
+                await UploadOnceAsync();
+            }
+            catch (NotFoundException)
+            {
+                await Task.Delay(1000);
+                release = await client.Repository.Release.Get(owner, repo, release.Id);
+                await UploadOnceAsync();
+            }
+            catch (ApiValidationException)
+            {
+                await Task.Delay(1000);
+                release = await client.Repository.Release.Get(owner, repo, release.Id);
+                await UploadOnceAsync();
+            }
 
             ProgressPercentage = 100;
             RequesteUploadComplete(new UploadCompleteEventArgs(this));
