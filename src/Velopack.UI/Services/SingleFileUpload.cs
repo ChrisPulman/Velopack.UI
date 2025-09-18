@@ -5,6 +5,7 @@ using System.Runtime.Serialization;
 using System.Runtime.Versioning;
 using System.Windows;
 using System.Windows.Threading;
+using System.Threading;
 using Amazon.S3;
 using Amazon.S3.Model;
 using Amazon.S3.Transfer;
@@ -26,6 +27,10 @@ public partial class SingleFileUpload : RxObject
 {
     private FileUploadStatus _uploadStatus;
     private TransferUtility? _fileTransferUtility;
+
+    // Cache resolved GitHub release IDs to prevent duplicate release creation across assets
+    private static readonly SemaphoreSlim s_releaseLock = new(1, 1);
+    private static readonly Dictionary<string, long> s_releaseIdCache = new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
     /// Occurs when [on upload completed].
@@ -186,70 +191,67 @@ public partial class SingleFileUpload : RxObject
             var owner = ghCon.Owner!.Trim();
             var repo = ghCon.Repository!.Trim();
             var tag = ghCon.TagName!.Trim();
+            var cacheKey = $"{owner}/{repo}@{tag}";
 
-            // Fetch repo for default branch
-            var repoInfo = await client.Repository.Get(owner, repo);
-            var defaultBranch = string.IsNullOrWhiteSpace(repoInfo.DefaultBranch) ? "main" : repoInfo.DefaultBranch;
-
-            // Find or create the release by tag, then re-fetch by ID to ensure upload URL is usable
-            Release release;
+            // Resolve or create release ID only once per (owner,repo,tag)
+            long releaseId;
+            await s_releaseLock.WaitAsync();
             try
             {
-                var byTag = await client.Repository.Release.Get(owner, repo, tag);
-                release = await client.Repository.Release.Get(owner, repo, byTag.Id);
-            }
-            catch (NotFoundException)
-            {
-                try
+                if (!s_releaseIdCache.TryGetValue(cacheKey, out releaseId))
                 {
-                    var newRelease = new NewRelease(tag)
-                    {
-                        Name = string.IsNullOrWhiteSpace(ghCon.ReleaseName) ? tag : ghCon.ReleaseName,
-                        Prerelease = ghCon.Prerelease,
-                        Draft = ghCon.Draft,
-                        TargetCommitish = defaultBranch,
-                    };
-                    var created = await client.Repository.Release.Create(owner, repo, newRelease);
-                    await Task.Delay(750); // allow propagation
-                    release = await client.Repository.Release.Get(owner, repo, created.Id);
-                }
-                catch (ApiValidationException ave)
-                {
-                    // If the tag doesn't exist and release isn't draft, create a lightweight tag at default branch head then create release again
+                    // Fetch repo for default branch
+                    var repoInfo = await client.Repository.Get(owner, repo);
+                    var defaultBranch = string.IsNullOrWhiteSpace(repoInfo.DefaultBranch) ? "main" : repoInfo.DefaultBranch;
+
+                    // Find or create the release by tag, then re-fetch by ID to ensure upload URL is usable
                     try
                     {
-                        // ensure refs/tags/{tag} exists
-                        var head = await client.Git.Reference.Get(owner, repo, $"heads/{defaultBranch}");
-                        var newRef = new NewReference($"refs/tags/{tag}", head.Object.Sha);
-                        try { await client.Git.Reference.Create(owner, repo, newRef); } catch { /* tag may already exist */ }
-
-                        var newRelease = new NewRelease(tag)
-                        {
-                            Name = string.IsNullOrWhiteSpace(ghCon.ReleaseName) ? tag : ghCon.ReleaseName,
-                            Prerelease = ghCon.Prerelease,
-                            Draft = ghCon.Draft,
-                            TargetCommitish = defaultBranch,
-                        };
-                        var created = await client.Repository.Release.Create(owner, repo, newRelease);
-                        await Task.Delay(750);
-                        release = await client.Repository.Release.Get(owner, repo, created.Id);
+                        var byTag = await client.Repository.Release.Get(owner, repo, tag);
+                        releaseId = byTag.Id;
                     }
-                    catch
+                    catch (NotFoundException)
                     {
-                        // As a final fallback, create as draft if allowed
-                        var draftRelease = new NewRelease(tag)
+                        try
                         {
-                            Name = string.IsNullOrWhiteSpace(ghCon.ReleaseName) ? tag : ghCon.ReleaseName,
-                            Prerelease = ghCon.Prerelease,
-                            Draft = true,
-                            TargetCommitish = defaultBranch,
-                        };
-                        var created = await client.Repository.Release.Create(owner, repo, draftRelease);
-                        await Task.Delay(750);
-                        release = await client.Repository.Release.Get(owner, repo, created.Id);
+                            var newRelease = new NewRelease(tag)
+                            {
+                                Name = string.IsNullOrWhiteSpace(ghCon.ReleaseName) ? tag : ghCon.ReleaseName,
+                                Prerelease = ghCon.Prerelease,
+                                Draft = ghCon.Draft,
+                                TargetCommitish = defaultBranch,
+                            };
+                            var created = await client.Repository.Release.Create(owner, repo, newRelease);
+                            releaseId = created.Id;
+                        }
+                        catch (ApiValidationException)
+                        {
+                            // Create lightweight tag at default branch head, then create release
+                            var head = await client.Git.Reference.Get(owner, repo, $"heads/{defaultBranch}");
+                            var newRef = new NewReference($"refs/tags/{tag}", head.Object.Sha);
+                            try { await client.Git.Reference.Create(owner, repo, newRef); } catch { }
+
+                            var created = await client.Repository.Release.Create(owner, repo, new NewRelease(tag)
+                            {
+                                Name = string.IsNullOrWhiteSpace(ghCon.ReleaseName) ? tag : ghCon.ReleaseName,
+                                Prerelease = ghCon.Prerelease,
+                                Draft = ghCon.Draft,
+                                TargetCommitish = defaultBranch,
+                            });
+                            releaseId = created.Id;
+                        }
                     }
+
+                    s_releaseIdCache[cacheKey] = releaseId;
                 }
             }
+            finally
+            {
+                s_releaseLock.Release();
+            }
+
+            // Work against the resolved release
+            var release = await client.Repository.Release.Get(owner, repo, releaseId);
 
             ProgressPercentage = 25;
 

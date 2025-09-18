@@ -12,6 +12,10 @@
     <ApplicationIcon>Images\Application.ico</ApplicationIcon>
     <Description>Velopack.UI by Chris Pulman — a Windows tool to build, sign, and publish Velopack (vpk) installers. Compose installer contents with drag &amp; drop, set metadata/icons, generate delta/full packages and optional MSI, then build and publish Releases.</Description>
     <StartupObject>Velopack.UI.App</StartupObject>
+    <Title>Velopack.UI</Title>
+    <Authors>Chris Pulman</Authors>
+    <PackageIcon>Application.png</PackageIcon>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
 
   <ItemGroup>
@@ -31,11 +35,18 @@
 
   <ItemGroup>
     <ApplicationDefinition Remove="App.xaml" />
-    <Page Include="App.xaml"/>
+    <Page Include="App.xaml" />
   </ItemGroup>
 
   <ItemGroup>
     <Content Include="Images\Application.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Images\Application.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
   </ItemGroup>
 
 </Project>
