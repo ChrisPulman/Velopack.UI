@@ -20,7 +20,7 @@
 
   <ItemGroup>
     <PackageReference Include="Octokit" Version="14.0.0" />
-    <PackageReference Include="ReactiveUI.SourceGenerators" Version="2.4.1" />
+    <PackageReference Include="ReactiveUI.SourceGenerators" Version="2.5.1" />
     <PackageReference Include="Velopack" Version="0.0.1298" />
     <PackageReference Include="AWSSDK.S3" Version="4.0.7.9" />
     <PackageReference Include="CrissCross.WPF.UI" Version="2.6.2" />
