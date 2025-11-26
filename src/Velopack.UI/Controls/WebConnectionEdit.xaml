@@ -202,22 +202,26 @@
                     <ui:TextBlock
                         Grid.Row="4"
                         Grid.Column="0"
-                        Text="Token:" />
+                        Width="150"
+                        Text="Personal access token (classic) - repo: "
+                        TextWrapping="Wrap" />
                     <ui:TextBox
                         Grid.Row="4"
                         Grid.Column="1"
                         Text="{Binding Token, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
 
-                    <CheckBox
+                    <ui:CheckBoxModern
                         Grid.Row="5"
                         Grid.Column="1"
-                        Content="Prerelease"
-                        IsChecked="{Binding Prerelease}" />
-                    <CheckBox
+                        BoxSize="22"
+                        Checked="{Binding Prerelease}"
+                        Text="Prerelease" />
+                    <ui:CheckBoxModern
                         Grid.Row="6"
                         Grid.Column="1"
-                        Content="Draft"
-                        IsChecked="{Binding Draft}" />
+                        BoxSize="22"
+                        Checked="{Binding Draft}"
+                        Text="Draft" />
 
                     <ui:TextBlock
                         Grid.Row="7"

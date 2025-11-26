@@ -188,15 +188,16 @@
                             Grid.Row="5"
                             Grid.Column="0"
                             Background="{x:Null}"
-                            IsEnabled="{Binding ElementName=cbManualVersion, Path=IsChecked}"
+                            IsEnabled="{Binding ElementName=cbManualVersion, Path=Checked}"
                             Text="{Binding Version, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged}" />
-                        <CheckBox
+                        <ui:CheckBoxModern
                             x:Name="cbManualVersion"
                             Grid.Row="6"
                             Grid.Column="0"
                             Margin="4"
-                            Content="Set Version Manually"
-                            IsChecked="{Binding SetVersionManually}" />
+                            BoxSize="22"
+                            Checked="{Binding SetVersionManually}"
+                            Text="Set Version Manually" />
 
                         <ui:TextBlock
                             Grid.Row="8"
@@ -273,18 +274,22 @@
                                     <RowDefinition Height="Auto" />
                                     <RowDefinition Height="Auto" />
                                 </ui:Grid.RowDefinitions>
-                                <CheckBox
+                                <ui:CheckBoxModern
                                     Grid.Row="0"
                                     Grid.Column="0"
                                     Margin="4"
-                                    Content="Generate Delta Packages"
-                                    IsChecked="{Binding GenerateDeltaPackages}" />
+                                    BoxSize="22"
+                                    Checked="{Binding GenerateDeltaPackages}"
+                                    Text="Generate Delta Packages" />
                                 <ui:StackPanel
                                     Grid.Row="1"
                                     Grid.Column="0"
                                     Margin="4"
                                     Orientation="Horizontal">
-                                    <CheckBox Content="Generate MSI" IsChecked="{Binding GenerateMsi}" />
+                                    <ui:CheckBoxModern
+                                        BoxSize="22"
+                                        Checked="{Binding GenerateMsi}"
+                                        Text="Generate MSI" />
                                     <ui:TextBlock
                                         Margin="12,0,4,0"
                                         VerticalAlignment="Center"
@@ -400,17 +405,17 @@
                     Margin="2,40,3,40.5"
                     HorizontalAlignment="Center"
                     IsTabStop="False" />
-                <GroupBox Grid.Column="2" Margin="5,5,5,4.5">
-                    <GroupBox.Header>
-                        <StackPanel Orientation="Horizontal">
+                <ui:GroupBox Grid.Column="2" Margin="5,5,5,4.5">
+                    <ui:GroupBox.Header>
+                        <ui:StackPanel Orientation="Horizontal">
                             <ui:TextBlock FontSize="14" Text="INSTALLER PACKAGE CONTENT" />
-                        </StackPanel>
-                    </GroupBox.Header>
-                    <Grid>
-                        <Grid.RowDefinitions>
+                        </ui:StackPanel>
+                    </ui:GroupBox.Header>
+                    <ui:Grid>
+                        <ui:Grid.RowDefinitions>
                             <RowDefinition Height="*" />
                             <RowDefinition Height="Auto" />
-                        </Grid.RowDefinitions>
+                        </ui:Grid.RowDefinitions>
                         <vtv:VelopackUITreeViewControl
                             x:Name="PackageTreeview"
                             dd:DragDrop.DropHandler="{Binding}"
@@ -499,61 +504,63 @@
                                 </ui:Grid>
                             </ui:Grid>
                         </ui:Border>
-                    </Grid>
-                </GroupBox>
+                    </ui:Grid>
+                </ui:GroupBox>
 
-                <GroupBox
+                <ui:GroupBox
                     Grid.Row="1"
                     Grid.Column="2"
-                    Margin="5,5.5,5,4.5">
-                    <GroupBox.Header>
+                    Margin="5">
+                    <ui:GroupBox.Header>
                         <StackPanel Orientation="Horizontal">
                             <ui:TextBlock FontSize="14" Text="UPLOAD QUEUE" />
                         </StackPanel>
-                    </GroupBox.Header>
-                    <ListView
+                    </ui:GroupBox.Header>
+                    <ui:ListView
                         Grid.Row="1"
                         Background="{x:Null}"
                         ItemsSource="{Binding Path=UploadQueue}"
+                        ScrollViewer.CanContentScroll="True"
+                        ScrollViewer.HorizontalScrollBarVisibility="Visible"
                         SelectedItem="{Binding Path=SelectedUploadItem}">
-                        <ListView.View>
-                            <GridView>
-                                <GridView.Columns>
-                                    <GridViewColumn
+                        <ui:ListView.View>
+                            <ui:GridView>
+                                <ui:GridView.Columns>
+                                    <ui:GridViewColumn
                                         Width="170"
                                         DisplayMemberBinding="{Binding Path=Filename}"
                                         Header="Filename" />
-                                    <GridViewColumn
+                                    <ui:GridViewColumn
                                         Width="230"
                                         DisplayMemberBinding="{Binding Path=DestinationPath}"
                                         Header="Destination" />
-                                    <GridViewColumn
+                                    <ui:GridViewColumn
                                         Width="150"
                                         DisplayMemberBinding="{Binding Path=ConnectionName}"
                                         Header="Location" />
-                                    <GridViewColumn
+                                    <ui:GridViewColumn
                                         Width="120"
                                         DisplayMemberBinding="{Binding Path=FormattedStatus}"
                                         Header="Status" />
-                                    <GridViewColumn
+                                    <ui:GridViewColumn
                                         Width="100"
                                         DisplayMemberBinding="{Binding Path=FileSize}"
                                         Header="Size" />
-                                    <GridViewColumn Width="150" Header="Upload %">
-                                        <GridViewColumn.CellTemplate>
+                                    <ui:GridViewColumn Width="150" Header="Upload %">
+                                        <ui:GridViewColumn.CellTemplate>
                                             <DataTemplate>
                                                 <ProgressBar
                                                     Maximum="100"
                                                     Minimum="0"
                                                     Value="{Binding Path=ProgressPercentage}" />
                                             </DataTemplate>
-                                        </GridViewColumn.CellTemplate>
-                                    </GridViewColumn>
-                                </GridView.Columns>
-                            </GridView>
-                        </ListView.View>
-                    </ListView>
-                </GroupBox>
+                                        </ui:GridViewColumn.CellTemplate>
+                                    </ui:GridViewColumn>
+                                </ui:GridView.Columns>
+                            </ui:GridView>
+                        </ui:ListView.View>
+                    </ui:ListView>
+                </ui:GroupBox>
 
                 <ui:Grid
                     Grid.Row="2"

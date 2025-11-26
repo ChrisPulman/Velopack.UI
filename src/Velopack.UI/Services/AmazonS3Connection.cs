@@ -1,4 +1,7 @@
-﻿using System.Runtime.Serialization;
+﻿// Copyright (c) Chris Pulman. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System.Runtime.Serialization;
 using System.Runtime.Versioning;
 using Amazon;
 using FluentValidation;
@@ -21,7 +24,7 @@ public partial class AmazonS3Connection : WebConnectionBase
     private string? _accessKey;
     private List<string>? _availableRegionList;
 
-    //http://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-s3-bucket-naming-requirements.html
+    // http://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-s3-bucket-naming-requirements.html
     private string? _bucketName;
 
     private string? _regionName;
@@ -43,10 +46,12 @@ public partial class AmazonS3Connection : WebConnectionBase
     {
         get
         {
-            if (_availableRegionList == null) {
+            if (_availableRegionList == null)
+            {
                 _availableRegionList = [];
 
-                foreach (var r in RegionEndpoint.EnumerableAllRegions) {
+                foreach (var r in RegionEndpoint.EnumerableAllRegions)
+                {
                     _availableRegionList.Add(r.DisplayName);
                 }
             }
@@ -67,7 +72,8 @@ public partial class AmazonS3Connection : WebConnectionBase
         set
         {
             _bucketName = value;
-            if (_bucketName != null) {
+            if (_bucketName != null)
+            {
                 _bucketName = _bucketName.ToLower().Replace(" ", string.Empty);
             }
 
@@ -100,7 +106,8 @@ public partial class AmazonS3Connection : WebConnectionBase
     {
         get
         {
-            if (string.IsNullOrWhiteSpace(BucketName) || string.IsNullOrWhiteSpace(RegionName)) {
+            if (string.IsNullOrWhiteSpace(BucketName) || string.IsNullOrWhiteSpace(RegionName))
+            {
                 return "Missing Parameter";
             }
 
@@ -111,11 +118,12 @@ public partial class AmazonS3Connection : WebConnectionBase
     /// <summary>
     /// Validates this instance.
     /// </summary>
-    /// <returns></returns>
+    /// <returns>A ValidationResult.</returns>
     public override ValidationResult Validate()
     {
         var commonValid = new Validator().Validate(this);
-        if (!commonValid.IsValid) {
+        if (!commonValid.IsValid)
+        {
             return commonValid;
         }
 
@@ -129,20 +137,13 @@ public partial class AmazonS3Connection : WebConnectionBase
     {
         public Validator()
         {
-            //RuleFor(c => c.ConnectionName).NotEmpty();
+            // RuleFor(c => c.ConnectionName).NotEmpty();
             RuleFor(c => c.RegionName).NotEmpty();
             RuleFor(c => c.SecretAccessKey).NotEmpty();
             RuleFor(c => c.AccessKey).NotEmpty();
             RuleFor(c => c.BucketName).Must(CheckBucketName).WithState(x => "Bucket Name not valid ! See Amazon SDK documentation");
         }
 
-        private static bool CheckBucketName(string? bucketName)
-        {
-            if (string.IsNullOrWhiteSpace(bucketName) || bucketName.Contains(' ')) {
-                return false;
-            }
-
-            return true;
-        }
+        private static bool CheckBucketName(string? bucketName) => !string.IsNullOrWhiteSpace(bucketName) && !bucketName.Contains(' ');
     }
 }

@@ -1,5 +1,9 @@
+// Copyright (c) Chris Pulman. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System.Runtime.Serialization;
 using System.Runtime.Versioning;
+using System.Text.Json.Serialization;
 using FluentValidation;
 using FluentValidation.Results;
 using ReactiveUI;
@@ -39,14 +43,17 @@ public partial class GitHubReleasesConnection : WebConnectionBase
     [Reactive]
     private bool _draft;
 
-    [DataMember]
     [Reactive]
+    [JsonIgnore]
     private string? _token; // GitHub PAT with repo scope
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="GitHubReleasesConnection"/> class.
+    /// </summary>
     public GitHubReleasesConnection() => ConnectionName = "GitHub Releases";
 
     /// <summary>
-    /// Example download URL for Setup.exe in this release.
+    /// Gets example download URL for Setup.exe in this release.
     /// </summary>
     public string SetupDownloadUrl
     {
@@ -56,10 +63,15 @@ public partial class GitHubReleasesConnection : WebConnectionBase
             {
                 return "Missing Parameter";
             }
+
             return $"https://github.com/{Owner}/{Repository}/releases/download/{TagName}/Setup.exe";
         }
     }
 
+    /// <summary>
+    /// Validates this instance.
+    /// </summary>
+    /// <returns>A ValidationResult.</returns>
     public override ValidationResult Validate()
     {
         this.RaisePropertyChanged(nameof(SetupDownloadUrl));

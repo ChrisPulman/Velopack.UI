@@ -9,17 +9,18 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>preview</LangVersion>
     <RootNamespace>Velopack.UI</RootNamespace>
-    <ApplicationIcon>Images\Application.ico</ApplicationIcon>
+    <ApplicationIcon>icon.ico</ApplicationIcon>
     <Description>Velopack.UI by Chris Pulman — a Windows tool to build, sign, and publish Velopack (vpk) installers. Compose installer contents with drag &amp; drop, set metadata/icons, generate delta/full packages and optional MSI, then build and publish Releases.</Description>
     <StartupObject>Velopack.UI.App</StartupObject>
     <Title>Velopack.UI</Title>
     <Authors>Chris Pulman</Authors>
-    <PackageIcon>Application.png</PackageIcon>
+    <PackageIcon>icon.png</PackageIcon>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Octokit" Version="14.0.0" />
+    <PackageReference Include="ReactiveMarbles.ObservableEvents.SourceGenerator" Version="1.3.1" />
     <PackageReference Include="ReactiveUI.SourceGenerators" Version="2.5.1" />
     <PackageReference Include="Velopack" Version="0.0.1298" />
     <PackageReference Include="AWSSDK.S3" Version="4.0.13.1" />
@@ -39,7 +40,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="Images\Application.ico" />
+    <Content Include="icon.ico" />
   </ItemGroup>
 
   <ItemGroup>

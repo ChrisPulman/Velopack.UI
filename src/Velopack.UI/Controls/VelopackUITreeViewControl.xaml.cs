@@ -1,3 +1,7 @@
+// Copyright (c) Chris Pulman. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Collections;
 using System.Runtime.Versioning;
 using System.Windows;
@@ -5,6 +9,7 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
+using ReactiveMarbles.ObservableEvents;
 
 namespace Velopack.UI.Controls;
 
@@ -16,17 +21,6 @@ namespace Velopack.UI.Controls;
 [SupportedOSPlatform("windows10.0.19041.0")]
 public partial class VelopackUITreeViewControl
 {
-    /// <summary>
-    /// Initializes a new instance of the <see cref="VelopackUITreeViewControl"/> class.
-    /// </summary>
-    public VelopackUITreeViewControl()
-    {
-        InitializeComponent();
-        Loaded += (_, _) => PART_Tree?.Tag = SelectedItems;
-
-        DataContextChanged += (_, __) => PART_Tree?.Tag = SelectedItems;
-    }
-
     /// <summary>
     /// The items source property.
     /// </summary>
@@ -44,6 +38,20 @@ public partial class VelopackUITreeViewControl
     /// </summary>
     public static readonly DependencyProperty ItemTemplateProperty = DependencyProperty.Register(
         nameof(ItemTemplate), typeof(HierarchicalDataTemplate), typeof(VelopackUITreeViewControl));
+
+    private object? _lastAnchor;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="VelopackUITreeViewControl"/> class.
+    /// </summary>
+    public VelopackUITreeViewControl()
+    {
+        InitializeComponent();
+        this.Events().Loaded
+            .Subscribe(_ => PART_Tree.Tag = SelectedItems);
+        this.Events().DataContextChanged
+            .Subscribe(_ => PART_Tree.Tag = SelectedItems);
+    }
 
     /// <summary>
     /// Gets or sets the items source.
@@ -81,115 +89,29 @@ public partial class VelopackUITreeViewControl
         set => SetValue(ItemTemplateProperty, value);
     }
 
+    private static bool IsCtrlDown => (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control;
+
+    private static bool IsShiftDown => (Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift;
+
     private static void OnSelectedItemsChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         var ctl = (VelopackUITreeViewControl)d;
         ctl.PART_Tree?.Tag = ctl.SelectedItems;
     }
 
-    private static bool IsCtrlDown => (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control;
-    private static bool IsShiftDown => (Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift;
-
-    private object? _lastAnchor;
-
     private static bool IsOnExpander(DependencyObject? source)
     {
         while (source != null)
         {
-            if (source is ToggleButton) return true;
+            if (source is ToggleButton)
+            {
+                return true;
+            }
+
             source = VisualTreeHelper.GetParent(source);
         }
+
         return false;
-    }
-
-    private void OnTreeViewPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-    {
-        if (IsOnExpander(e.OriginalSource as DependencyObject)) return;
-        var container = FindContainer(e.OriginalSource as DependencyObject);
-        if (container == null) return;
-        if (SelectedItems == null) return;
-
-        var item = container.DataContext;
-        if (!IsCtrlDown && !IsShiftDown)
-        {
-            ClearSelectionInternal();
-            AddToSelection(item);
-            _lastAnchor = item;
-        }
-        else if (IsCtrlDown)
-        {
-            if (SelectedItems.Contains(item)) RemoveFromSelection(item);
-            else { AddToSelection(item); _lastAnchor = item; }
-        }
-        else if (IsShiftDown && _lastAnchor != null)
-        {
-            var flat = Flatten(PART_Tree).ToList();
-            var a = flat.FindIndex(x => Equals((x as TreeViewItem)?.DataContext, _lastAnchor));
-            var b = flat.FindIndex(x => Equals((x as TreeViewItem)?.DataContext, item));
-            if (a >= 0 && b >= 0)
-            {
-                if (a > b) (a, b) = (b, a);
-                ClearSelectionInternal();
-                for (var i = a; i <= b; i++) AddToSelection(((TreeViewItem)flat[i]).DataContext);
-            }
-        }
-        e.Handled = true;
-    }
-
-    private void OnTreeViewPreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
-    {
-        var container = FindContainer(e.OriginalSource as DependencyObject);
-        if (container == null) return;
-        if (SelectedItems == null) return;
-        var item = container.DataContext;
-        if (!SelectedItems.Contains(item))
-        {
-            if (!IsCtrlDown) ClearSelectionInternal();
-            AddToSelection(item);
-            _lastAnchor = item;
-        }
-        // allow context menu
-    }
-
-    private void OnTreeViewPreviewKeyDown(object sender, KeyEventArgs e)
-    {
-        if (e.Key == Key.A && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
-        {
-            if (SelectedItems == null) return;
-            ClearSelectionInternal();
-            foreach (var tvi in Flatten(PART_Tree)) AddToSelection(tvi.DataContext);
-            e.Handled = true;
-        }
-    }
-
-    private void ClearSelectionInternal()
-    {
-        if (SelectedItems == null) return;
-        foreach (var obj in SelectedItems.Cast<object>().ToList())
-        {
-            SetItemSelected(obj, false);
-            SelectedItems.Remove(obj);
-        }
-    }
-
-    private void AddToSelection(object obj)
-    {
-        if (SelectedItems == null) return;
-        if (!SelectedItems.Contains(obj))
-        {
-            SelectedItems.Add(obj);
-            SetItemSelected(obj, true);
-        }
-    }
-
-    private void RemoveFromSelection(object obj)
-    {
-        if (SelectedItems == null) return;
-        if (SelectedItems.Contains(obj))
-        {
-            SelectedItems.Remove(obj);
-            SetItemSelected(obj, false);
-        }
     }
 
     private static void SetItemSelected(object obj, bool selected)
@@ -211,7 +133,10 @@ public partial class VelopackUITreeViewControl
                 yield return tvi;
                 if (tvi.IsExpanded)
                 {
-                    foreach (var child in Flatten(tvi)) yield return child;
+                    foreach (var child in Flatten(tvi))
+                    {
+                        yield return child;
+                    }
                 }
             }
         }
@@ -223,6 +148,156 @@ public partial class VelopackUITreeViewControl
         {
             d = VisualTreeHelper.GetParent(d);
         }
+
         return d as TreeViewItem;
+    }
+
+    private void OnTreeViewPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (IsOnExpander(e.OriginalSource as DependencyObject))
+        {
+            return;
+        }
+
+        var container = FindContainer(e.OriginalSource as DependencyObject);
+        if (container == null)
+        {
+            return;
+        }
+
+        if (SelectedItems == null)
+        {
+            return;
+        }
+
+        var item = container.DataContext;
+        if (!IsCtrlDown && !IsShiftDown)
+        {
+            ClearSelectionInternal();
+            AddToSelection(item);
+            _lastAnchor = item;
+        }
+        else if (IsCtrlDown)
+        {
+            if (SelectedItems.Contains(item))
+            {
+                RemoveFromSelection(item);
+            }
+            else
+            {
+                AddToSelection(item);
+                _lastAnchor = item;
+            }
+        }
+        else if (IsShiftDown && _lastAnchor != null)
+        {
+            var flat = Flatten(PART_Tree).ToList();
+            var a = flat.FindIndex(x => Equals(x?.DataContext, _lastAnchor));
+            var b = flat.FindIndex(x => Equals(x?.DataContext, item));
+            if (a >= 0 && b >= 0)
+            {
+                if (a > b)
+                {
+                    (a, b) = (b, a);
+                }
+
+                ClearSelectionInternal();
+                for (var i = a; i <= b; i++)
+                {
+                    AddToSelection(flat[i].DataContext);
+                }
+            }
+        }
+
+        e.Handled = true;
+    }
+
+    private void OnTreeViewPreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        var container = FindContainer(e.OriginalSource as DependencyObject);
+        if (container == null)
+        {
+            return;
+        }
+
+        if (SelectedItems == null)
+        {
+            return;
+        }
+
+        var item = container.DataContext;
+        if (!SelectedItems.Contains(item))
+        {
+            if (!IsCtrlDown)
+            {
+                ClearSelectionInternal();
+            }
+
+            AddToSelection(item);
+            _lastAnchor = item;
+        }
+
+        // allow context menu
+    }
+
+    private void OnTreeViewPreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.A && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
+        {
+            if (SelectedItems == null)
+            {
+                return;
+            }
+
+            ClearSelectionInternal();
+            foreach (var tvi in Flatten(PART_Tree))
+            {
+                AddToSelection(tvi.DataContext);
+            }
+
+            e.Handled = true;
+        }
+    }
+
+    private void ClearSelectionInternal()
+    {
+        if (SelectedItems == null)
+        {
+            return;
+        }
+
+        foreach (var obj in SelectedItems.Cast<object>().ToList())
+        {
+            SetItemSelected(obj, false);
+            SelectedItems.Remove(obj);
+        }
+    }
+
+    private void AddToSelection(object obj)
+    {
+        if (SelectedItems == null)
+        {
+            return;
+        }
+
+        if (!SelectedItems.Contains(obj))
+        {
+            SelectedItems.Add(obj);
+            SetItemSelected(obj, true);
+        }
+    }
+
+    private void RemoveFromSelection(object obj)
+    {
+        if (SelectedItems == null)
+        {
+            return;
+        }
+
+        if (SelectedItems.Contains(obj))
+        {
+            SelectedItems.Remove(obj);
+            SetItemSelected(obj, false);
+        }
     }
 }

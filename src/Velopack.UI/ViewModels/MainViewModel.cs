@@ -1,4 +1,7 @@
-﻿using System.ComponentModel;
+﻿// Copyright (c) Chris Pulman. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Reactive;
@@ -15,11 +18,15 @@ using Velopack.UI.Helpers;
 
 namespace Velopack.UI;
 
+/// <summary>
+/// MainViewModel.
+/// </summary>
+/// <seealso cref="CrissCross.RxObject" />
 [SupportedOSPlatform("windows10.0.19041.0")]
 public partial class MainViewModel : RxObject
 {
-    internal BackgroundWorker? ActiveBackgroungWorker;
     private readonly JsonSerializerOptions _saveOptions;
+    private BackgroundWorker? _activeBackgroungWorker;
     private bool _abortPackageFlag;
     [Reactive]
     private string? _currentPackageCreationStage;
@@ -34,6 +41,9 @@ public partial class MainViewModel : RxObject
     private IDisposable? _dirtySubscription;
     private bool _hasUnsavedNonTreeChanges;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="MainViewModel"/> class.
+    /// </summary>
     public MainViewModel()
     {
         _saveOptions = new JsonSerializerOptions
@@ -81,6 +91,19 @@ public partial class MainViewModel : RxObject
                                 }
                             }
                         }
+                        else if (ti.Type == typeof(WebConnectionBase))
+                        {
+                            ti.PolymorphismOptions = new JsonPolymorphismOptions
+                            {
+                                TypeDiscriminatorPropertyName = "$type",
+                                DerivedTypes =
+                                {
+                                    new JsonDerivedType(typeof(GitHubReleasesConnection), "GitHubReleasesConnection"),
+                                    new JsonDerivedType(typeof(AmazonS3Connection), "AmazonS3Connection"),
+                                    new JsonDerivedType(typeof(FileSystemConnection), "FileSystemConnection"),
+                                }
+                            };
+                        }
                     }
                 }
             }
@@ -101,30 +124,12 @@ public partial class MainViewModel : RxObject
         AbortPackageCreationCmd = ReactiveCommand.Create(AbortPackageCreation);
     }
 
-    private void SetupDirtyTracking()
-    {
-        _dirtySubscription?.Dispose();
-        if (Model == null)
-        {
-            return;
-        }
-
-        var dirtyStreams = new IObservable<Unit>[]
-        {
-            Model.WhenAnyValue(m => m.Title).Select(_ => Unit.Default),
-            Model.WhenAnyValue(m => m.Authors).Select(_ => Unit.Default),
-            Model.WhenAnyValue(m => m.Description).Select(_ => Unit.Default),
-            Model.WhenAnyValue(m => m.Version).Select(_ => Unit.Default),
-            Model.WhenAnyValue(m => m.AppId).Select(_ => Unit.Default),
-            Model.WhenAnyValue(m => m.SelectedConnectionString).Select(_ => Unit.Default),
-            Model.WhenAnyValue(m => m.PackageFilesOutputPath).Select(_ => Unit.Default),
-            Model.WhenAnyValue(m => m.VelopackOutputPath).Select(_ => Unit.Default),
-            Model.WhenAnyValue(m => m.FileSystemBasePath).Select(_ => Unit.Default)
-        };
-        _dirtySubscription = Observable.Merge(dirtyStreams)
-            .Subscribe(_ => _hasUnsavedNonTreeChanges = true);
-    }
-
+    /// <summary>
+    /// Gets a value indicating whether this instance has unsaved changes.
+    /// </summary>
+    /// <value>
+    ///   <c>true</c> if this instance has unsaved changes; otherwise, <c>false</c>.
+    /// </value>
     public bool HasUnsavedChanges => (Model?.HasUnsavedTreeChanges ?? false) || _hasUnsavedNonTreeChanges || string.IsNullOrWhiteSpace(FilePath);
 
     /// <summary>
@@ -144,13 +149,13 @@ public partial class MainViewModel : RxObject
         set
         {
             Model?.CurrentFilePath = value;
-            
+
             this.RaiseAndSetIfChanged(ref _filePath, value);
         }
     }
 
     /// <summary>
-    /// The user preference
+    /// Gets the user preference.
     /// </summary>
     public Preference UserPreference { get; }
 
@@ -158,12 +163,11 @@ public partial class MainViewModel : RxObject
     /// Gets the window title.
     /// </summary>
     /// <value>The window title.</value>
-
     public string WindowTitle
     {
         get
         {
-            var fp = "New Project" + "*";
+            var fp = "New Project*";
             if (!string.IsNullOrWhiteSpace(FilePath))
             {
                 fp = Path.GetFileNameWithoutExtension(FilePath);
@@ -178,9 +182,9 @@ public partial class MainViewModel : RxObject
     /// </summary>
     public void AbortPackageCreation()
     {
-        if (ActiveBackgroungWorker != null)
+        if (_activeBackgroungWorker != null)
         {
-            ActiveBackgroungWorker.CancelAsync();
+            _activeBackgroungWorker.CancelAsync();
 
             _exeProcess?.Kill();
         }
@@ -264,7 +268,7 @@ public partial class MainViewModel : RxObject
 
             FilePath = filepath;
 
-            var m = JsonSerializer.Deserialize<VelopackModel>(File.ReadAllText(filepath));
+            var m = JsonSerializer.Deserialize<VelopackModel>(File.ReadAllText(filepath), _saveOptions);
 
             if (m == null)
             {
@@ -272,6 +276,7 @@ public partial class MainViewModel : RxObject
             }
 
             Model = m;
+
             // Resync connection instances and mirror saved FileSystemBasePath into the active FileSystemConnection
             Model.ResyncAfterLoad();
             SetupDirtyTracking();
@@ -295,13 +300,13 @@ public partial class MainViewModel : RxObject
     /// Publishes the package.
     /// </summary>
     /// <exception cref="Exception">
-    /// Package Details are invalid or incomplete ! or Selected connection details are not valid !
+    /// Package Details are invalid or incomplete ! or Selected connection details are not valid !.
     /// </exception>
     public void PublishPackage()
     {
         try
         {
-            if (ActiveBackgroungWorker?.IsBusy == true)
+            if (_activeBackgroungWorker?.IsBusy == true)
             {
                 Trace.TraceError("You shouldn't be here !");
                 return;
@@ -329,7 +334,6 @@ public partial class MainViewModel : RxObject
 
             // I proceed only if i created the project .velo file and directory I need existing
             // directory to create the packages.
-
             if (!_isSaved)
             {
                 return;
@@ -337,13 +341,13 @@ public partial class MainViewModel : RxObject
 
             IsBusy = true;
 
-            ActiveBackgroungWorker = new BackgroundWorker() { WorkerReportsProgress = true, WorkerSupportsCancellation = true };
+            _activeBackgroungWorker = new BackgroundWorker() { WorkerReportsProgress = true, WorkerSupportsCancellation = true };
 
-            ActiveBackgroungWorker.DoWork += ActiveBackgroungWorker_DoWork;
-            ActiveBackgroungWorker.RunWorkerCompleted += PackageCreationCompleted;
-            ActiveBackgroungWorker.ProgressChanged += ActiveBackgroungWorker_ProgressChanged;
+            _activeBackgroungWorker.DoWork += ActiveBackgroungWorker_DoWork;
+            _activeBackgroungWorker.RunWorkerCompleted += PackageCreationCompleted;
+            _activeBackgroungWorker.ProgressChanged += ActiveBackgroungWorker_ProgressChanged;
 
-            ActiveBackgroungWorker.RunWorkerAsync(this);
+            _activeBackgroungWorker.RunWorkerAsync(this);
         }
         catch (Exception ex)
         {
@@ -358,7 +362,7 @@ public partial class MainViewModel : RxObject
     /// 4) Publish to amazon the updated file ( to get the update file , search the timedate &gt;
     ///    of building time ) /// - Possibly in async way..
     /// - Must be callable from command line, so i can optionally start this process from at the
-    ///   end of visual studio release build
+    ///   end of visual studio release build.
     /// </summary>
     [ReactiveCommand]
     public void PublishPackageComplete()
@@ -388,6 +392,7 @@ public partial class MainViewModel : RxObject
             SaveAs();
             return;
         }
+
         if (FilePath.Contains(PathFolderHelper.ProjectFileExtension))
         {
             FilePath = Path.GetDirectoryName(FilePath);
@@ -403,6 +408,7 @@ public partial class MainViewModel : RxObject
         if (Model.SelectedConnection is FileSystemConnection fsc && !string.IsNullOrWhiteSpace(fsc.FileSystemPath))
         {
             baseDir = fsc.FileSystemPath;
+
             // persist base into model so it is saved in *.velo and restored later
             Model.FileSystemBasePath = fsc.FileSystemPath;
         }
@@ -421,7 +427,6 @@ public partial class MainViewModel : RxObject
         var asProj = Path.Combine(FilePath!, $"{Model.AppId}{PathFolderHelper.ProjectFileExtension}");
 
         // Serialize with a resolver that ignores non-persistable/runtime properties
-
         File.WriteAllText(asProj, JsonSerializer.Serialize(Model, _saveOptions));
         Trace.WriteLine("FILE SAVED ! : " + FilePath);
 
@@ -469,24 +474,53 @@ public partial class MainViewModel : RxObject
         }
     }
 
+    /// <summary>
+    /// Releases unmanaged and - optionally - managed resources.
+    /// </summary>
+    /// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only
+    /// unmanaged resources.</param>
     protected override void Dispose(bool disposing)
     {
         base.Dispose(disposing);
         if (disposing)
         {
-            ActiveBackgroungWorker?.Dispose();
+            _activeBackgroungWorker?.Dispose();
             _exeProcess?.Dispose();
             _dirtySubscription?.Dispose();
         }
+    }
+
+    private void SetupDirtyTracking()
+    {
+        _dirtySubscription?.Dispose();
+        if (Model == null)
+        {
+            return;
+        }
+
+        var dirtyStreams = new IObservable<Unit>[]
+        {
+            Model.WhenAnyValue(m => m.Title).Select(_ => Unit.Default),
+            Model.WhenAnyValue(m => m.Authors).Select(_ => Unit.Default),
+            Model.WhenAnyValue(m => m.Description).Select(_ => Unit.Default),
+            Model.WhenAnyValue(m => m.Version).Select(_ => Unit.Default),
+            Model.WhenAnyValue(m => m.AppId).Select(_ => Unit.Default),
+            Model.WhenAnyValue(m => m.SelectedConnectionString).Select(_ => Unit.Default),
+            Model.WhenAnyValue(m => m.PackageFilesOutputPath).Select(_ => Unit.Default),
+            Model.WhenAnyValue(m => m.VelopackOutputPath).Select(_ => Unit.Default),
+            Model.WhenAnyValue(m => m.FileSystemBasePath).Select(_ => Unit.Default)
+        };
+        _dirtySubscription = Observable.Merge(dirtyStreams)
+            .Subscribe(_ => _hasUnsavedNonTreeChanges = true);
     }
 
     private void ActiveBackgroungWorker_DoWork(object? sender, DoWorkEventArgs e)
     {
         try
         {
-            ActiveBackgroungWorker?.ReportProgress(20, "VELOPACK PACKAGE CREATING");
+            _activeBackgroungWorker?.ReportProgress(20, "VELOPACK PACKAGE CREATING");
 
-            if (ActiveBackgroungWorker?.CancellationPending == true)
+            if (_activeBackgroungWorker?.CancellationPending == true)
             {
                 return;
             }
@@ -501,14 +535,21 @@ public partial class MainViewModel : RxObject
             {
                 foreach (var f in Directory.EnumerateFiles(Model.PackageFilesOutputPath, "*", SearchOption.AllDirectories))
                 {
-                    try { File.SetAttributes(f, FileAttributes.Normal); File.Delete(f); } catch { }
+                    try
+                    {
+                        File.SetAttributes(f, FileAttributes.Normal);
+                        File.Delete(f);
+                    }
+                    catch
+                    {
+                    }
                 }
             }
 
             // Copy all selected items preserving folder structure
             void CopyNode(ItemLink node, List<string> parents)
             {
-                if (ActiveBackgroungWorker?.CancellationPending == true)
+                if (_activeBackgroungWorker?.CancellationPending == true)
                 {
                     return;
                 }
@@ -537,13 +578,13 @@ public partial class MainViewModel : RxObject
                 }
             }
 
-            ActiveBackgroungWorker?.ReportProgress(40, "COPYING CONTENT");
+            _activeBackgroungWorker?.ReportProgress(40, "COPYING CONTENT");
             foreach (var node in Model!.PackageFiles.ToList())
             {
                 CopyNode(node, []);
             }
 
-            ActiveBackgroungWorker?.ReportProgress(60, "VELOPACK RELEASIFY");
+            _activeBackgroungWorker?.ReportProgress(60, "VELOPACK RELEASIFY");
 
             VelopackPack();
             Trace.WriteLine("CREATED VELOPACK PACKAGE to : " + Model.VelopackOutputPath);
@@ -556,7 +597,7 @@ public partial class MainViewModel : RxObject
 
     private void ActiveBackgroungWorker_ProgressChanged(object? sender, ProgressChangedEventArgs e)
     {
-        //todo : Update busy indicator information.
+        // TODO : Update busy indicator information.
         if (e.UserState is not string message)
         {
             return;
@@ -580,17 +621,17 @@ public partial class MainViewModel : RxObject
     /// <summary>
     /// Called on package created. Start the upload.
     /// </summary>
-    /// <param name="sender"></param>
-    /// <param name="e"></param>
+    /// <param name="sender">The sender.</param>
+    /// <param name="e">The <see cref="RunWorkerCompletedEventArgs"/> instance containing the event data.</param>
     private void PackageCreationCompleted(object? sender, RunWorkerCompletedEventArgs e)
     {
         IsBusy = false;
 
         CurrentPackageCreationStage = string.Empty;
 
-        ActiveBackgroungWorker?.Dispose();
+        _activeBackgroungWorker?.Dispose();
 
-        ActiveBackgroungWorker = null;
+        _activeBackgroungWorker = null;
 
         if (_abortPackageFlag)
         {
@@ -605,7 +646,7 @@ public partial class MainViewModel : RxObject
         {
             MessageBox.Show(ex.Message, "Package creation error", MessageBoxButton.OK, MessageBoxImage.Error);
 
-            //todo : Manage generated error
+            // TODO : Manage generated error
             return;
         }
 
@@ -622,7 +663,7 @@ public partial class MainViewModel : RxObject
     {
         if (Model == null)
         {
-               throw new Exception("Model is null");
+            throw new Exception("Model is null");
         }
 
         // vpk pack -u MyApp -v 1.0.0 -p path-to/publish/folder -o path-to/releases
@@ -648,7 +689,7 @@ public partial class MainViewModel : RxObject
             cmd += " -s \"" + Path.GetFullPath(Model.SplashFilepath) + "\"";
         }
 
-        if (Model.GenerateDeltaPackages == false)
+        if (!Model.GenerateDeltaPackages)
         {
             cmd += " --no-delta";
         }
@@ -689,6 +730,7 @@ public partial class MainViewModel : RxObject
             {
                 Trace.TraceError(stderr);
             }
+
             if (_exeProcess!.ExitCode != 0)
             {
                 throw new Exception($"vpk exited with code {_exeProcess.ExitCode}.\n{stderr}\n{stdout}");

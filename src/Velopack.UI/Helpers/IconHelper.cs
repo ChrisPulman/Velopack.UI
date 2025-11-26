@@ -1,4 +1,7 @@
-﻿using System.Drawing;
+﻿// Copyright (c) Chris Pulman. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System.Drawing;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
@@ -10,84 +13,83 @@ using System.Windows.Media.Imaging;
 namespace Velopack.UI.Helpers;
 
 /// <summary>
-/// Icon Helper
+/// Icon Helper.
 /// </summary>
 [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1060:Move pinvokes to native methods class", Justification = "intended")]
 [SupportedOSPlatform("windows10.0.19041.0")]
 internal static class IconHelper
 {
     /// <summary>
-    /// The file attribute directory
+    /// The file attribute directory.
     /// </summary>
-    public const uint FILE_ATTRIBUTE_DIRECTORY = 0x00000010;
+    public const uint FILEATTRIBUTEDIRECTORY = 0x00000010;
 
     /// <summary>
-    /// The shgfi icon
+    /// The shgfi icon.
     /// </summary>
-    public const uint SHGFI_ICON = 0x000000100;
+    public const uint SHGFIICON = 0x000000100;
 
     /// <summary>
-    /// The shgfi largeicon
+    /// The shgfi largeicon.
     /// </summary>
-    public const uint SHGFI_LARGEICON = 0x000000000;
+    public const uint SHGFILARGEICON = 0x000000000;
 
     /// <summary>
-    /// The shgfi openicon
+    /// The shgfi openicon.
     /// </summary>
-    public const uint SHGFI_OPENICON = 0x000000002;
+    public const uint SHGFIOPENICON = 0x000000002;
 
     /// <summary>
-    /// The shgfi smallicon
+    /// The shgfi smallicon.
     /// </summary>
-    public const uint SHGFI_SMALLICON = 0x000000001;
+    public const uint SHGFISMALLICON = 0x000000001;
 
     /// <summary>
-    /// The shgfi usefileattributes
+    /// The shgfi usefileattributes.
     /// </summary>
-    public const uint SHGFI_USEFILEATTRIBUTES = 0x000000010;
+    public const uint SHGFIUSEFILEATTRIBUTES = 0x000000010;
 
     private static readonly Dictionary<string, ImageSource> _largeIconCache = [];
     private static readonly Dictionary<string, ImageSource> _smallIconCache = [];
 
     /// <summary>
-    /// Folder Type
+    /// Folder Type.
     /// </summary>
     public enum FolderType
     {
         /// <summary>
-        /// The closed
+        /// The closed.
         /// </summary>
         Closed,
 
         /// <summary>
-        /// The open
+        /// The open.
         /// </summary>
         Open
     }
 
     /// <summary>
-    /// Icon Size
+    /// Icon Size.
     /// </summary>
     public enum IconSize
     {
         /// <summary>
-        /// The large
+        /// The large.
         /// </summary>
         Large,
 
         /// <summary>
-        /// The small
+        /// The small.
         /// </summary>
         Small
     }
 
-    //}
     /// <summary>
-    /// Get an icon for a given filename
+    /// Get an icon for a given filename.
     /// </summary>
-    /// <param name="fileName">any filename</param>
-    /// <param name="large">16x16 or 32x32 icon</param>
-    /// <returns>null if path is null, otherwise - an icon</returns>
+    /// <param name="fileName">any filename.</param>
+    /// <param name="large">16x16 or 32x32 icon.</param>
+    /// <returns>null if path is null, otherwise - an icon.</returns>
     public static ImageSource? FindIconForFilename(string? fileName, bool large)
     {
         if (fileName == null)
@@ -117,31 +119,31 @@ internal static class IconHelper
     /// </summary>
     /// <param name="size">The size.</param>
     /// <param name="folderType">Type of the folder.</param>
-    /// <returns></returns>
-    /// <exception cref="Exception"></exception>
     public static Icon GetFolderIcon(IconSize size, FolderType folderType)
     {
         // Need to add size check, although errors generated at present!
-        var flags = SHGFI_ICON | SHGFI_USEFILEATTRIBUTES;
+        var flags = SHGFIICON | SHGFIUSEFILEATTRIBUTES;
 
-        if (FolderType.Open == folderType)
+        if (folderType == FolderType.Open)
         {
-            flags += SHGFI_OPENICON;
+            flags += SHGFIOPENICON;
         }
-        if (IconSize.Small == size)
+
+        if (size == IconSize.Small)
         {
-            flags += SHGFI_SMALLICON;
+            flags += SHGFISMALLICON;
         }
         else
         {
-            flags += SHGFI_LARGEICON;
+            flags += SHGFILARGEICON;
         }
 
         // Get the folder icon
-        var shfi = new SHFILEINFO();
+        var shfi = default(SHFILEINFO);
 
-        var res = SHGetFileInfo(Environment.GetFolderPath(Environment.SpecialFolder.Windows),
-            FILE_ATTRIBUTE_DIRECTORY,
+        var res = SHGetFileInfo(
+            Environment.GetFolderPath(Environment.SpecialFolder.Windows),
+            FILEATTRIBUTEDIRECTORY,
             out shfi,
             (uint)Marshal.SizeOf(shfi),
             flags);
@@ -152,33 +154,20 @@ internal static class IconHelper
         }
 
         // Load the icon from an HICON handle
-        Icon.FromHandle(shfi.hIcon);
+        Icon.FromHandle(shfi.HIcon);
 
         // Now clone the icon, so that it can be successfully stored in an ImageList
-        var icon = (Icon)Icon.FromHandle(shfi.hIcon).Clone();
+        var icon = (Icon)Icon.FromHandle(shfi.HIcon).Clone();
 
-        DestroyIcon(shfi.hIcon);        // Cleanup
+        DestroyIcon(shfi.HIcon);        // Cleanup
 
         return icon;
     }
 
     /// <summary>
-    /// Shes the get file information.
-    /// </summary>
-    /// <param name="pszPath">The PSZ path.</param>
-    /// <param name="dwFileAttributes">The dw file attributes.</param>
-    /// <param name="psfi">The psfi.</param>
-    /// <param name="cbFileInfo">The cb file information.</param>
-    /// <param name="uFlags">The u flags.</param>
-    /// <returns></returns>
-    [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
-    internal static extern nint SHGetFileInfo(string pszPath, uint dwFileAttributes, out SHFILEINFO psfi, uint cbFileInfo, uint uFlags);
-
-    /// <summary>
     /// To the image source.
     /// </summary>
     /// <param name="icon">The icon.</param>
-    /// <returns></returns>
     public static ImageSource? ToImageSource(this Icon icon)
     {
         if (icon == null)
@@ -192,43 +181,54 @@ internal static class IconHelper
             BitmapSizeOptions.FromEmptyOptions());
     }
 
+    /// <summary>
+    /// Shes the get file information.
+    /// </summary>
+    /// <param name="pszPath">The PSZ path.</param>
+    /// <param name="dwFileAttributes">The dw file attributes.</param>
+    /// <param name="psfi">The psfi.</param>
+    /// <param name="cbFileInfo">The cb file information.</param>
+    /// <param name="uFlags">The u flags.</param>
+    [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
+    internal static extern nint SHGetFileInfo(string pszPath, uint dwFileAttributes, out SHFILEINFO psfi, uint cbFileInfo, uint uFlags);
+
     [DllImport("user32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool DestroyIcon(nint hIcon);
 
     /// <summary>
-    /// SH FILE INFO
+    /// SH FILE INFO.
     /// </summary>
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1815:Override equals and operator equals on value types", Justification = "Not required")]
     public record struct SHFILEINFO
     {
         /// <summary>
-        /// The h icon
+        /// The h icon.
         /// </summary>
-        public nint hIcon;
+        public nint HIcon;
 
         /// <summary>
-        /// The i icon
+        /// The i icon.
         /// </summary>
-        public int iIcon;
+        public int IIcon;
 
         /// <summary>
-        /// The dw attributes
+        /// The dw attributes.
         /// </summary>
-        public uint dwAttributes;
+        public uint DwAttributes;
 
         /// <summary>
-        /// The sz display name
+        /// The sz display name.
         /// </summary>
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)]
-        public string szDisplayName;
+        public string SzDisplayName;
 
         /// <summary>
-        /// The sz type name
+        /// The sz type name.
         /// </summary>
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 80)]
-        public string szTypeName;
+        public string SzTypeName;
     }
 
     /// <summary>
@@ -261,32 +261,34 @@ internal static class IconHelper
         /// Returns an icon for a given file - indicated by the name parameter.
         /// </summary>
         /// <param name="name">Pathname for file.</param>
-        /// <param name="size">Large or small</param>
-        /// <param name="linkOverlay">Whether to include the link icon</param>
-        /// <returns>System.Drawing.Icon</returns>
+        /// <param name="size">Large or small.</param>
+        /// <param name="linkOverlay">Whether to include the link icon.</param>
+        /// <returns>System.Drawing.Icon.</returns>
         public static Icon GetFileIcon(string name, IconSize size, bool linkOverlay)
         {
-            var shfi = new Shell32.Shfileinfo();
+            var shfi = default(Shell32.Shfileinfo);
             var flags = Shell32.ShgfiIcon | Shell32.ShgfiUsefileattributes;
             if (linkOverlay)
             {
                 flags += Shell32.ShgfiLinkoverlay;
             }
+
             /* Check the size specified for return. */
             flags += size switch
             {
                 IconSize.Small => Shell32.ShgfiSmallicon,
                 _ => Shell32.ShgfiLargeicon,
             };
-            Shell32.SHGetFileInfo(name,
+            Shell32.SHGetFileInfo(
+                name,
                 Shell32.FileAttributeNormal,
                 ref shfi,
                 (uint)Marshal.SizeOf(shfi),
                 flags);
 
             // Copy (clone) the returned icon to a new object, thus allowing us to clean-up properly
-            var icon = (Icon)Icon.FromHandle(shfi.hIcon).Clone();
-            User32.DestroyIcon(shfi.hIcon);     // Cleanup
+            var icon = (Icon)Icon.FromHandle(shfi.HIcon).Clone();
+            User32.DestroyIcon(shfi.HIcon);     // Cleanup
             return icon;
         }
     }
@@ -320,14 +322,13 @@ internal static class IconHelper
             uint dwFileAttributes,
             ref Shfileinfo psfi,
             uint cbFileInfo,
-            uint uFlags
-            );
+            uint uFlags);
 
         [StructLayout(LayoutKind.Sequential)]
         public struct Shfileinfo
         {
+            public readonly nint HIcon;
             private const int Namesize = 80;
-            public readonly nint hIcon;
             private readonly int _iIcon;
             private readonly uint _dwAttributes;
 
@@ -351,7 +352,7 @@ internal static class IconHelper
         /// and is not required to be called separately.
         /// </summary>
         /// <param name="hIcon">Pointer to icon handle.</param>
-        /// <returns>N/A</returns>
+        /// <returns>N/A.</returns>
         [DllImport("User32.dll")]
         public static extern int DestroyIcon(nint hIcon);
     }

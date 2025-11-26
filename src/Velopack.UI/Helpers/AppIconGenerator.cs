@@ -1,3 +1,6 @@
+// Copyright (c) Chris Pulman. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System.IO;
 using System.Windows;
 using System.Windows.Media;
@@ -40,6 +43,7 @@ internal static class AppIconGenerator
         {
             DrawBrandIcon(dc);
         }
+
         rtb.Render(dv);
 
         var encoder = new PngBitmapEncoder();
@@ -57,7 +61,8 @@ internal static class AppIconGenerator
         var bgBrush = new LinearGradientBrush(
             Color.FromRgb(0x33, 0x41, 0x5E),
             Color.FromRgb(0x0F, 0x17, 0x2A),
-            new Point(0, 0), new Point(1, 1));
+            new Point(0, 0),
+            new Point(1, 1));
         var bgPen = new Pen(new SolidColorBrush(Color.FromArgb(0x30, 0xFF, 0xFF, 0xFF)), IconSize * 0.01);
         dc.DrawRoundedRectangle(bgBrush, bgPen, rect, bgRadius, bgRadius);
 
@@ -73,14 +78,16 @@ internal static class AppIconGenerator
         dc.DrawRectangle(boxBrush, boxStroke, boxBody);
 
         // Lid (slightly darker amber) as a trapezoid
-        var lidTop = boxY - IconSize * 0.12;
+        var lidTop = boxY - (IconSize * 0.12);
         var lid = new PathFigureCollection
         {
-            new PathFigure(new Point(boxX, boxY), new []
-            {
-                new LineSegment(new Point(boxX + boxW/2, lidTop), true),
-                new LineSegment(new Point(boxX + boxW, boxY), true),
-            }, true)
+            new PathFigure(
+                new Point(boxX, boxY),
+                [
+                    new LineSegment(new Point(boxX + (boxW / 2), lidTop), true),
+                    new LineSegment(new Point(boxX + boxW, boxY), true)
+                ],
+                true)
         };
         var lidGeo = new PathGeometry(lid);
         var lidBrush = new SolidColorBrush(Color.FromRgb(0xD9, 0x77, 0x06)); // amber 600
@@ -88,19 +95,23 @@ internal static class AppIconGenerator
 
         // Center seam
         var seamPen = new Pen(new SolidColorBrush(Color.FromArgb(0x60, 0x00, 0x00, 0x00)), IconSize * 0.01);
-        dc.DrawLine(seamPen, new Point(boxX + boxW/2, boxY), new Point(boxX + boxW/2, boxY + boxH));
+        dc.DrawLine(seamPen, new Point(boxX + (boxW / 2), boxY), new Point(boxX + (boxW / 2), boxY + boxH));
 
         // Stylized "V" (installer for Velopack) in a bright cool accent for high contrast
         var accent = new SolidColorBrush(Color.FromRgb(0x22, 0xD3, 0xEE)); // cyan 400
         var vStroke = new Pen(new SolidColorBrush(Colors.White), IconSize * 0.055) { StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round };
         var vPath = new PathGeometry(new[]
         {
-            new PathFigure(new Point(IconSize*0.30, IconSize*0.35), new []
-            {
-                new LineSegment(new Point(IconSize*0.45, IconSize*0.58), true),
-                new LineSegment(new Point(IconSize*0.72, IconSize*0.26), true),
-            }, false)
+            new PathFigure(
+                new Point(IconSize * 0.30, IconSize * 0.35),
+                new[]
+                {
+                    new LineSegment(new Point(IconSize * 0.45, IconSize * 0.58), true),
+                    new LineSegment(new Point(IconSize * 0.72, IconSize * 0.26), true)
+                },
+                false)
         });
+
         // Glow underlay for readability on any background
         var glow = new Pen(new SolidColorBrush(Color.FromArgb(0x55, 0x00, 0x00, 0x00)), IconSize * 0.10) { StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round };
         dc.DrawGeometry(null, glow, vPath);
@@ -109,17 +120,20 @@ internal static class AppIconGenerator
 
         // Up-arrow (packaging/upload) subtly embossed into the box
         var arrowSize = IconSize * 0.12;
-        var arrowX = boxX + boxW/2;
-        var arrowY = boxY + boxH/2 + IconSize*0.02;
+        var arrowX = boxX + (boxW / 2);
+        var arrowY = boxY + (boxH / 2) + (IconSize * 0.02);
         var arrowGeo = new PathGeometry(new[]
         {
-            new PathFigure(new Point(arrowX, arrowY - arrowSize/2), new []
-            {
-                new LineSegment(new Point(arrowX, arrowY + arrowSize/2), true),
-                new LineSegment(new Point(arrowX - arrowSize*0.3, arrowY + arrowSize*0.2), true),
-                new LineSegment(new Point(arrowX, arrowY - arrowSize/2), true),
-                new LineSegment(new Point(arrowX + arrowSize*0.3, arrowY + arrowSize*0.2), true),
-            }, true)
+            new PathFigure(
+                new Point(arrowX, arrowY - (arrowSize / 2)),
+                new[]
+                {
+                    new LineSegment(new Point(arrowX, arrowY + (arrowSize / 2)), true),
+                    new LineSegment(new Point(arrowX - (arrowSize * 0.3), arrowY + (arrowSize * 0.2)), true),
+                    new LineSegment(new Point(arrowX, arrowY - (arrowSize / 2)), true),
+                    new LineSegment(new Point(arrowX + (arrowSize * 0.3), arrowY + (arrowSize * 0.2)), true)
+                },
+                true)
         });
         var arrowBrush = new SolidColorBrush(Color.FromArgb(0xB0, 0xFF, 0xFF, 0xFF));
         var arrowPen = new Pen(new SolidColorBrush(Color.FromArgb(0x40, 0x00, 0x00, 0x00)), IconSize * 0.01);
@@ -143,7 +157,7 @@ internal static class AppIconGenerator
         bw.Write((byte)0);   // color count
         bw.Write((byte)0);   // reserved
         bw.Write((ushort)1); // planes
-        bw.Write((ushort)32);// bit count
+        bw.Write((ushort)32); // bit count
         bw.Write((uint)png.Length); // bytes in resource
         bw.Write((uint)(6 + 16));   // offset to image data
 

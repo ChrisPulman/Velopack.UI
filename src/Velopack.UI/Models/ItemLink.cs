@@ -1,4 +1,7 @@
-﻿using System.Collections.ObjectModel;
+﻿// Copyright (c) Chris Pulman. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System.Collections.ObjectModel;
 using System.Drawing;
 using System.IO;
 using System.Runtime.Serialization;
@@ -12,10 +15,14 @@ using static Velopack.UI.Helpers.IconHelper;
 
 namespace Velopack.UI;
 
+/// <summary>
+/// ItemLink.
+/// </summary>
+/// <seealso cref="CrissCross.RxObject" />
 [SupportedOSPlatform("windows10.0.19041.0")]
 public partial class ItemLink : CrissCross.RxObject
 {
-    private static readonly ItemLink s_dummyChild = new();
+    private static readonly ItemLink dummyChild = new();
 
     [DataMember]
     private ObservableCollection<ItemLink> _children = [];
@@ -34,7 +41,7 @@ public partial class ItemLink : CrissCross.RxObject
     }
 
     /// <summary>
-    /// Returns the logical child items of this object.
+    /// Gets or sets the logical child items of this object.
     /// </summary>
     public ObservableCollection<ItemLink> Children
     {
@@ -70,17 +77,15 @@ public partial class ItemLink : CrissCross.RxObject
                 {
                     icon = GetFolderIcon(IconSize.Large, FolderType.Closed);
                 }
+                else if (File.Exists(SourceFilepath))
+                {
+                    icon = Icon.ExtractAssociatedIcon(SourceFilepath);
+                }
                 else
                 {
-                    if (File.Exists(SourceFilepath))
-                    {
-                        icon = Icon.ExtractAssociatedIcon(SourceFilepath);
-                    }
-                    else
-                    {
-                        return FindIconForFilename(Path.GetFileName(SourceFilepath), true);
-                    }
+                    return FindIconForFilename(Path.GetFileName(SourceFilepath), true);
                 }
+
                 if (icon == null)
                 {
                     return null;
@@ -90,7 +95,7 @@ public partial class ItemLink : CrissCross.RxObject
             }
             catch
             {
-                //TODO - Get default icon
+                // TODO - Get default icon
                 return null;
             }
         }
@@ -126,10 +131,10 @@ public partial class ItemLink : CrissCross.RxObject
     }
 
     /// <summary>
-    /// Returns true if this object's Children have not yet been populated.
+    /// Gets a value indicating whether returns true if this object's Children have not yet been populated.
     /// </summary>
     [JsonIgnore]
-    public bool HasDummyChild => Children.Count == 1 && Children[0] == s_dummyChild;
+    public bool HasDummyChild => Children.Count == 1 && Children[0] == dummyChild;
 
     /// <summary>
     /// Gets or sets a value indicating whether this instance is directory.
@@ -139,18 +144,18 @@ public partial class ItemLink : CrissCross.RxObject
     public bool IsDirectory { get; set; }
 
     /// <summary>
-    /// Gets/sets whether the TreeViewItem associated with this object is expanded.
+    /// Gets or sets a value indicating whether gets/sets whether the TreeViewItem associated with this object is expanded.
     /// </summary>
     [DataMember]
     public bool IsExpanded
     {
-        get => _isExpanded;
+        get => IsExpanded1;
 
         set
         {
-            if (value != _isExpanded)
+            if (value != IsExpanded1)
             {
-                _isExpanded = value;
+                IsExpanded1 = value;
                 this.RaisePropertyChanged(nameof(IsExpanded));
                 this.RaisePropertyChanged(nameof(FileIcon));
             }
@@ -158,14 +163,14 @@ public partial class ItemLink : CrissCross.RxObject
             // Lazy load the child items, if necessary.
             if (HasDummyChild)
             {
-                Children.Remove(s_dummyChild);
+                Children.Remove(dummyChild);
                 LoadChildren();
             }
         }
     }
 
     /// <summary>
-    /// Fixed folder. Can't remove or move.
+    /// Gets a value indicating whether fixed folder. Can't remove or move.
     /// </summary>
     [DataMember]
     public bool IsRootBase { get; internal set; }
@@ -185,7 +190,7 @@ public partial class ItemLink : CrissCross.RxObject
     public string? OutputFilename { get; internal set; }
 
     /// <summary>
-    /// Filepath of linked source file. Absolute ?
+    /// Gets or sets filepath of linked source file. Absolute ?.
     /// </summary>
     [DataMember]
     public string? SourceFilepath
@@ -221,13 +226,13 @@ public partial class ItemLink : CrissCross.RxObject
         }
     }
 
-    private bool _isExpanded { get; set; }
+    private bool IsExpanded1 { get; set; }
 
     /// <summary>
     /// Gets the parent.
     /// </summary>
     /// <param name="root">The root.</param>
-    /// <returns></returns>
+    /// <returns>Elements of type ItemLink.</returns>
     public ItemLink GetParent(ObservableCollection<ItemLink> root)
     {
         ArgumentNullException.ThrowIfNull(root);

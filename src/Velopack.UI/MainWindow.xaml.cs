@@ -1,19 +1,25 @@
-﻿using CrissCross;
+﻿// Copyright (c) Chris Pulman. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System.ComponentModel;
+using System.Runtime.Versioning;
+using System.Windows;
+using CrissCross;
 using CrissCross.WPF.UI.Appearance;
 using ReactiveUI;
-using System.ComponentModel;
-using System.Windows;
 using Splat;
-using System.Runtime.Versioning;
 
 namespace Velopack.UI;
 
 /// <summary>
-/// Interaction logic for MainWindow.xaml
+/// Interaction logic for MainWindow.xaml.
 /// </summary>
 [SupportedOSPlatform("windows10.0.19041.0")]
 public partial class MainWindow
 {
+    /// <summary>
+    /// Initializes a new instance of the <see cref="MainWindow"/> class.
+    /// </summary>
     public MainWindow()
     {
         SystemThemeWatcher.Watch(this);
@@ -34,6 +40,7 @@ public partial class MainWindow
                 e.Cancel = true;
                 return;
             }
+
             if (rslt == MessageBoxResult.Yes)
             {
                 vm.Save();

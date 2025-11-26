@@ -1,4 +1,8 @@
-﻿using System.Diagnostics;
+﻿// Copyright (c) Chris Pulman. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System.Diagnostics;
+using System.Runtime.Versioning;
 using System.Windows;
 
 namespace Velopack.UI;
@@ -9,6 +13,7 @@ namespace Velopack.UI;
 /// <seealso cref="Window" />
 /// <seealso cref="System.Windows.Markup.IComponentConnector" />
 /// <seealso cref="System.Windows.Markup.IStyleConnector" />
+[SupportedOSPlatform("windows10.0.19041.0")]
 public partial class WebConnectionEdit
 {
     /// <summary>

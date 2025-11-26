@@ -1,4 +1,7 @@
-﻿using System.Collections.ObjectModel;
+﻿// Copyright (c) Chris Pulman. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Cache;
@@ -21,19 +24,18 @@ using Velopack.UI.Models;
 
 namespace Velopack.UI;
 
+/// <summary>
+/// VelopackModel.
+/// </summary>
+/// <seealso cref="Velopack.UI.WebConnectionBase" />
+/// <seealso cref="GongSolutions.Wpf.DragDrop.IDropTarget" />
 [DataContract]
 [SupportedOSPlatform("windows10.0.19041.0")]
 public partial class VelopackModel : WebConnectionBase, IDropTarget
 {
-    [JsonIgnore]
-    public bool HasUnsavedTreeChanges { get; set; }
-
-    [DataMember]
-    internal List<WebConnectionBase> CachedConnection = [];
-
+    private static readonly HashSet<string> excludedExtensions = new([".pdb", ".nupkg", ".msi", ".zip"], StringComparer.OrdinalIgnoreCase);
     private readonly ConnectionDiscoveryService _connectionDiscoveryService = new();
     private readonly string _newFolderName = "NEW FOLDER";
-    private static readonly HashSet<string> s_excludedExtensions = new([".pdb", ".nupkg", ".msi", ".zip"], StringComparer.OrdinalIgnoreCase);
     private List<string>? _availableUploadLocation;
     private string? _iconFilepath;
 
@@ -115,21 +117,34 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
     private IDisposable? _fileSystemConnPathSub;
 
     /// <summary>
-    /// After JSON load, resync selected connection and mirror any saved FileSystemBasePath.
-    /// </summary>
-    internal void ResyncAfterLoad() => UpdateSelectedConnection(SelectedConnectionString);
-
-    /// <summary>
     /// Initializes a new instance of the <see cref="VelopackModel"/> class.
     /// </summary>
     public VelopackModel()
     {
         PackageFiles = [];
+
         // Default to File System connection for ease of use
         SelectedConnectionString = "File System";
+
         // Ensure default connection is resolved immediately
         UpdateSelectedConnection(SelectedConnectionString);
     }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether this instance has unsaved tree changes.
+    /// </summary>
+    /// <value>
+    ///   <c>true</c> if this instance has unsaved tree changes; otherwise, <c>false</c>.
+    /// </value>
+    [JsonIgnore]
+    public bool HasUnsavedTreeChanges { get; set; }
+
+    /// <summary>
+    /// Gets the cached connection.
+    /// </summary>
+    [DataMember]
+    [JsonInclude]
+    public List<WebConnectionBase> CachedConnection { get; private set; } = [];
 
     /// <summary>
     /// Gets the available upload location.
@@ -183,7 +198,7 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
             }
             catch
             {
-                //TODO -  default icon
+                // TODO -  default icon
                 return null;
             }
         }
@@ -222,55 +237,7 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
     /// </summary>
     /// <value>The select splash command.</value>
     [JsonIgnore]
-    public ICommand SelectSplashCmd =>
-_selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
-
-    /// <summary>
-    /// Opens the connection edit dialog for the currently selected connection.
-    /// </summary>
-    [ReactiveCommand]
-    private void EditCurrentConnection()
-    {
-        // Ensure we have a connection instance matching the selected string
-        if (string.IsNullOrWhiteSpace(SelectedConnectionString))
-        {
-            return;
-        }
-
-        var conn = SelectedConnection ?? _connectionDiscoveryService.GetByName(SelectedConnectionString);
-        if (conn == null)
-        {
-            return;
-        }
-
-        // Cache the instance so changes persist across selection switches
-        CachedConnection ??= [];
-        if (!CachedConnection.Contains(conn))
-        {
-            CachedConnection.Add(conn);
-        }
-
-        var dlg = new WebConnectionEdit
-        {
-            DataContext = conn,
-            Owner = Application.Current?.Windows.OfType<Window>().FirstOrDefault(w => w.IsActive) ?? Application.Current?.MainWindow
-        };
-
-        var ok = dlg.ShowDialog();
-        if (ok == true)
-        {
-            // Keep SelectedConnection in sync
-            SelectedConnection = conn;
-
-            // If editing a FileSystem connection, mirror path into model for visibility/persistence
-            if (conn is FileSystemConnection fsc && !string.IsNullOrWhiteSpace(fsc.FileSystemPath))
-            {
-                FileSystemBasePath = fsc.FileSystemPath;
-                // Show the base path; Save() will derive Nupkg/Releases paths
-                VelopackOutputPath = fsc.FileSystemPath;
-            }
-        }
-    }
+    public ICommand SelectSplashCmd => _selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
 
     /// <summary>
     /// Gets or sets a value indicating whether [set version manually].
@@ -351,16 +318,13 @@ _selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
         set
         {
             var test = value?.Split('.');
-            if (test != null && test.Length <= 3)
+            if (test?.Length <= 3)
             {
                 this.RaiseAndSetIfChanged(ref _version, value);
             }
-            else
+            else if (System.Windows.MessageBox.Show("Please use a Semantic Versioning 2.0.0 standard for the version number i.e. Major.Minor.Build http://semver.org/", "Invalid Version", MessageBoxButton.OK) == MessageBoxResult.OK)
             {
-                if (System.Windows.MessageBox.Show("Please use a Semantic Versioning 2.0.0 standard for the version number i.e. Major.Minor.Build http://semver.org/", "Invalid Version", MessageBoxButton.OK) == MessageBoxResult.OK)
-                {
-                    RefreshPackageVersion();
-                }
+                RefreshPackageVersion();
             }
         }
     }
@@ -385,9 +349,9 @@ _selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
     }
 
     /// <summary>
-    /// ON DROP
+    /// ON DROP.
     /// </summary>
-    /// <param name="dropInfo"></param>
+    /// <param name="dropInfo">Object which contains several drop information.</param>
     public void Drop(IDropInfo dropInfo)
     {
         // MOVE FILE INSIDE PACKAGE
@@ -412,7 +376,6 @@ _selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
         }
 
         // FILE ADDED FROM FILE SYSTEM
-
         if (dropInfo.Data is DataObject dataObj)
         {
             if (dataObj.GetDataPresent(System.Windows.DataFormats.FileDrop))
@@ -427,99 +390,6 @@ _selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
             }
 
             PackageFiles = OrderFileList(PackageFiles);
-        }
-    }
-
-    /// <summary>
-    /// Choose files to add to package (multi-select)
-    /// </summary>
-    [ReactiveCommand]
-    private void AddFilesFromDialog()
-    {
-        var ofd = new Microsoft.Win32.OpenFileDialog
-        {
-            Multiselect = true,
-            CheckFileExists = true,
-            Title = "Select files to include"
-        };
-        if (ofd.ShowDialog() == true)
-        {
-            foreach (var f in ofd.FileNames)
-            {
-                if (ShouldIncludeFile(f))
-                {
-                    AddFile(f, null);
-                }
-            }
-            PackageFiles = OrderFileList(PackageFiles);
-        }
-    }
-
-    /// <summary>
-    /// Choose a folder (e.g. bin/Release) to include recursively
-    /// </summary>
-    [ReactiveCommand]
-    private void AddFolderFromDialog()
-    {
-        using var dialog = new System.Windows.Forms.FolderBrowserDialog();
-        var result = dialog.ShowDialog();
-        if (result == System.Windows.Forms.DialogResult.OK && Directory.Exists(dialog.SelectedPath))
-        {
-            AddFile(dialog.SelectedPath, null);
-            PackageFiles = OrderFileList(PackageFiles);
-        }
-    }
-
-    /// <summary>
-    /// Selects the nupkg directory.
-    /// </summary>
-    [ReactiveCommand]
-    public void SelectNupkgDirectory()
-    {
-        var dialog = new System.Windows.Forms.FolderBrowserDialog();
-
-        if (Directory.Exists(PackageFilesOutputPath))
-        {
-            dialog.SelectedPath = PackageFilesOutputPath;
-        }
-
-        var result = dialog.ShowDialog();
-
-        if (result != System.Windows.Forms.DialogResult.OK)
-        {
-            return;
-        }
-
-        PackageFilesOutputPath = dialog.SelectedPath;
-    }
-
-    /// <summary>
-    /// Selects the output directory.
-    /// </summary>
-    [ReactiveCommand]
-    public void SelectOutputDirectory()
-    {
-        var dialog = new System.Windows.Forms.FolderBrowserDialog();
-
-        if (Directory.Exists(VelopackOutputPath))
-        {
-            dialog.SelectedPath = VelopackOutputPath;
-        }
-
-        var result = dialog.ShowDialog();
-
-        if (result != System.Windows.Forms.DialogResult.OK)
-        {
-            return;
-        }
-
-        VelopackOutputPath = dialog.SelectedPath;
-
-        // If FileSystem connection is selected, align its path and use it for uploads
-        if (SelectedConnection is FileSystemConnection fsc)
-        {
-            fsc.FileSystemPath = VelopackOutputPath;
-            FileSystemBasePath = fsc.FileSystemPath;
         }
     }
 
@@ -546,29 +416,6 @@ _selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
     }
 
     /// <summary>
-    /// Choose an application icon file and update IconFilepath.
-    /// </summary>
-    [ReactiveCommand]
-    private void SelectIcon()
-    {
-        var ofd = new System.Windows.Forms.OpenFileDialog
-        {
-            AddExtension = true,
-            DefaultExt = ".ico",
-            Filter = "Icon or Image|*.ico;*.png;*.jpg;*.jpeg;*.bmp|All Files|*.*",
-            Title = "Select application icon"
-        };
-
-        var result = ofd.ShowDialog();
-        if (result != System.Windows.Forms.DialogResult.OK || !File.Exists(ofd.FileName))
-        {
-            return;
-        }
-
-        IconFilepath = ofd.FileName;
-    }
-
-    /// <summary>
     /// Sets the selected item.
     /// </summary>
     /// <param name="item">The item.</param>
@@ -581,7 +428,7 @@ _selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
     /// <summary>
     /// Validates this instance.
     /// </summary>
-    /// <returns></returns>
+    /// <returns>A <see cref="ValidationResult"/> representing the result of the validation.</returns>
     public override ValidationResult Validate()
     {
         var commonValid = new Validator().Validate(this);
@@ -635,7 +482,6 @@ _selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
     /// 3) Start async upload.
     /// </summary>
     /// <param name="mode">The mode.</param>
-    /// <exception cref="Exception"></exception>
     internal void BeginUpdatedFiles(int mode)
     {
         // Determine the folder where vpk outputs artifacts
@@ -669,15 +515,27 @@ _selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
         // Filter for OnlyUpdate mode (mode == 1). mode == 0 => full publish
         if (mode == 1)
         {
-            allFiles = allFiles.Where(p =>
+            allFiles = [.. allFiles.Where(p =>
             {
                 var name = Path.GetFileName(p);
                 var ext = Path.GetExtension(p);
-                if (name.Equals("Setup.exe", StringComparison.OrdinalIgnoreCase)) return false;
-                if (ext.Equals(".msi", StringComparison.OrdinalIgnoreCase)) return false;
-                if (name.Contains("-full.nupkg", StringComparison.OrdinalIgnoreCase)) return false;
+                if (name.Equals("Setup.exe", StringComparison.OrdinalIgnoreCase))
+                {
+                    return false;
+                }
+
+                if (ext.Equals(".msi", StringComparison.OrdinalIgnoreCase))
+                {
+                    return false;
+                }
+
+                if (name.Contains("-full.nupkg", StringComparison.OrdinalIgnoreCase))
+                {
+                    return false;
+                }
+
                 return true;
-            }).ToList();
+            })];
         }
 
         var updatedFiles = allFiles.Where(File.Exists).Select(p => new FileInfo(p)).ToList();
@@ -706,7 +564,12 @@ _selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
     }
 
     /// <summary>
-    /// Read the main exe version and set it as package version
+    /// After JSON load, resync selected connection and mirror any saved FileSystemBasePath.
+    /// </summary>
+    internal void ResyncAfterLoad() => UpdateSelectedConnection(SelectedConnectionString);
+
+    /// <summary>
+    /// Read the main exe version and set it as package version.
     /// </summary>
     [ReactiveCommand]
     internal void RefreshPackageVersion()
@@ -726,9 +589,46 @@ _selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
         Version = $"{versInfo.ProductMajorPart}.{versInfo.ProductMinorPart}.{versInfo.ProductBuildPart}";
     }
 
+    /// <summary>
+    /// Releases unmanaged and - optionally - managed resources.
+    /// </summary>
+    /// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only
+    /// unmanaged resources.</param>
+    protected override void Dispose(bool disposing)
+    {
+        base.Dispose(disposing);
+        if (disposing)
+        {
+            try
+            {
+                _selectedItem?.Dispose();
+            }
+            catch
+            {
+            }
+
+            if (_uploadQueue != null)
+            {
+                foreach (var u in _uploadQueue)
+                {
+                    try
+                    {
+                        u?.Dispose();
+                    }
+                    catch
+                    {
+                    }
+                }
+            }
+
+            _fileSystemConnPathSub?.Dispose();
+            _fileSystemConnPathSub = null;
+        }
+    }
+
     private static string BytesToString(long byteCount)
     {
-        string[] suf = ["B", "KB", "MB", "GB", "TB", "PB", "EB"]; //Longs run out around EB
+        string[] suf = ["B", "KB", "MB", "GB", "TB", "PB", "EB"]; // Longs run out around EB
         if (byteCount == 0)
         {
             return "0" + suf[0];
@@ -770,6 +670,273 @@ _selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
         }
     }
 
+    // -------- Helpers added for filtering and upload processing --------
+    private static bool ShouldIncludeFile(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return false;
+        }
+
+        try
+        {
+            var attr = File.GetAttributes(path);
+            if (attr.HasFlag(FileAttributes.Directory))
+            {
+                return true; // always include directories
+            }
+
+            var ext = Path.GetExtension(path);
+            if (!string.IsNullOrEmpty(ext) && excludedExtensions.Contains(ext))
+            {
+                return false;
+            }
+
+            return File.Exists(path);
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static void TryDeleteFile(string? path)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
+            {
+                return;
+            }
+
+            File.SetAttributes(path, FileAttributes.Normal);
+            File.Delete(path);
+        }
+        catch
+        {
+            // ignore
+        }
+    }
+
+    private static void TryDeleteDirectory(string? path)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(path) || !Directory.Exists(path))
+            {
+                return;
+            }
+
+            // ensure files are deletable
+            foreach (var f in Directory.EnumerateFiles(path!, "*", SearchOption.AllDirectories))
+            {
+                try
+                {
+                    File.SetAttributes(f, FileAttributes.Normal);
+                }
+                catch
+                {
+                }
+            }
+
+            Directory.Delete(path!, true);
+        }
+        catch
+        {
+            // ignore
+        }
+    }
+
+    private static void TryDeleteDirectoryContents(string? path)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(path) || !Directory.Exists(path))
+            {
+                return;
+            }
+
+            foreach (var file in Directory.EnumerateFiles(path!, "*", SearchOption.TopDirectoryOnly))
+            {
+                TryDeleteFile(file);
+            }
+
+            foreach (var dir in Directory.EnumerateDirectories(path!, "*", SearchOption.TopDirectoryOnly))
+            {
+                TryDeleteDirectory(dir);
+            }
+        }
+        catch
+        {
+            // ignore
+        }
+    }
+
+    /// <summary>
+    /// Opens the connection edit dialog for the currently selected connection.
+    /// </summary>
+    [ReactiveCommand]
+    private void EditCurrentConnection()
+    {
+        // Ensure we have a connection instance matching the selected string
+        if (string.IsNullOrWhiteSpace(SelectedConnectionString))
+        {
+            return;
+        }
+
+        var conn = SelectedConnection ?? _connectionDiscoveryService.GetByName(SelectedConnectionString);
+        if (conn == null)
+        {
+            return;
+        }
+
+        // Cache the instance so changes persist across selection switches
+        CachedConnection ??= [];
+        if (!CachedConnection.Contains(conn))
+        {
+            CachedConnection.Add(conn);
+        }
+
+        var dlg = new WebConnectionEdit
+        {
+            DataContext = conn,
+            Owner = Application.Current?.Windows.OfType<Window>().FirstOrDefault(w => w.IsActive) ?? Application.Current?.MainWindow
+        };
+
+        var ok = dlg.ShowDialog();
+        if (ok == true)
+        {
+            // Keep SelectedConnection in sync
+            SelectedConnection = conn;
+
+            // If editing a FileSystem connection, mirror path into model for visibility/persistence
+            if (conn is FileSystemConnection fsc && !string.IsNullOrWhiteSpace(fsc.FileSystemPath))
+            {
+                FileSystemBasePath = fsc.FileSystemPath;
+
+                // Show the base path; Save() will derive Nupkg/Releases paths
+                VelopackOutputPath = fsc.FileSystemPath;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Choose files to add to package (multi-select).
+    /// </summary>
+    [ReactiveCommand]
+    private void AddFilesFromDialog()
+    {
+        var ofd = new Microsoft.Win32.OpenFileDialog
+        {
+            Multiselect = true,
+            CheckFileExists = true,
+            Title = "Select files to include"
+        };
+        if (ofd.ShowDialog() == true)
+        {
+            foreach (var f in ofd.FileNames)
+            {
+                if (ShouldIncludeFile(f))
+                {
+                    AddFile(f, null);
+                }
+            }
+
+            PackageFiles = OrderFileList(PackageFiles);
+        }
+    }
+
+    /// <summary>
+    /// Choose a folder (e.g. bin/Release) to include recursively.
+    /// </summary>
+    [ReactiveCommand]
+    private void AddFolderFromDialog()
+    {
+        using var dialog = new System.Windows.Forms.FolderBrowserDialog();
+        var result = dialog.ShowDialog();
+        if (result == System.Windows.Forms.DialogResult.OK && Directory.Exists(dialog.SelectedPath))
+        {
+            AddFile(dialog.SelectedPath, null);
+            PackageFiles = OrderFileList(PackageFiles);
+        }
+    }
+
+    /// <summary>
+    /// Selects the nupkg directory.
+    /// </summary>
+    [ReactiveCommand]
+    private void SelectNupkgDirectory()
+    {
+        var dialog = new System.Windows.Forms.FolderBrowserDialog();
+
+        if (Directory.Exists(PackageFilesOutputPath))
+        {
+            dialog.SelectedPath = PackageFilesOutputPath;
+        }
+
+        var result = dialog.ShowDialog();
+
+        if (result != System.Windows.Forms.DialogResult.OK)
+        {
+            return;
+        }
+
+        PackageFilesOutputPath = dialog.SelectedPath;
+    }
+
+    /// <summary>
+    /// Selects the output directory.
+    /// </summary>
+    [ReactiveCommand]
+    private void SelectOutputDirectory()
+    {
+        var dialog = new System.Windows.Forms.FolderBrowserDialog();
+
+        if (Directory.Exists(VelopackOutputPath))
+        {
+            dialog.SelectedPath = VelopackOutputPath;
+        }
+
+        var result = dialog.ShowDialog();
+
+        if (result != System.Windows.Forms.DialogResult.OK)
+        {
+            return;
+        }
+
+        VelopackOutputPath = dialog.SelectedPath;
+
+        // If FileSystem connection is selected, align its path and use it for uploads
+        if (SelectedConnection is FileSystemConnection fsc)
+        {
+            fsc.FileSystemPath = VelopackOutputPath;
+            FileSystemBasePath = fsc.FileSystemPath;
+        }
+    }
+
+    /// <summary>
+    /// Choose an application icon file and update IconFilepath.
+    /// </summary>
+    [ReactiveCommand]
+    private void SelectIcon()
+    {
+        var ofd = new System.Windows.Forms.OpenFileDialog
+        {
+            AddExtension = true,
+            DefaultExt = ".ico",
+            Filter = "Icon or Image|*.ico;*.png;*.jpg;*.jpeg;*.bmp|All Files|*.*",
+            Title = "Select application icon"
+        };
+
+        var result = ofd.ShowDialog();
+        if (result != System.Windows.Forms.DialogResult.OK || !File.Exists(ofd.FileName))
+        {
+            return;
+        }
+
+        IconFilepath = ofd.FileName;
+    }
+
     private void AddFile(string filePath, ItemLink? targetItem)
     {
         var isDir = false;
@@ -786,7 +953,7 @@ _selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
         var parent = targetItem;
         if (targetItem == null)
         {
-            //Add to root
+            // Add to root
             _packageFiles.Add(node);
         }
         else
@@ -798,12 +965,12 @@ _selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
 
             if (parent != null)
             {
-                //Insert into treeview root
+                // Insert into treeview root
                 parent.Children.Add(node);
             }
             else
             {
-                //Insert into treeview root
+                // Insert into treeview root
                 _packageFiles.Add(node);
             }
         }
@@ -845,6 +1012,7 @@ _selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
                     {
                         AppId = fileName;
                     }
+
                     if (string.IsNullOrWhiteSpace(Title))
                     {
                         Title = fileName;
@@ -915,7 +1083,7 @@ _selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
     [ReactiveCommand]
     private void RemoveAllItems()
     {
-        if (SelectedLink != null && SelectedLink.Count == 1)
+        if (SelectedLink?.Count == 1)
         {
             RemoveAllFromTreeview(SelectedLink[0]);
         }
@@ -946,7 +1114,7 @@ _selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
         var parent = targetItem;
         if (targetItem == null)
         {
-            //Porto su root
+            // Porto su root
             _packageFiles.Add(draggedItem);
         }
         else
@@ -958,12 +1126,12 @@ _selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
 
             if (parent != null)
             {
-                //Insert into treeview root
+                // Insert into treeview root
                 parent.Children.Add(draggedItem);
             }
             else
             {
-                //Insert into treeview root
+                // Insert into treeview root
                 _packageFiles.Add(draggedItem);
             }
         }
@@ -991,9 +1159,10 @@ _selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
             var parentPath = BuildDirectoryFullPath(parent);
             TryDeleteDirectoryContents(parentPath);
 
-            //Remove it from children list
+            // Remove it from children list
             parent.Children.Clear();
         }
+
         MainExePath = string.Empty;
         RefreshPackageVersion();
         HasUnsavedTreeChanges = true;
@@ -1019,7 +1188,7 @@ _selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
         }
         else
         {
-            //Remove it from children list
+            // Remove it from children list
             parent.Children.Remove(item);
         }
 
@@ -1040,7 +1209,7 @@ _selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
 
     /// <summary>
     /// I keep in memory created WebConnectionBase, so if the user switch accidentally the
-    /// connection string , he don't lose inserted parameter
+    /// connection string , he don't lose inserted parameter.
     /// </summary>
     /// <param name="connectionType">Type of the connection.</param>
     private void UpdateSelectedConnection(string? connectionType)
@@ -1094,38 +1263,6 @@ _selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
                     FileSystemBasePath = path;
                     VelopackOutputPath = path;
                 });
-        }
-    }
-
-    private class Validator : AbstractValidator<VelopackModel>
-    {
-        public Validator()
-        {
-            RuleFor(c => c.AppId).NotEmpty();
-            RuleFor(c => c.Title).NotEmpty();
-            RuleFor(c => c.Description).NotEmpty();
-            RuleFor(c => c.Version).NotEmpty();
-            RuleFor(c => c.PackageFiles).NotEmpty();
-            RuleFor(c => c.Authors).NotEmpty();
-            RuleFor(c => c.SelectedConnectionString).NotEmpty();
-        }
-    }
-
-    // -------- Helpers added for filtering and upload processing --------
-    private static bool ShouldIncludeFile(string path)
-    {
-        if (string.IsNullOrWhiteSpace(path)) return false;
-        try
-        {
-            var attr = File.GetAttributes(path);
-            if (attr.HasFlag(FileAttributes.Directory)) return true; // always include directories
-            var ext = Path.GetExtension(path);
-            if (!string.IsNullOrEmpty(ext) && s_excludedExtensions.Contains(ext)) return false;
-            return File.Exists(path);
-        }
-        catch
-        {
-            return false;
         }
     }
 
@@ -1191,8 +1328,13 @@ _selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
     // -------- Disk sync helpers for PackageFiles mirror --------
     private string? BuildDirectoryFullPath(ItemLink? node)
     {
-        if (node == null || string.IsNullOrWhiteSpace(PackageFilesOutputPath)) return null;
+        if (node == null || string.IsNullOrWhiteSpace(PackageFilesOutputPath))
+        {
+            return null;
+        }
+
         var parts = new List<string>();
+
         // collect ancestors up to root
         var current = node;
         while (true)
@@ -1204,16 +1346,22 @@ _selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
                 parts.Add(current.Filename);
                 break;
             }
+
             parts.Add(current.Filename);
             current = parent;
         }
+
         parts.Reverse();
         return Path.Combine(PackageFilesOutputPath!, Path.Combine([.. parts]));
     }
 
     private string? BuildParentsDirectoryFullPath(ItemLink? node)
     {
-        if (node == null || string.IsNullOrWhiteSpace(PackageFilesOutputPath)) return null;
+        if (node == null || string.IsNullOrWhiteSpace(PackageFilesOutputPath))
+        {
+            return null;
+        }
+
         var stack = new Stack<string>();
         var current = node.GetParent(PackageFiles);
         while (current != null)
@@ -1221,16 +1369,20 @@ _selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
             stack.Push(current.Filename);
             current = current.GetParent(PackageFiles);
         }
+
         return stack.Count == 0
             ? PackageFilesOutputPath
-            : Path.Combine(PackageFilesOutputPath!, Path.Combine(stack.ToArray()));
+            : Path.Combine(PackageFilesOutputPath!, Path.Combine([.. stack]));
     }
 
     private void TryDeleteNodeFromDisk(ItemLink item)
     {
         try
         {
-            if (string.IsNullOrWhiteSpace(PackageFilesOutputPath)) return;
+            if (string.IsNullOrWhiteSpace(PackageFilesOutputPath))
+            {
+                return;
+            }
 
             if (item.IsDirectory)
             {
@@ -1240,7 +1392,11 @@ _selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
             else
             {
                 var parentDir = BuildParentsDirectoryFullPath(item);
-                if (string.IsNullOrWhiteSpace(parentDir)) return;
+                if (string.IsNullOrWhiteSpace(parentDir))
+                {
+                    return;
+                }
+
                 var filePath = Path.Combine(parentDir!, item.Filename);
                 TryDeleteFile(filePath);
             }
@@ -1251,73 +1407,17 @@ _selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
         }
     }
 
-    private static void TryDeleteFile(string? path)
+    private class Validator : AbstractValidator<VelopackModel>
     {
-        try
+        public Validator()
         {
-            if (string.IsNullOrWhiteSpace(path) || !File.Exists(path)) return;
-            File.SetAttributes(path, FileAttributes.Normal);
-            File.Delete(path);
-        }
-        catch
-        {
-            // ignore
-        }
-    }
-
-    private static void TryDeleteDirectory(string? path)
-    {
-        try
-        {
-            if (string.IsNullOrWhiteSpace(path) || !Directory.Exists(path)) return;
-            // ensure files are deletable
-            foreach (var f in Directory.EnumerateFiles(path!, "*", SearchOption.AllDirectories))
-            {
-                try { File.SetAttributes(f, FileAttributes.Normal); } catch { }
-            }
-            Directory.Delete(path!, true);
-        }
-        catch
-        {
-            // ignore
-        }
-    }
-
-    private static void TryDeleteDirectoryContents(string? path)
-    {
-        try
-        {
-            if (string.IsNullOrWhiteSpace(path) || !Directory.Exists(path)) return;
-            foreach (var file in Directory.EnumerateFiles(path!, "*", SearchOption.TopDirectoryOnly))
-            {
-                TryDeleteFile(file);
-            }
-            foreach (var dir in Directory.EnumerateDirectories(path!, "*", SearchOption.TopDirectoryOnly))
-            {
-                TryDeleteDirectory(dir);
-            }
-        }
-        catch
-        {
-            // ignore
-        }
-    }
-
-    protected override void Dispose(bool disposing)
-    {
-        base.Dispose(disposing);
-        if (disposing)
-        {
-            try { _selectedItem?.Dispose(); } catch { }
-            if (_uploadQueue != null)
-            {
-                foreach (var u in _uploadQueue)
-                {
-                    try { u?.Dispose(); } catch { }
-                }
-            }
-            _fileSystemConnPathSub?.Dispose();
-            _fileSystemConnPathSub = null;
+            RuleFor(c => c.AppId).NotEmpty();
+            RuleFor(c => c.Title).NotEmpty();
+            RuleFor(c => c.Description).NotEmpty();
+            RuleFor(c => c.Version).NotEmpty();
+            RuleFor(c => c.PackageFiles).NotEmpty();
+            RuleFor(c => c.Authors).NotEmpty();
+            RuleFor(c => c.SelectedConnectionString).NotEmpty();
         }
     }
 }

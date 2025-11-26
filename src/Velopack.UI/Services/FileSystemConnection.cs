@@ -1,4 +1,7 @@
-﻿using System.Runtime.Serialization;
+﻿// Copyright (c) Chris Pulman. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System.Runtime.Serialization;
 using System.Runtime.Versioning;
 using FluentValidation;
 using FluentValidation.Results;
@@ -47,7 +50,8 @@ public partial class FileSystemConnection : WebConnectionBase
     {
         get
         {
-            if (string.IsNullOrWhiteSpace(FileSystemPath)) {
+            if (string.IsNullOrWhiteSpace(FileSystemPath))
+            {
                 return "Missing Parameter";
             }
 
@@ -58,11 +62,12 @@ public partial class FileSystemConnection : WebConnectionBase
     /// <summary>
     /// Prima controllo correttezza del pattern poi controllo questo.
     /// </summary>
-    /// <returns></returns>
+    /// <returns>ValidationResult.</returns>
     public override ValidationResult Validate()
     {
         var commonValid = new Validator().Validate(this);
-        if (!commonValid.IsValid) {
+        if (!commonValid.IsValid)
+        {
             return commonValid;
         }
 
