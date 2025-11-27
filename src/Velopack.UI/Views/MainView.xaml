@@ -11,11 +11,11 @@
     xmlns:vtv="clr-namespace:Velopack.UI.Controls"
     xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
     x:Name="mainView"
-    Width="1024"
-    Height="910"
     MinWidth="525"
     MinHeight="400"
     d:DataContext="{d:DesignInstance Type=local:MainViewModel}"
+    d:DesignHeight="910"
+    d:DesignWidth="1024"
     mc:Ignorable="d">
 
     <xctk:BusyIndicator
@@ -85,318 +85,303 @@
                     <ColumnDefinition Width="*" MinWidth="300" />
                 </ui:Grid.ColumnDefinitions>
                 <ui:Grid.RowDefinitions>
-                    <RowDefinition Height="509*" />
-                    <RowDefinition Height="204*" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
                     <RowDefinition Height="60" />
                 </ui:Grid.RowDefinitions>
-                <ui:GroupBox Grid.RowSpan="2" Margin="5,5,5,4.5">
+                <ui:GroupBox
+                    x:Name="PackageDetailsGroup"
+                    Grid.RowSpan="2"
+                    Margin="5">
                     <ui:GroupBox.Header>
                         <StackPanel Orientation="Horizontal">
                             <ui:TextBlock FontSize="14" Text="PACKAGE DETAILS" />
                         </StackPanel>
                     </ui:GroupBox.Header>
-                    <ui:Grid>
-                        <ui:Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <ui:Grid>
+                            <ui:Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="4" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="4" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="4" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="4" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="4" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="4" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="4" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="4" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </ui:Grid.RowDefinitions>
+                            <Menu
+                                Grid.ColumnSpan="3"
+                                Margin="0,0,0,12"
+                                DataContext="{Binding ElementName=mainView, Path=DataContext}"
+                                FontSize="16">
+                                <MenuItem Width="200" Header="Project">
+                                    <MenuItem.Icon>
+                                        <Image Source="/Velopack.UI;component/Images/folder_24.png" Stretch="UniformToFill" />
+                                    </MenuItem.Icon>
+                                    <MenuItem Command="{Binding CreateNewProjectCommand}" Header="Create New" />
+                                    <MenuItem Command="{Binding OpenProjectCommand}" Header="Open" />
+                                    <MenuItem Command="{Binding SaveCommand}" Header="Save" />
+                                    <MenuItem Command="{Binding SaveAsCommand}" Header="Save As" />
+                                </MenuItem>
+                            </Menu>
 
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-
-                            <RowDefinition Height="4" />
-
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-
-                            <RowDefinition Height="4" />
-
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-
-                            <RowDefinition Height="4" />
-
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-
-                            <RowDefinition Height="4" />
-
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-
-                            <RowDefinition Height="4" />
-
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-
-                            <RowDefinition Height="4" />
-
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-
-                            <RowDefinition Height="4" />
-
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-
-                            <RowDefinition Height="Auto" />
-
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-
-                            <RowDefinition Height="4" />
-
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                        </ui:Grid.RowDefinitions>
-                        <Menu
-                            Grid.ColumnSpan="3"
-                            Margin="0,0,0,12"
-                            DataContext="{Binding ElementName=mainView, Path=DataContext}"
-                            FontSize="16">
-                            <MenuItem Width="200" Header="Project">
-                                <MenuItem.Icon>
-                                    <Image Source="/Velopack.UI;component/Images/folder_24.png" Stretch="UniformToFill" />
-                                </MenuItem.Icon>
-                                <MenuItem Command="{Binding CreateNewProjectCommand}" Header="Create New" />
-                                <MenuItem Command="{Binding OpenProjectCommand}" Header="Open" />
-                                <MenuItem Command="{Binding SaveCommand}" Header="Save" />
-                                <MenuItem Command="{Binding SaveAsCommand}" Header="Save As" />
-                            </MenuItem>
-                        </Menu>
-
-                        <ui:TextBlock
-                            Grid.Row="1"
-                            Grid.Column="0"
-                            Style="{StaticResource ResourceKey=Label}"
-                            Text="APP ID" />
-                        <ui:TextBox
-                            Grid.Row="2"
-                            Grid.Column="0"
-                            Background="{x:Null}"
-                            Text="{Binding AppId, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged}" />
-
-                        <ui:TextBlock
-                            Grid.Row="4"
-                            Grid.Column="0"
-                            Style="{StaticResource ResourceKey=Label}"
-                            Text="VERSION" />
-                        <ui:TextBox
-                            Grid.Row="5"
-                            Grid.Column="0"
-                            Background="{x:Null}"
-                            IsEnabled="{Binding ElementName=cbManualVersion, Path=Checked}"
-                            Text="{Binding Version, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged}" />
-                        <ui:CheckBoxModern
-                            x:Name="cbManualVersion"
-                            Grid.Row="6"
-                            Grid.Column="0"
-                            Margin="4"
-                            BoxSize="22"
-                            Checked="{Binding SetVersionManually}"
-                            Text="Set Version Manually" />
-
-                        <ui:TextBlock
-                            Grid.Row="8"
-                            Grid.Column="0"
-                            Style="{StaticResource ResourceKey=Label}"
-                            Text="TITLE" />
-                        <ui:TextBox
-                            Grid.Row="9"
-                            Grid.Column="0"
-                            Background="{x:Null}"
-                            Text="{Binding Title, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged}" />
-
-                        <ui:TextBlock
-                            Grid.Row="11"
-                            Grid.Column="0"
-                            Style="{StaticResource ResourceKey=Label}"
-                            Text="DESCRIPTION" />
-                        <ui:TextBox
-                            Grid.Row="12"
-                            Grid.Column="0"
-                            Width="410"
-                            Height="50"
-                            AcceptsReturn="True"
-                            Background="{x:Null}"
-                            Text="{Binding Description, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged}"
-                            TextWrapping="Wrap" />
-
-                        <ui:TextBlock
-                            Grid.Row="14"
-                            Grid.Column="0"
-                            Style="{StaticResource ResourceKey=Label}"
-                            Text="AUTHORS" />
-                        <ui:TextBox
-                            Grid.Row="15"
-                            Grid.Column="0"
-                            Background="{x:Null}"
-                            Text="{Binding Authors, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged}" />
-
-                        <ui:TextBlock
-                            Grid.Row="17"
-                            Grid.Column="0"
-                            Style="{StaticResource ResourceKey=Label}"
-                            Text="UPLOAD LOCATION" />
-                        <ui:StackPanel
-                            Grid.Row="18"
-                            Grid.Column="0"
-                            Orientation="Horizontal">
-                            <ComboBox
+                            <ui:TextBlock
+                                Grid.Row="1"
+                                Grid.Column="0"
+                                Style="{StaticResource ResourceKey=Label}"
+                                Text="APP ID" />
+                            <ui:TextBox
+                                Grid.Row="2"
+                                Grid.Column="0"
                                 Background="{x:Null}"
-                                ItemsSource="{Binding AvailableUploadLocation}"
-                                SelectedItem="{Binding SelectedConnectionString, ValidatesOnDataErrors=True}" />
-                            <ui:Image
-                                Width="16"
-                                Height="16"
-                                Margin="4,0"
-                                Source="/Velopack.UI;component/Images/edit_16.png" />
-                            <ui:Button
-                                Margin="4"
-                                Command="{Binding EditCurrentConnectionCommand}"
-                                Content="Edit Connection"
-                                FontSize="16" />
-                        </ui:StackPanel>
+                                Text="{Binding AppId, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged}" />
 
-                        <ui:GroupBox Grid.Row="23" Header="Velopack Options">
-                            <ui:Grid Margin="4">
-                                <ui:Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="*" />
-                                </ui:Grid.ColumnDefinitions>
-                                <ui:Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                </ui:Grid.RowDefinitions>
-                                <ui:CheckBoxModern
-                                    Grid.Row="0"
-                                    Grid.Column="0"
-                                    Margin="4"
-                                    BoxSize="22"
-                                    Checked="{Binding GenerateDeltaPackages}"
-                                    Text="Generate Delta Packages" />
-                                <ui:StackPanel
-                                    Grid.Row="1"
-                                    Grid.Column="0"
-                                    Margin="4"
-                                    Orientation="Horizontal">
-                                    <ui:CheckBoxModern
-                                        BoxSize="22"
-                                        Checked="{Binding GenerateMsi}"
-                                        Text="Generate MSI" />
-                                    <ui:TextBlock
-                                        Margin="12,0,4,0"
-                                        VerticalAlignment="Center"
-                                        Text=" Bitness:" />
-                                    <ui:ComboBox Width="80" SelectedItem="{Binding MsiBitness}">
-                                        <sys:String>x86</sys:String>
-                                        <sys:String>x64</sys:String>
-                                    </ui:ComboBox>
-                                </ui:StackPanel>
-                                <ui:StackPanel
-                                    Grid.Row="2"
-                                    Grid.ColumnSpan="2"
-                                    Margin="4"
-                                    Orientation="Horizontal">
-                                    <ui:TextBlock
-                                        Width="100"
-                                        VerticalAlignment="Center"
-                                        Text="Sign Params:" />
-                                    <ui:TextBox MinWidth="280" Text="{Binding SignParams}" />
-                                </ui:StackPanel>
-                                <ui:StackPanel
-                                    Grid.Row="3"
-                                    Grid.ColumnSpan="2"
-                                    Margin="4"
-                                    Orientation="Horizontal">
-                                    <ui:TextBlock
-                                        Width="100"
-                                        VerticalAlignment="Center"
-                                        Text="Sign Template:" />
-                                    <ui:TextBox MinWidth="280" Text="{Binding SignTemplate}" />
-                                </ui:StackPanel>
-                            </ui:Grid>
-                        </ui:GroupBox>
-
-                        <ui:Grid Grid.Row="21">
-                            <ui:Grid.ColumnDefinitions>
-                                <ColumnDefinition />
-                                <ColumnDefinition />
-                            </ui:Grid.ColumnDefinitions>
-                            <ui:StackPanel
+                            <ui:TextBlock
+                                Grid.Row="4"
+                                Grid.Column="0"
+                                Style="{StaticResource ResourceKey=Label}"
+                                Text="VERSION" />
+                            <ui:TextBox
+                                Grid.Row="5"
+                                Grid.Column="0"
+                                Background="{x:Null}"
+                                IsEnabled="{Binding ElementName=cbManualVersion, Path=Checked}"
+                                Text="{Binding Version, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged}" />
+                            <ui:CheckBoxModern
+                                x:Name="cbManualVersion"
+                                Grid.Row="6"
                                 Grid.Column="0"
                                 Margin="4"
-                                Orientation="Vertical">
+                                BoxSize="22"
+                                Checked="{Binding SetVersionManually}"
+                                Text="Set Version Manually" />
+
+                            <ui:TextBlock
+                                Grid.Row="8"
+                                Grid.Column="0"
+                                Style="{StaticResource ResourceKey=Label}"
+                                Text="TITLE" />
+                            <ui:TextBox
+                                Grid.Row="9"
+                                Grid.Column="0"
+                                Background="{x:Null}"
+                                Text="{Binding Title, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged}" />
+
+                            <ui:TextBlock
+                                Grid.Row="11"
+                                Grid.Column="0"
+                                Style="{StaticResource ResourceKey=Label}"
+                                Text="DESCRIPTION" />
+                            <ui:TextBox
+                                Grid.Row="12"
+                                Grid.Column="0"
+                                Width="410"
+                                Height="50"
+                                AcceptsReturn="True"
+                                Background="{x:Null}"
+                                Text="{Binding Description, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged}"
+                                TextWrapping="Wrap" />
+
+                            <ui:TextBlock
+                                Grid.Row="14"
+                                Grid.Column="0"
+                                Style="{StaticResource ResourceKey=Label}"
+                                Text="AUTHORS" />
+                            <ui:TextBox
+                                Grid.Row="15"
+                                Grid.Column="0"
+                                Background="{x:Null}"
+                                Text="{Binding Authors, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged}" />
+
+                            <ui:TextBlock
+                                Grid.Row="17"
+                                Grid.Column="0"
+                                Style="{StaticResource ResourceKey=Label}"
+                                Text="UPLOAD LOCATION" />
+                            <ui:StackPanel
+                                Grid.Row="18"
+                                Grid.Column="0"
+                                Orientation="Horizontal">
+                                <ComboBox
+                                    Background="{x:Null}"
+                                    ItemsSource="{Binding AvailableUploadLocation}"
+                                    SelectedItem="{Binding SelectedConnectionString, ValidatesOnDataErrors=True}" />
+                                <ui:Image
+                                    Width="16"
+                                    Height="16"
+                                    Margin="4,0"
+                                    Source="/Velopack.UI;component/Images/edit_16.png" />
                                 <ui:Button
-                                    HorizontalAlignment="Center"
-                                    Command="{Binding SelectIconCommand}"
-                                    Content="APP ICON"
-                                    FontSize="14"
-                                    FontWeight="Bold" />
-                                <ui:Border
-                                    Margin="2"
-                                    Padding="3"
-                                    HorizontalAlignment="Center"
-                                    BorderThickness="1">
-                                    <ui:Image
-                                        Width="32"
-                                        Height="32"
-                                        Margin="3"
-                                        Source="{Binding IconSource}" />
-                                </ui:Border>
+                                    Margin="4"
+                                    Command="{Binding EditCurrentConnectionCommand}"
+                                    Content="Edit Connection"
+                                    FontSize="16" />
+                            </ui:StackPanel>
+
+                            <ui:GroupBox Grid.Row="23" Header="Velopack Options">
+                                <ui:Grid Margin="4">
+                                    <ui:Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                    </ui:Grid.ColumnDefinitions>
+                                    <ui:Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                    </ui:Grid.RowDefinitions>
+                                    <ui:CheckBoxModern
+                                        Grid.Row="0"
+                                        Grid.Column="0"
+                                        Margin="4"
+                                        BoxSize="22"
+                                        Checked="{Binding GenerateDeltaPackages}"
+                                        Text="Generate Delta Packages" />
+                                    <ui:StackPanel
+                                        Grid.Row="1"
+                                        Grid.Column="0"
+                                        Margin="4"
+                                        Orientation="Horizontal">
+                                        <ui:CheckBoxModern
+                                            BoxSize="22"
+                                            Checked="{Binding GenerateMsi}"
+                                            Text="Generate MSI" />
+                                        <ui:TextBlock
+                                            Margin="12,0,4,0"
+                                            VerticalAlignment="Center"
+                                            Text=" Bitness:" />
+                                        <ui:ComboBox Width="80" SelectedItem="{Binding MsiBitness}">
+                                            <sys:String>x86</sys:String>
+                                            <sys:String>x64</sys:String>
+                                        </ui:ComboBox>
+                                    </ui:StackPanel>
+                                    <ui:StackPanel
+                                        Grid.Row="2"
+                                        Grid.ColumnSpan="2"
+                                        Margin="4"
+                                        Orientation="Horizontal">
+                                        <ui:TextBlock
+                                            Width="100"
+                                            VerticalAlignment="Center"
+                                            Text="Sign Params:" />
+                                        <ui:TextBox MinWidth="280" Text="{Binding SignParams}" />
+                                    </ui:StackPanel>
+                                    <ui:StackPanel
+                                        Grid.Row="3"
+                                        Grid.ColumnSpan="2"
+                                        Margin="4"
+                                        Orientation="Horizontal">
+                                        <ui:TextBlock
+                                            Width="100"
+                                            VerticalAlignment="Center"
+                                            Text="Sign Template:" />
+                                        <ui:TextBox MinWidth="280" Text="{Binding SignTemplate}" />
+                                    </ui:StackPanel>
+                                </ui:Grid>
+                            </ui:GroupBox>
+
+                            <ui:Grid Grid.Row="21">
+                                <ui:Grid.ColumnDefinitions>
+                                    <ColumnDefinition />
+                                    <ColumnDefinition />
+                                </ui:Grid.ColumnDefinitions>
+                                <ui:StackPanel
+                                    Grid.Column="0"
+                                    Margin="4"
+                                    Orientation="Vertical">
+                                    <ui:Button
+                                        HorizontalAlignment="Center"
+                                        Command="{Binding SelectIconCommand}"
+                                        Content="APP ICON"
+                                        FontSize="14"
+                                        FontWeight="Bold" />
+                                    <ui:Border
+                                        Margin="2"
+                                        Padding="3"
+                                        HorizontalAlignment="Center"
+                                        BorderThickness="1">
+                                        <ui:Image
+                                            Width="32"
+                                            Height="32"
+                                            Margin="3"
+                                            Source="{Binding IconSource}" />
+                                    </ui:Border>
+                                </ui:StackPanel>
+                                <ui:StackPanel
+                                    Grid.Column="1"
+                                    Margin="4"
+                                    Orientation="Vertical">
+                                    <ui:Button
+                                        HorizontalAlignment="Center"
+                                        Command="{Binding SelectSplashCmd}"
+                                        Content="SPLASH"
+                                        FontSize="14"
+                                        FontWeight="Bold" />
+                                    <ui:Border
+                                        Margin="2"
+                                        Padding="3"
+                                        HorizontalAlignment="Center"
+                                        BorderThickness="1">
+                                        <ui:Image
+                                            Width="32"
+                                            Height="32"
+                                            Margin="3"
+                                            Source="{Binding Path=SplashSource}" />
+                                    </ui:Border>
+                                </ui:StackPanel>
+                            </ui:Grid>
+
+                            <ui:StackPanel
+                                Grid.Row="25"
+                                Margin="0,8,0,0"
+                                HorizontalAlignment="Left"
+                                Orientation="Horizontal">
+                                <ui:Button
+                                    Margin="0,0,8,0"
+                                    Command="{Binding SelectNupkgDirectoryCommand}"
+                                    Content="Output: Content Folder" />
+                                <ui:TextBlock VerticalAlignment="Center" Text="{Binding PackageFilesOutputPath}" />
                             </ui:StackPanel>
                             <ui:StackPanel
-                                Grid.Column="1"
-                                Margin="4"
-                                Orientation="Vertical">
+                                Grid.Row="26"
+                                HorizontalAlignment="Left"
+                                Orientation="Horizontal">
                                 <ui:Button
-                                    HorizontalAlignment="Center"
-                                    Command="{Binding SelectSplashCmd}"
-                                    Content="SPLASH"
-                                    FontSize="14"
-                                    FontWeight="Bold" />
-                                <ui:Border
-                                    Margin="2"
-                                    Padding="3"
-                                    HorizontalAlignment="Center"
-                                    BorderThickness="1">
-                                    <ui:Image
-                                        Width="32"
-                                        Height="32"
-                                        Margin="3"
-                                        Source="{Binding Path=SplashSource}" />
-                                </ui:Border>
+                                    Margin="0,0,8,0"
+                                    Command="{Binding SelectOutputDirectoryCommand}"
+                                    Content="Output: Releases Folder" />
+                                <ui:TextBlock VerticalAlignment="Center" Text="{Binding VelopackOutputPath}" />
                             </ui:StackPanel>
                         </ui:Grid>
-
-                        <ui:StackPanel
-                            Grid.Row="25"
-                            Margin="0,8,0,0"
-                            HorizontalAlignment="Left"
-                            Orientation="Horizontal">
-                            <ui:Button
-                                Margin="0,0,8,0"
-                                Command="{Binding SelectNupkgDirectoryCommand}"
-                                Content="Output: Content Folder" />
-                            <ui:TextBlock VerticalAlignment="Center" Text="{Binding PackageFilesOutputPath}" />
-                        </ui:StackPanel>
-                        <ui:StackPanel
-                            Grid.Row="26"
-                            HorizontalAlignment="Left"
-                            Orientation="Horizontal">
-                            <ui:Button
-                                Margin="0,0,8,0"
-                                Command="{Binding SelectOutputDirectoryCommand}"
-                                Content="Output: Releases Folder" />
-                            <ui:TextBlock VerticalAlignment="Center" Text="{Binding VelopackOutputPath}" />
-                        </ui:StackPanel>
-                    </ui:Grid>
+                    </ScrollViewer>
                 </ui:GroupBox>
                 <GridSplitter
                     Grid.RowSpan="2"
@@ -405,7 +390,7 @@
                     Margin="2,40,3,40.5"
                     HorizontalAlignment="Center"
                     IsTabStop="False" />
-                <ui:GroupBox Grid.Column="2" Margin="5,5,5,4.5">
+                <ui:GroupBox Grid.Column="2" Margin="5">
                     <ui:GroupBox.Header>
                         <ui:StackPanel Orientation="Horizontal">
                             <ui:TextBlock FontSize="14" Text="INSTALLER PACKAGE CONTENT" />
@@ -429,7 +414,7 @@
                             Grid.Row="1"
                             Padding="4"
                             BorderBrush="#999"
-                            BorderThickness="1,0,1,1"
+                            BorderThickness="1"
                             SnapsToDevicePixels="True">
                             <ui:Grid
                                 x:Name="DetailGrid"

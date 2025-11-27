@@ -35,7 +35,7 @@ public partial class App
         }
 
         TryPromptVelopackTool();
-        RxApp.TaskpoolScheduler.Schedule(async () => await UpdateMyApp("https://github.com/ChrisPulman/Velopack.UI/releases"));
+        UpdateMyApp("https://github.com/ChrisPulman/Velopack.UI/releases").Wait();
     }
 
     [STAThread]
