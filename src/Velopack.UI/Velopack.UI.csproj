@@ -21,13 +21,17 @@
   <ItemGroup>
     <PackageReference Include="Octokit" Version="14.0.0" />
     <PackageReference Include="ReactiveMarbles.ObservableEvents.SourceGenerator" Version="1.3.1" />
-    <PackageReference Include="ReactiveUI.SourceGenerators" Version="2.6.30" />
+    <PackageReference Include="ReactiveUI.SourceGenerators" Version="2.6.30">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="Velopack" Version="0.0.1298" />
     <PackageReference Include="AWSSDK.S3" Version="4.0.22.1" />
     <PackageReference Include="CrissCross.WPF.UI" Version="3.2.10" />
     <PackageReference Include="DotNetProjects.Extended.Wpf.Toolkit" Version="5.0.129" />
     <PackageReference Include="gong-wpf-dragdrop" Version="4.0.0" />
     <PackageReference Include="FluentValidation" Version="12.1.1" />
+    <PackageReference Update="Microsoft.SourceLink.GitHub" Version="10.0.203" />
   </ItemGroup>
 
   <ItemGroup>
