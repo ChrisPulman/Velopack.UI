@@ -115,7 +115,7 @@
                     <ui:TextBlock
                         Grid.Row="0"
                         Grid.Column="0"
-                        Text="Filesytem Path : " />
+                        Text="Output Root : " />
                     <ui:TextBox
                         Grid.Row="0"
                         Grid.Column="1"
@@ -126,7 +126,7 @@
                         Grid.Column="0"
                         VerticalAlignment="Center"
                         FontWeight="Bold"
-                        Text="Setup Link Url : " />
+                        Text="Releases Folder : " />
                     <ui:TextBox
                         Grid.Row="6"
                         Grid.Column="1"
@@ -136,7 +136,7 @@
                     <TextBlock
                         Grid.Row="7"
                         Grid.Column="1"
-                        Text="Copy this link for Setup.Exe location" />
+                        Text="Velopack packages are written under this folder" />
                     <Button
                         Grid.Row="8"
                         Grid.Column="1"
@@ -162,75 +162,86 @@
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
                     </ui:Grid.RowDefinitions>
                     <ui:TextBlock
                         Grid.Row="0"
                         Grid.Column="0"
-                        Text="Owner:" />
+                        Text="Repository URL:" />
                     <ui:TextBox
                         Grid.Row="0"
+                        Grid.Column="1"
+                        ToolTip="Paste a GitHub repository URL such as https://github.com/ChrisPulman/Velopack.UI"
+                        Text="{Binding RepositoryUrl, UpdateSourceTrigger=PropertyChanged}" />
+
+                    <ui:TextBlock
+                        Grid.Row="1"
+                        Grid.Column="0"
+                        Text="Owner:" />
+                    <ui:TextBox
+                        Grid.Row="1"
                         Grid.Column="1"
                         Text="{Binding Owner, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
 
                     <ui:TextBlock
-                        Grid.Row="1"
+                        Grid.Row="2"
                         Grid.Column="0"
                         Text="Repository:" />
                     <ui:TextBox
-                        Grid.Row="1"
+                        Grid.Row="2"
                         Grid.Column="1"
                         Text="{Binding Repository, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
 
                     <ui:TextBlock
-                        Grid.Row="2"
+                        Grid.Row="3"
                         Grid.Column="0"
                         Text="Tag Name:" />
                     <ui:TextBox
-                        Grid.Row="2"
+                        Grid.Row="3"
                         Grid.Column="1"
                         Text="{Binding TagName, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
 
                     <ui:TextBlock
-                        Grid.Row="3"
+                        Grid.Row="4"
                         Grid.Column="0"
                         Text="Release Name:" />
                     <ui:TextBox
-                        Grid.Row="3"
+                        Grid.Row="4"
                         Grid.Column="1"
                         Text="{Binding ReleaseName, UpdateSourceTrigger=PropertyChanged}" />
 
                     <ui:TextBlock
-                        Grid.Row="4"
+                        Grid.Row="5"
                         Grid.Column="0"
                         Width="150"
                         Text="Personal access token (classic) - repo: "
                         TextWrapping="Wrap" />
                     <ui:TextBox
-                        Grid.Row="4"
+                        Grid.Row="5"
                         Grid.Column="1"
                         Text="{Binding Token, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
 
                     <ui:CheckBoxModern
-                        Grid.Row="5"
+                        Grid.Row="6"
                         Grid.Column="1"
                         BoxSize="22"
                         Checked="{Binding Prerelease}"
                         Text="Prerelease" />
                     <ui:CheckBoxModern
-                        Grid.Row="6"
+                        Grid.Row="7"
                         Grid.Column="1"
                         BoxSize="22"
                         Checked="{Binding Draft}"
                         Text="Draft" />
 
                     <ui:TextBlock
-                        Grid.Row="7"
+                        Grid.Row="8"
                         Grid.Column="0"
                         VerticalAlignment="Center"
                         FontWeight="Bold"
                         Text="Setup Link Url : " />
                     <ui:TextBox
-                        Grid.Row="7"
+                        Grid.Row="8"
                         Grid.Column="1"
                         FontWeight="Bold"
                         IsReadOnly="True"

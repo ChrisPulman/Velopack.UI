@@ -31,6 +31,8 @@ public partial class SingleFileUpload : RxObject
     // Cache resolved GitHub release IDs to prevent duplicate release creation across assets
     private static readonly SemaphoreSlim releaseLock = new(1, 1);
     private static readonly Dictionary<string, long> releaseIdCache = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly HashSet<string> shownUploadErrors = new(StringComparer.Ordinal);
+    private static readonly object shownUploadErrorsLock = new();
 
     private FileUploadStatus _uploadStatus;
     private TransferUtility? _fileTransferUtility;
@@ -129,6 +131,14 @@ public partial class SingleFileUpload : RxObject
         {
             this.RaiseAndSetIfChanged(ref _uploadStatus, value);
             this.RaisePropertyChanged(nameof(FormattedStatus));
+        }
+    }
+
+    internal static void ResetErrorNotifications()
+    {
+        lock (shownUploadErrorsLock)
+        {
+            shownUploadErrors.Clear();
         }
     }
 
@@ -323,11 +333,14 @@ public partial class SingleFileUpload : RxObject
 
                 System.Windows.Application.Current.Dispatcher.Invoke(() => RequesteUploadComplete(new UploadCompleteEventArgs(this)));
             }
-            catch
+            catch (Exception ex)
             {
                 System.Windows.Application.Current.Dispatcher.Invoke(() => UploadStatus = FileUploadStatus.Failed);
-                System.Windows.Application.Current.Dispatcher.Invoke(() =>
-                    System.Windows.MessageBox.Show("Authentication failed: Bad credentials. Please verify your GitHub token."));
+                var message = ex is AuthorizationException || ex.Message.Contains("Bad credentials", StringComparison.OrdinalIgnoreCase)
+                    ? "Authentication failed: Bad credentials. Please verify your GitHub token."
+                    : $"GitHub upload failed: {ex.Message}";
+
+                ShowUploadErrorOnce(message);
             }
         }
     }
@@ -357,6 +370,20 @@ public partial class SingleFileUpload : RxObject
         _ = await client.PutBucketAsync(putRequest1);
 
         Trace.WriteLine("Creating a bucket " + bucketName);
+    }
+
+    private static void ShowUploadErrorOnce(string message)
+    {
+        lock (shownUploadErrorsLock)
+        {
+            if (!shownUploadErrors.Add(message))
+            {
+                return;
+            }
+        }
+
+        System.Windows.Application.Current.Dispatcher.Invoke(() =>
+            System.Windows.MessageBox.Show(message));
     }
 
     private void RequesteUploadComplete(UploadCompleteEventArgs uploadEvent)

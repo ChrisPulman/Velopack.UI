@@ -88,6 +88,7 @@
                     <RowDefinition Height="*" />
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="60" />
+                    <RowDefinition Height="60" />
                 </ui:Grid.RowDefinitions>
                 <ui:GroupBox
                     x:Name="PackageDetailsGroup"
@@ -245,67 +246,125 @@
                                     FontSize="16" />
                             </ui:StackPanel>
 
-                            <ui:GroupBox Grid.Row="23" Header="Velopack Options">
-                                <ui:Grid Margin="4">
-                                    <ui:Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="*" />
-                                    </ui:Grid.ColumnDefinitions>
-                                    <ui:Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto" />
-                                        <RowDefinition Height="Auto" />
-                                        <RowDefinition Height="Auto" />
-                                        <RowDefinition Height="Auto" />
-                                        <RowDefinition Height="Auto" />
-                                    </ui:Grid.RowDefinitions>
+                            <ui:GroupBox Grid.Row="23" Header="Velopack Pack Options">
+                                <ui:StackPanel Margin="4">
+                                    <ui:TextBlock Style="{StaticResource ResourceKey=Label}" Text="MAIN EXE" />
+                                    <ui:TextBox Background="{x:Null}" Text="{Binding MainExeName, UpdateSourceTrigger=PropertyChanged}" />
+
+                                    <ui:StackPanel Orientation="Horizontal">
+                                        <ui:StackPanel Width="198" Margin="0,0,8,0">
+                                            <ui:TextBlock Style="{StaticResource ResourceKey=Label}" Text="CHANNEL" />
+                                            <ui:TextBox Background="{x:Null}" Text="{Binding Channel, UpdateSourceTrigger=PropertyChanged}" />
+                                        </ui:StackPanel>
+                                        <ui:StackPanel Width="198">
+                                            <ui:TextBlock Style="{StaticResource ResourceKey=Label}" Text="RUNTIME" />
+                                            <ui:TextBox Background="{x:Null}" Text="{Binding Runtime, UpdateSourceTrigger=PropertyChanged}" />
+                                        </ui:StackPanel>
+                                    </ui:StackPanel>
+
+                                    <ui:StackPanel Orientation="Horizontal">
+                                        <ui:StackPanel Width="198" Margin="0,0,8,0">
+                                            <ui:TextBlock Style="{StaticResource ResourceKey=Label}" Text="DELTA MODE" />
+                                            <ui:ComboBox SelectedItem="{Binding DeltaMode}">
+                                                <sys:String>BestSpeed</sys:String>
+                                                <sys:String>BestSize</sys:String>
+                                                <sys:String>None</sys:String>
+                                            </ui:ComboBox>
+                                        </ui:StackPanel>
+                                        <ui:StackPanel Width="198">
+                                            <ui:TextBlock Style="{StaticResource ResourceKey=Label}" Text="SHORTCUTS" />
+                                            <ComboBox
+                                                IsEditable="True"
+                                                SelectedItem="{Binding Shortcuts, UpdateSourceTrigger=PropertyChanged}"
+                                                Text="{Binding Shortcuts, UpdateSourceTrigger=PropertyChanged}">
+                                                <sys:String>Desktop,StartMenuRoot</sys:String>
+                                                <sys:String>Desktop</sys:String>
+                                                <sys:String>StartMenuRoot</sys:String>
+                                                <sys:String>StartMenu</sys:String>
+                                                <sys:String>Startup</sys:String>
+                                                <sys:String>None</sys:String>
+                                            </ComboBox>
+                                        </ui:StackPanel>
+                                    </ui:StackPanel>
+
+                                    <ui:TextBlock Style="{StaticResource ResourceKey=Label}" Text="RELEASE NOTES" />
+                                    <ui:StackPanel Orientation="Horizontal">
+                                        <ui:TextBox
+                                            Width="318"
+                                            Background="{x:Null}"
+                                            Text="{Binding ReleaseNotesPath, UpdateSourceTrigger=PropertyChanged}" />
+                                        <ui:Button
+                                            Margin="4,0,0,0"
+                                            Command="{Binding SelectReleaseNotesCommand}"
+                                            Content="Browse" />
+                                    </ui:StackPanel>
+
+                                    <ui:TextBlock Style="{StaticResource ResourceKey=Label}" Text="EXCLUDE REGEX" />
+                                    <ui:TextBox Background="{x:Null}" Text="{Binding ExcludeRegex, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged}" />
+
+                                    <ui:TextBlock Style="{StaticResource ResourceKey=Label}" Text="FRAMEWORKS" />
+                                    <ui:TextBox Background="{x:Null}" Text="{Binding Frameworks, UpdateSourceTrigger=PropertyChanged}" />
+
+                                    <ui:StackPanel Margin="0,4" Orientation="Horizontal">
+                                        <ui:CheckBoxModern
+                                            Margin="4"
+                                            BoxSize="22"
+                                            Checked="{Binding NoPortable}"
+                                            Text="No Portable" />
+                                        <ui:CheckBoxModern
+                                            Margin="4"
+                                            BoxSize="22"
+                                            Checked="{Binding NoInstaller}"
+                                            Text="No Installer" />
+                                    </ui:StackPanel>
                                     <ui:CheckBoxModern
-                                        Grid.Row="0"
-                                        Grid.Column="0"
                                         Margin="4"
                                         BoxSize="22"
-                                        Checked="{Binding GenerateDeltaPackages}"
-                                        Text="Generate Delta Packages" />
-                                    <ui:StackPanel
-                                        Grid.Row="1"
-                                        Grid.Column="0"
-                                        Margin="4"
-                                        Orientation="Horizontal">
+                                        Checked="{Binding SkipVeloAppCheck}"
+                                        Text="Skip VelopackApp Check" />
+
+                                    <ui:TextBlock Style="{StaticResource ResourceKey=Label}" Text="SIGN PARAMS" />
+                                    <ui:TextBox Background="{x:Null}" Text="{Binding SignParams, UpdateSourceTrigger=PropertyChanged}" />
+
+                                    <ui:TextBlock Style="{StaticResource ResourceKey=Label}" Text="SIGN TEMPLATE" />
+                                    <ui:TextBox Background="{x:Null}" Text="{Binding SignTemplate, UpdateSourceTrigger=PropertyChanged}" />
+
+                                    <ui:StackPanel Orientation="Horizontal">
+                                        <ui:StackPanel Width="268" Margin="0,0,8,0">
+                                            <ui:TextBlock Style="{StaticResource ResourceKey=Label}" Text="SIGN EXCLUDE" />
+                                            <ui:TextBox Background="{x:Null}" Text="{Binding SignExclude, UpdateSourceTrigger=PropertyChanged}" />
+                                        </ui:StackPanel>
+                                        <ui:StackPanel Width="128">
+                                            <ui:TextBlock Style="{StaticResource ResourceKey=Label}" Text="SIGN PARALLEL" />
+                                            <xctk:IntegerUpDown Minimum="1" Value="{Binding SignParallel, UpdateSourceTrigger=PropertyChanged}" />
+                                        </ui:StackPanel>
+                                    </ui:StackPanel>
+
+                                    <ui:TextBlock Style="{StaticResource ResourceKey=Label}" Text="AZURE TRUSTED SIGN FILE" />
+                                    <ui:StackPanel Orientation="Horizontal">
+                                        <ui:TextBox
+                                            Width="318"
+                                            Background="{x:Null}"
+                                            Text="{Binding AzureTrustedSignFile, UpdateSourceTrigger=PropertyChanged}" />
+                                        <ui:Button
+                                            Margin="4,0,0,0"
+                                            Command="{Binding SelectAzureTrustedSignFileCommand}"
+                                            Content="Browse" />
+                                    </ui:StackPanel>
+
+                                    <ui:StackPanel Margin="0,4" Orientation="Horizontal">
                                         <ui:CheckBoxModern
+                                            Width="198"
+                                            Margin="4"
                                             BoxSize="22"
-                                            Checked="{Binding GenerateMsi}"
-                                            Text="Generate MSI" />
-                                        <ui:TextBlock
-                                            Margin="12,0,4,0"
-                                            VerticalAlignment="Center"
-                                            Text=" Bitness:" />
-                                        <ui:ComboBox Width="80" SelectedItem="{Binding MsiBitness}">
-                                            <sys:String>x86</sys:String>
-                                            <sys:String>x64</sys:String>
-                                        </ui:ComboBox>
+                                            Checked="{Binding MsiDeploymentTool}"
+                                            Text="MSI Deployment Tool" />
+                                        <ui:StackPanel Width="198">
+                                            <ui:TextBlock Style="{StaticResource ResourceKey=Label}" Text="MSI TOOL VERSION" />
+                                            <ui:TextBox Background="{x:Null}" Text="{Binding MsiDeploymentToolVersion, UpdateSourceTrigger=PropertyChanged}" />
+                                        </ui:StackPanel>
                                     </ui:StackPanel>
-                                    <ui:StackPanel
-                                        Grid.Row="2"
-                                        Grid.ColumnSpan="2"
-                                        Margin="4"
-                                        Orientation="Horizontal">
-                                        <ui:TextBlock
-                                            Width="100"
-                                            VerticalAlignment="Center"
-                                            Text="Sign Params:" />
-                                        <ui:TextBox MinWidth="280" Text="{Binding SignParams}" />
-                                    </ui:StackPanel>
-                                    <ui:StackPanel
-                                        Grid.Row="3"
-                                        Grid.ColumnSpan="2"
-                                        Margin="4"
-                                        Orientation="Horizontal">
-                                        <ui:TextBlock
-                                            Width="100"
-                                            VerticalAlignment="Center"
-                                            Text="Sign Template:" />
-                                        <ui:TextBox MinWidth="280" Text="{Binding SignTemplate}" />
-                                    </ui:StackPanel>
-                                </ui:Grid>
+                                </ui:StackPanel>
                             </ui:GroupBox>
 
                             <ui:Grid Grid.Row="21">
@@ -359,27 +418,6 @@
                                 </ui:StackPanel>
                             </ui:Grid>
 
-                            <ui:StackPanel
-                                Grid.Row="25"
-                                Margin="0,8,0,0"
-                                HorizontalAlignment="Left"
-                                Orientation="Horizontal">
-                                <ui:Button
-                                    Margin="0,0,8,0"
-                                    Command="{Binding SelectNupkgDirectoryCommand}"
-                                    Content="Output: Content Folder" />
-                                <ui:TextBlock VerticalAlignment="Center" Text="{Binding PackageFilesOutputPath}" />
-                            </ui:StackPanel>
-                            <ui:StackPanel
-                                Grid.Row="26"
-                                HorizontalAlignment="Left"
-                                Orientation="Horizontal">
-                                <ui:Button
-                                    Margin="0,0,8,0"
-                                    Command="{Binding SelectOutputDirectoryCommand}"
-                                    Content="Output: Releases Folder" />
-                                <ui:TextBlock VerticalAlignment="Center" Text="{Binding VelopackOutputPath}" />
-                            </ui:StackPanel>
                         </ui:Grid>
                     </ScrollViewer>
                 </ui:GroupBox>
@@ -451,7 +489,7 @@
                                         Grid.Row="0"
                                         Grid.Column="2"
                                         Margin="4,0"
-                                        Text="{Binding DataContext.Model.VelopackOutputPath, ElementName=mainView}"
+                                        Text="{Binding SourceFilepath}"
                                         TextWrapping="Wrap" />
 
                                     <ui:TextBlock
@@ -549,6 +587,82 @@
 
                 <ui:Grid
                     Grid.Row="2"
+                    Grid.ColumnSpan="3"
+                    Margin="0,1.5,0,0.5">
+                    <ui:Grid.ColumnDefinitions>
+                        <ColumnDefinition />
+                        <ColumnDefinition />
+                        <ColumnDefinition />
+                    </ui:Grid.ColumnDefinitions>
+
+                    <ui:Button
+                        Width="300"
+                        Margin="5"
+                        Padding="0"
+                        HorizontalAlignment="Center"
+                        Command="{Binding OpenPackageFilesCommand}"
+                        Cursor="Hand">
+                        <ui:StackPanel Orientation="Horizontal">
+                            <ui:Image
+                                Width="24"
+                                Height="24"
+                                Margin="5,0"
+                                Source="/Velopack.UI;component/Images/folder_24.png" />
+                            <ui:TextBlock
+                                FontSize="18"
+                                FontWeight="Bold"
+                                Foreground="Green"
+                                Text="Open Package Files" />
+                        </ui:StackPanel>
+                    </ui:Button>
+
+                    <ui:Button
+                        Grid.Column="1"
+                        Width="300"
+                        Margin="5"
+                        Padding="0"
+                        HorizontalAlignment="Center"
+                        Command="{Binding OpenReleasesCommand}"
+                        Cursor="Hand">
+                        <ui:StackPanel Orientation="Horizontal">
+                            <ui:Image
+                                Width="24"
+                                Height="24"
+                                Margin="5,0"
+                                Source="/Velopack.UI;component/Images/folder_24.png" />
+                            <ui:TextBlock
+                                FontSize="18"
+                                FontWeight="Bold"
+                                Foreground="Green"
+                                Text="Open Releases" />
+                        </ui:StackPanel>
+                    </ui:Button>
+
+                    <ui:Button
+                        Grid.Column="2"
+                        Width="300"
+                        Margin="5"
+                        Padding="0"
+                        HorizontalAlignment="Center"
+                        Command="{Binding ClearPackageFilesCommand}"
+                        Cursor="Hand">
+                        <ui:StackPanel Orientation="Horizontal">
+                            <ui:Image
+                                Width="16"
+                                Height="16"
+                                Margin="5,0"
+                                Source="/Velopack.UI;component/Images/minus_16.png" />
+                            <ui:TextBlock
+                                FontSize="18"
+                                FontWeight="Bold"
+                                Foreground="Firebrick"
+                                Text="Clear Package Files" />
+                        </ui:StackPanel>
+                    </ui:Button>
+                </ui:Grid>
+
+                <ui:Grid
+                    Grid.Row="3"
                     Grid.ColumnSpan="3"
                     Margin="0,1.5,0,0.5">
                     <ui:Grid.ColumnDefinitions>

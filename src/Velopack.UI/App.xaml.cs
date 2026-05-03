@@ -6,6 +6,7 @@ using System.Reactive.Concurrency;
 using System.Security.Principal;
 using System.Windows;
 using ReactiveUI;
+using ReactiveUI.Builder;
 
 namespace Velopack.UI;
 
@@ -36,6 +37,8 @@ public partial class App
 
         TryPromptVelopackTool();
         UpdateMyApp("https://github.com/ChrisPulman/Velopack.UI/releases").Wait();
+
+        RxAppBuilder.CreateReactiveUIBuilder().WithWpf().Build();
     }
 
     [STAThread]

@@ -3,6 +3,7 @@
 
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Reactive;
 using System.Reactive.Linq;
@@ -279,6 +280,15 @@ public partial class MainViewModel : RxObject
 
             // Resync connection instances and mirror saved FileSystemBasePath into the active FileSystemConnection
             Model.ResyncAfterLoad();
+            if (Model.SelectedConnection is not FileSystemConnection)
+            {
+                var projectDir = Path.GetDirectoryName(filepath);
+                if (!string.IsNullOrWhiteSpace(projectDir))
+                {
+                    Model.SetOutputBasePath(projectDir);
+                }
+            }
+
             SetupDirtyTracking();
             Model.PackageFiles = VelopackModel.OrderFileList(Model.PackageFiles);
             Model.RefreshPackageVersion();
@@ -387,10 +397,26 @@ public partial class MainViewModel : RxObject
     [ReactiveCommand]
     public void Save()
     {
+        if (Model == null)
+        {
+            return;
+        }
+
+        var fileSystemPath = Model.SelectedConnection is FileSystemConnection fsc && !string.IsNullOrWhiteSpace(fsc.FileSystemPath)
+            ? fsc.FileSystemPath
+            : null;
+
         if (string.IsNullOrWhiteSpace(FilePath))
         {
-            SaveAs();
-            return;
+            if (!string.IsNullOrWhiteSpace(fileSystemPath))
+            {
+                FilePath = fileSystemPath;
+            }
+            else
+            {
+                SaveAs();
+                return;
+            }
         }
 
         if (FilePath.Contains(PathFolderHelper.ProjectFileExtension))
@@ -398,31 +424,20 @@ public partial class MainViewModel : RxObject
             FilePath = Path.GetDirectoryName(FilePath);
         }
 
-        if (Model == null)
-        {
-            return;
-        }
+        var baseDir = !string.IsNullOrWhiteSpace(fileSystemPath) ? fileSystemPath : FilePath!;
+        FilePath = baseDir;
 
-        // If FileSystem connection is selected with a path, prefer it for FileSystemBasePath
-        string baseDir;
-        if (Model.SelectedConnection is FileSystemConnection fsc && !string.IsNullOrWhiteSpace(fsc.FileSystemPath))
-        {
-            baseDir = fsc.FileSystemPath;
-
-            // persist base into model so it is saved in *.velo and restored later
-            Model.FileSystemBasePath = fsc.FileSystemPath;
-        }
-        else
-        {
-            baseDir = Path.Combine(FilePath!, Model.AppId + "_files");
-        }
+        // Persist the single local output root so all upload targets reuse the same staging layout.
+        Model.FileSystemBasePath = baseDir;
 
         // Build output directories
         Model.PackageFilesOutputPath = Path.Combine(baseDir, PathFolderHelper.PackageFilesDirectory);
         Model.VelopackOutputPath = Path.Combine(baseDir, PathFolderHelper.ReleasesDirectory);
 
+        Directory.CreateDirectory(FilePath!);
         Directory.CreateDirectory(Model.PackageFilesOutputPath);
         Directory.CreateDirectory(Model.VelopackOutputPath);
+        CleanLegacyReleaseArtifactsFromRoot(baseDir);
 
         var asProj = Path.Combine(FilePath!, $"{Model.AppId}{PathFolderHelper.ProjectFileExtension}");
 
@@ -505,10 +520,30 @@ public partial class MainViewModel : RxObject
             Model.WhenAnyValue(m => m.Description).Select(_ => Unit.Default),
             Model.WhenAnyValue(m => m.Version).Select(_ => Unit.Default),
             Model.WhenAnyValue(m => m.AppId).Select(_ => Unit.Default),
+            Model.WhenAnyValue(m => m.MainExeName).Select(_ => Unit.Default),
+            Model.WhenAnyValue(m => m.IconFilepath).Select(_ => Unit.Default),
+            Model.WhenAnyValue(m => m.SplashFilepath).Select(_ => Unit.Default),
             Model.WhenAnyValue(m => m.SelectedConnectionString).Select(_ => Unit.Default),
             Model.WhenAnyValue(m => m.PackageFilesOutputPath).Select(_ => Unit.Default),
             Model.WhenAnyValue(m => m.VelopackOutputPath).Select(_ => Unit.Default),
-            Model.WhenAnyValue(m => m.FileSystemBasePath).Select(_ => Unit.Default)
+            Model.WhenAnyValue(m => m.FileSystemBasePath).Select(_ => Unit.Default),
+            Model.WhenAnyValue(m => m.Channel).Select(_ => Unit.Default),
+            Model.WhenAnyValue(m => m.Runtime).Select(_ => Unit.Default),
+            Model.WhenAnyValue(m => m.ReleaseNotesPath).Select(_ => Unit.Default),
+            Model.WhenAnyValue(m => m.DeltaMode).Select(_ => Unit.Default),
+            Model.WhenAnyValue(m => m.ExcludeRegex).Select(_ => Unit.Default),
+            Model.WhenAnyValue(m => m.NoPortable).Select(_ => Unit.Default),
+            Model.WhenAnyValue(m => m.NoInstaller).Select(_ => Unit.Default),
+            Model.WhenAnyValue(m => m.Frameworks).Select(_ => Unit.Default),
+            Model.WhenAnyValue(m => m.SkipVeloAppCheck).Select(_ => Unit.Default),
+            Model.WhenAnyValue(m => m.Shortcuts).Select(_ => Unit.Default),
+            Model.WhenAnyValue(m => m.SignParams).Select(_ => Unit.Default),
+            Model.WhenAnyValue(m => m.SignTemplate).Select(_ => Unit.Default),
+            Model.WhenAnyValue(m => m.SignExclude).Select(_ => Unit.Default),
+            Model.WhenAnyValue(m => m.SignParallel).Select(_ => Unit.Default),
+            Model.WhenAnyValue(m => m.AzureTrustedSignFile).Select(_ => Unit.Default),
+            Model.WhenAnyValue(m => m.MsiDeploymentTool).Select(_ => Unit.Default),
+            Model.WhenAnyValue(m => m.MsiDeploymentToolVersion).Select(_ => Unit.Default)
         };
         _dirtySubscription = Observable.Merge(dirtyStreams)
             .Subscribe(_ => _hasUnsavedNonTreeChanges = true);
@@ -530,21 +565,8 @@ public partial class MainViewModel : RxObject
                 throw new Exception("PackageFilesOutputPath is null");
             }
 
-            // Clean output content dir
-            if (Directory.Exists(Model.PackageFilesOutputPath))
-            {
-                foreach (var f in Directory.EnumerateFiles(Model.PackageFilesOutputPath, "*", SearchOption.AllDirectories))
-                {
-                    try
-                    {
-                        File.SetAttributes(f, FileAttributes.Normal);
-                        File.Delete(f);
-                    }
-                    catch
-                    {
-                    }
-                }
-            }
+            // Recreate the staging directory from the original source paths every time.
+            Model.ClearPackageFilesDirectory();
 
             // Copy all selected items preserving folder structure
             void CopyNode(ItemLink node, List<string> parents)
@@ -666,59 +688,9 @@ public partial class MainViewModel : RxObject
             throw new Exception("Model is null");
         }
 
-        // vpk pack -u MyApp -v 1.0.0 -p path-to/publish/folder -o path-to/releases
         var packDir = Path.GetFullPath(Model.PackageFilesOutputPath!);
         var outDir = Path.GetFullPath(Model.VelopackOutputPath!);
-        var cmd = $" pack -u {Model.AppId} -v {Model.Version} -p \"{packDir}\" -o \"{outDir}\"";
-
-        // If MainExePath is known (top-level exe), pass it to vpk to avoid auto-detection failures
-        if (!string.IsNullOrWhiteSpace(Model.MainExePath) && File.Exists(Model.MainExePath))
-        {
-            var exeName = Path.GetFileName(Model.MainExePath);
-            cmd += $" --mainExe \"{exeName}\"";
-        }
-
-        if (File.Exists(Model.IconFilepath))
-        {
-            // -i is the correct Velopack icon flag
-            cmd += " -i \"" + Model.IconFilepath + "\"";
-        }
-
-        if (File.Exists(Model.SplashFilepath))
-        {
-            cmd += " -s \"" + Path.GetFullPath(Model.SplashFilepath) + "\"";
-        }
-
-        if (!Model.GenerateDeltaPackages)
-        {
-            cmd += " --no-delta";
-        }
-
-        if (Model.GenerateMsi && !string.IsNullOrWhiteSpace(Model.MsiBitness))
-        {
-            cmd += " --msi " + Model.MsiBitness;
-        }
-
-        if (!string.IsNullOrWhiteSpace(Model.SignParams))
-        {
-            cmd += " -n \"" + Model.SignParams + "\"";
-        }
-
-        if (!string.IsNullOrWhiteSpace(Model.SignTemplate))
-        {
-            cmd += " --signTemplate \"" + Model.SignTemplate + "\"";
-        }
-
-        var startInfo = new ProcessStartInfo
-        {
-            WindowStyle = ProcessWindowStyle.Hidden,
-            FileName = "vpk",
-            Arguments = cmd,
-            UseShellExecute = false,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            CreateNoWindow = true
-        };
+        var startInfo = CreateVelopackPackStartInfo(packDir, outDir);
 
         using (_exeProcess = Process.Start(startInfo))
         {
@@ -736,5 +708,139 @@ public partial class MainViewModel : RxObject
                 throw new Exception($"vpk exited with code {_exeProcess.ExitCode}.\n{stderr}\n{stdout}");
             }
         }
+    }
+
+    private void CleanLegacyReleaseArtifactsFromRoot(string baseDir)
+    {
+        if (Model == null || string.IsNullOrWhiteSpace(Model.AppId) || string.IsNullOrWhiteSpace(baseDir) || !Directory.Exists(baseDir))
+        {
+            return;
+        }
+
+        var patterns = new[]
+        {
+            "assets.*.json",
+            "releases.*.json",
+            "RELEASES",
+            $"{Model.AppId}-*.nupkg",
+            $"{Model.AppId}-*.zip",
+            $"{Model.AppId}-*.exe",
+            $"{Model.AppId}-*.msi"
+        };
+
+        foreach (var pattern in patterns)
+        {
+            foreach (var file in Directory.EnumerateFiles(baseDir, pattern, SearchOption.TopDirectoryOnly))
+            {
+                TryDeleteFile(file);
+            }
+        }
+
+        static void TryDeleteFile(string file)
+        {
+            try
+            {
+                File.SetAttributes(file, FileAttributes.Normal);
+                File.Delete(file);
+            }
+            catch
+            {
+                // Ignore cleanup failures; vpk will still write the correct Releases output.
+            }
+        }
+    }
+
+    private ProcessStartInfo CreateVelopackPackStartInfo(string packDir, string outDir)
+    {
+        if (Model == null)
+        {
+            throw new Exception("Model is null");
+        }
+
+        var startInfo = new ProcessStartInfo
+        {
+            WindowStyle = ProcessWindowStyle.Hidden,
+            FileName = "vpk",
+            UseShellExecute = false,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            CreateNoWindow = true
+        };
+
+        var args = startInfo.ArgumentList;
+        args.Add("pack");
+
+        AddOption(args, "--packId", Model.AppId);
+        AddOption(args, "--packVersion", Model.Version);
+        AddOption(args, "--packDir", packDir);
+        AddOption(args, "--outputDir", outDir);
+        AddOption(args, "--channel", Model.Channel);
+        AddOption(args, "--runtime", Model.Runtime);
+        AddOption(args, "--packAuthors", Model.Authors);
+        AddOption(args, "--packTitle", Model.Title);
+        AddOption(args, "--releaseNotes", Model.ReleaseNotesPath);
+        AddOption(args, "--delta", Model.GetResolvedDeltaMode());
+
+        if (File.Exists(Model.IconFilepath))
+        {
+            AddOption(args, "--icon", Path.GetFullPath(Model.IconFilepath));
+        }
+
+        var mainExe = Model.MainExeName;
+        if (string.IsNullOrWhiteSpace(mainExe) && !string.IsNullOrWhiteSpace(Model.MainExePath))
+        {
+            mainExe = Path.GetFileName(Model.MainExePath);
+        }
+
+        AddOption(args, "--mainExe", mainExe);
+        AddOption(args, "--exclude", Model.ExcludeRegex);
+        AddFlag(args, "--noPortable", Model.NoPortable);
+        AddFlag(args, "--noInst", Model.NoInstaller);
+        AddOption(args, "--framework", Model.Frameworks);
+
+        if (File.Exists(Model.SplashFilepath))
+        {
+            AddOption(args, "--splashImage", Path.GetFullPath(Model.SplashFilepath));
+        }
+
+        AddFlag(args, "--skipVeloAppCheck", Model.SkipVeloAppCheck);
+        AddOption(args, "--signTemplate", Model.SignTemplate);
+        AddOption(args, "--signExclude", Model.SignExclude);
+
+        if (Model.SignParallel != 10)
+        {
+            AddOption(args, "--signParallel", Model.SignParallel.ToString(CultureInfo.InvariantCulture));
+        }
+
+        AddOption(args, "--shortcuts", Model.Shortcuts);
+        AddOption(args, "--signParams", Model.SignParams);
+        AddOption(args, "--azureTrustedSignFile", Model.AzureTrustedSignFile);
+        AddFlag(args, "--msiDeploymentTool", Model.MsiDeploymentTool);
+        AddOption(args, "--msiDeploymentToolVersion", Model.MsiDeploymentToolVersion);
+
+        Trace.WriteLine("vpk " + string.Join(" ", args.Select(FormatArgumentForTrace)));
+        return startInfo;
+
+        static void AddFlag(ICollection<string> args, string option, bool enabled)
+        {
+            if (enabled)
+            {
+                args.Add(option);
+            }
+        }
+
+        static void AddOption(ICollection<string> args, string option, string? value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return;
+            }
+
+            args.Add(option);
+            args.Add(value);
+        }
+
+        static string FormatArgumentForTrace(string argument) =>
+            argument.Contains(' ', StringComparison.Ordinal) ? '"' + argument + '"' : argument;
     }
 }

@@ -10,6 +10,7 @@ using System.Reactive.Linq;
 using System.Runtime.Serialization;
 using System.Runtime.Versioning;
 using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -17,6 +18,7 @@ using System.Windows.Media.Imaging;
 using FluentValidation;
 using FluentValidation.Results;
 using GongSolutions.Wpf.DragDrop;
+using NuGet.Versioning;
 using ReactiveUI;
 using ReactiveUI.SourceGenerators;
 using Velopack.UI.Helpers;
@@ -33,7 +35,6 @@ namespace Velopack.UI;
 [SupportedOSPlatform("windows10.0.19041.0")]
 public partial class VelopackModel : WebConnectionBase, IDropTarget
 {
-    private static readonly HashSet<string> excludedExtensions = new([".pdb", ".nupkg", ".msi", ".zip"], StringComparer.OrdinalIgnoreCase);
     private readonly ConnectionDiscoveryService _connectionDiscoveryService = new();
     private readonly string _newFolderName = "NEW FOLDER";
     private List<string>? _availableUploadLocation;
@@ -54,6 +55,10 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
     [DataMember]
     [Reactive]
     private string? _mainExePath;
+
+    [DataMember]
+    [Reactive]
+    private string? _mainExeName;
 
     [DataMember]
     [Reactive]
@@ -90,6 +95,46 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
     // Velopack options
     [DataMember]
     [Reactive]
+    private string? _channel = "win";
+
+    [DataMember]
+    [Reactive]
+    private string? _runtime;
+
+    [DataMember]
+    [Reactive]
+    private string? _releaseNotesPath;
+
+    [DataMember]
+    [Reactive]
+    private string? _deltaMode = "BestSpeed";
+
+    [DataMember]
+    [Reactive]
+    private string? _excludeRegex = @".*\.pdb";
+
+    [DataMember]
+    [Reactive]
+    private bool _noPortable;
+
+    [DataMember]
+    [Reactive]
+    private bool _noInstaller;
+
+    [DataMember]
+    [Reactive]
+    private string? _frameworks;
+
+    [DataMember]
+    [Reactive]
+    private bool _skipVeloAppCheck;
+
+    [DataMember]
+    [Reactive]
+    private string? _shortcuts = "Desktop,StartMenuRoot";
+
+    [DataMember]
+    [Reactive]
     private bool _generateDeltaPackages = true;
 
     [DataMember]
@@ -107,6 +152,26 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
     [DataMember]
     [Reactive]
     private string? _signTemplate;
+
+    [DataMember]
+    [Reactive]
+    private string? _signExclude;
+
+    [DataMember]
+    [Reactive]
+    private int _signParallel = 10;
+
+    [DataMember]
+    [Reactive]
+    private string? _azureTrustedSignFile;
+
+    [DataMember]
+    [Reactive]
+    private bool _msiDeploymentTool;
+
+    [DataMember]
+    [Reactive]
+    private string? _msiDeploymentToolVersion;
 
     // Persisted base path for FileSystem connection so it can be saved/restored in *.velo
     [DataMember]
@@ -317,12 +382,11 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
 
         set
         {
-            var test = value?.Split('.');
-            if (test?.Length <= 3)
+            if (IsSupportedVelopackVersion(value))
             {
                 this.RaiseAndSetIfChanged(ref _version, value);
             }
-            else if (System.Windows.MessageBox.Show("Please use a Semantic Versioning 2.0.0 standard for the version number i.e. Major.Minor.Build http://semver.org/", "Invalid Version", MessageBoxButton.OK) == MessageBoxResult.OK)
+            else if (System.Windows.MessageBox.Show("Please use Semantic Versioning 2.0.0 for the version number, for example 1.0.0 or 1.0.0-beta.1. Velopack does not support four-part versions such as 1.0.0.0.", "Invalid Version", MessageBoxButton.OK) == MessageBoxResult.OK)
             {
                 RefreshPackageVersion();
             }
@@ -402,7 +466,7 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
         {
             AddExtension = true,
             DefaultExt = ".gif",
-            Filter = "GIF | *.gif"
+            Filter = "Images|*.gif;*.png;*.jpg;*.jpeg|All Files|*.*"
         };
 
         var o = ofd.ShowDialog();
@@ -509,6 +573,9 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
             throw new Exception("No selected upload location !");
         }
 
+        SingleFileUpload.ResetErrorNotifications();
+        ApplyPackageContextToConnection(SelectedConnection);
+
         // Gather all artifacts from releases folder (top-level only)
         var allFiles = Directory.EnumerateFiles(releasesPath, "*", SearchOption.TopDirectoryOnly).ToList();
 
@@ -566,7 +633,60 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
     /// <summary>
     /// After JSON load, resync selected connection and mirror any saved FileSystemBasePath.
     /// </summary>
-    internal void ResyncAfterLoad() => UpdateSelectedConnection(SelectedConnectionString);
+    internal void ResyncAfterLoad()
+    {
+        UpdateSelectedConnection(SelectedConnectionString);
+
+        if (!GenerateDeltaPackages &&
+            (string.IsNullOrWhiteSpace(DeltaMode) || string.Equals(DeltaMode, "BestSpeed", StringComparison.OrdinalIgnoreCase)))
+        {
+            DeltaMode = "None";
+        }
+
+        if (string.IsNullOrWhiteSpace(DeltaMode))
+        {
+            DeltaMode = "BestSpeed";
+        }
+
+        if (string.IsNullOrWhiteSpace(ExcludeRegex))
+        {
+            ExcludeRegex = @".*\.pdb";
+        }
+
+        if (string.IsNullOrWhiteSpace(Shortcuts))
+        {
+            Shortcuts = "Desktop,StartMenuRoot";
+        }
+
+        if (string.IsNullOrWhiteSpace(MainExeName) && !string.IsNullOrWhiteSpace(MainExePath))
+        {
+            MainExeName = Path.GetFileName(MainExePath);
+        }
+    }
+
+    internal string GetResolvedDeltaMode()
+    {
+        if (!GenerateDeltaPackages && string.IsNullOrWhiteSpace(DeltaMode))
+        {
+            return "None";
+        }
+
+        return string.IsNullOrWhiteSpace(DeltaMode) ? "BestSpeed" : DeltaMode;
+    }
+
+    internal void ClearPackageFilesDirectory()
+    {
+        if (string.IsNullOrWhiteSpace(PackageFilesOutputPath))
+        {
+            return;
+        }
+
+        Directory.CreateDirectory(PackageFilesOutputPath);
+        TryDeleteDirectoryContents(PackageFilesOutputPath);
+        Directory.CreateDirectory(PackageFilesOutputPath);
+    }
+
+    internal void SetOutputBasePath(string basePath) => ApplyOutputBasePath(basePath);
 
     /// <summary>
     /// Read the main exe version and set it as package version.
@@ -670,34 +790,20 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
         }
     }
 
-    // -------- Helpers added for filtering and upload processing --------
-    private static bool ShouldIncludeFile(string path)
+    private static bool IsSupportedVelopackVersion(string? value)
     {
-        if (string.IsNullOrWhiteSpace(path))
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return true;
+        }
+
+        var coreVersion = value.Split(['-', '+'], 2)[0];
+        if (coreVersion.Count(c => c == '.') > 2)
         {
             return false;
         }
 
-        try
-        {
-            var attr = File.GetAttributes(path);
-            if (attr.HasFlag(FileAttributes.Directory))
-            {
-                return true; // always include directories
-            }
-
-            var ext = Path.GetExtension(path);
-            if (!string.IsNullOrEmpty(ext) && excludedExtensions.Contains(ext))
-            {
-                return false;
-            }
-
-            return File.Exists(path);
-        }
-        catch
-        {
-            return false;
-        }
+        return NuGetVersion.TryParse(value, out _);
     }
 
     private static void TryDeleteFile(string? path)
@@ -772,6 +878,67 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
         }
     }
 
+    private static void OpenFolder(string path)
+    {
+        Directory.CreateDirectory(path);
+        Process.Start(new ProcessStartInfo
+        {
+            FileName = path,
+            UseShellExecute = true
+        });
+    }
+
+    // -------- Helpers added for filtering and upload processing --------
+    private bool ShouldIncludeFile(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return false;
+        }
+
+        try
+        {
+            var attr = File.GetAttributes(path);
+            if (attr.HasFlag(FileAttributes.Directory))
+            {
+                return true; // always include directories
+            }
+
+            if (!string.IsNullOrWhiteSpace(ExcludeRegex) &&
+                Regex.IsMatch(path, ExcludeRegex, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
+            {
+                return false;
+            }
+
+            return File.Exists(path);
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private void ApplyOutputBasePath(string? basePath)
+    {
+        if (string.IsNullOrWhiteSpace(basePath))
+        {
+            return;
+        }
+
+        FileSystemBasePath = basePath;
+        PackageFilesOutputPath = Path.Combine(basePath, PathFolderHelper.PackageFilesDirectory);
+        VelopackOutputPath = Path.Combine(basePath, PathFolderHelper.ReleasesDirectory);
+    }
+
+    private void ApplyPackageContextToConnection(WebConnectionBase? connection)
+    {
+        if (connection is GitHubReleasesConnection github)
+        {
+            github.PackageTitle = Title;
+            github.PackageChannel = Channel;
+        }
+    }
+
     /// <summary>
     /// Opens the connection edit dialog for the currently selected connection.
     /// </summary>
@@ -797,6 +964,8 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
             CachedConnection.Add(conn);
         }
 
+        ApplyPackageContextToConnection(conn);
+
         var dlg = new WebConnectionEdit
         {
             DataContext = conn,
@@ -812,10 +981,7 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
             // If editing a FileSystem connection, mirror path into model for visibility/persistence
             if (conn is FileSystemConnection fsc && !string.IsNullOrWhiteSpace(fsc.FileSystemPath))
             {
-                FileSystemBasePath = fsc.FileSystemPath;
-
-                // Show the base path; Save() will derive Nupkg/Releases paths
-                VelopackOutputPath = fsc.FileSystemPath;
+                ApplyOutputBasePath(fsc.FileSystemPath);
             }
         }
     }
@@ -909,9 +1075,46 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
         // If FileSystem connection is selected, align its path and use it for uploads
         if (SelectedConnection is FileSystemConnection fsc)
         {
-            fsc.FileSystemPath = VelopackOutputPath;
-            FileSystemBasePath = fsc.FileSystemPath;
+            fsc.FileSystemPath = Path.GetDirectoryName(VelopackOutputPath) ?? VelopackOutputPath;
+            ApplyOutputBasePath(fsc.FileSystemPath);
         }
+    }
+
+    /// <summary>
+    /// Opens the staged package files folder.
+    /// </summary>
+    [ReactiveCommand]
+    private void OpenPackageFiles()
+    {
+        if (string.IsNullOrWhiteSpace(PackageFilesOutputPath))
+        {
+            return;
+        }
+
+        OpenFolder(PackageFilesOutputPath);
+    }
+
+    /// <summary>
+    /// Opens the Velopack releases folder.
+    /// </summary>
+    [ReactiveCommand]
+    private void OpenReleases()
+    {
+        if (string.IsNullOrWhiteSpace(VelopackOutputPath))
+        {
+            return;
+        }
+
+        OpenFolder(VelopackOutputPath);
+    }
+
+    /// <summary>
+    /// Clears the staged package files folder without changing the source file tree.
+    /// </summary>
+    [ReactiveCommand]
+    private void ClearPackageFiles()
+    {
+        ClearPackageFilesDirectory();
     }
 
     /// <summary>
@@ -935,6 +1138,52 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
         }
 
         IconFilepath = ofd.FileName;
+    }
+
+    /// <summary>
+    /// Choose release notes for this Velopack release.
+    /// </summary>
+    [ReactiveCommand]
+    private void SelectReleaseNotes()
+    {
+        var ofd = new System.Windows.Forms.OpenFileDialog
+        {
+            AddExtension = true,
+            DefaultExt = ".md",
+            Filter = "Release notes|*.md;*.txt|All Files|*.*",
+            Title = "Select release notes"
+        };
+
+        var result = ofd.ShowDialog();
+        if (result != System.Windows.Forms.DialogResult.OK || !File.Exists(ofd.FileName))
+        {
+            return;
+        }
+
+        ReleaseNotesPath = ofd.FileName;
+    }
+
+    /// <summary>
+    /// Choose Azure Trusted Signing metadata for Velopack signing.
+    /// </summary>
+    [ReactiveCommand]
+    private void SelectAzureTrustedSignFile()
+    {
+        var ofd = new System.Windows.Forms.OpenFileDialog
+        {
+            AddExtension = true,
+            DefaultExt = ".json",
+            Filter = "JSON|*.json|All Files|*.*",
+            Title = "Select Azure Trusted Signing metadata"
+        };
+
+        var result = ofd.ShowDialog();
+        if (result != System.Windows.Forms.DialogResult.OK || !File.Exists(ofd.FileName))
+        {
+            return;
+        }
+
+        AzureTrustedSignFile = ofd.FileName;
     }
 
     private void AddFile(string filePath, ItemLink? targetItem)
@@ -1019,6 +1268,7 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
                     }
 
                     MainExePath = filePath;
+                    MainExeName = Path.GetFileName(filePath);
                     var versInfo = FileVersionInfo.GetVersionInfo(MainExePath);
                     if (string.IsNullOrWhiteSpace(Description))
                     {
@@ -1234,6 +1484,7 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
         }
 
         SelectedConnection = con;
+        ApplyPackageContextToConnection(SelectedConnection);
 
         // Remove previous subscription
         _fileSystemConnPathSub?.Dispose();
@@ -1253,15 +1504,14 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
                 FileSystemBasePath = fsc.FileSystemPath;
             }
 
-            VelopackOutputPath = fsc.FileSystemPath;
+            ApplyOutputBasePath(fsc.FileSystemPath);
 
             // Observe changes to the connection path and propagate into model for persistence/dirty tracking
             _fileSystemConnPathSub = fsc
                 .WhenAnyValue(x => x.FileSystemPath)
                 .Subscribe(path =>
                 {
-                    FileSystemBasePath = path;
-                    VelopackOutputPath = path;
+                    ApplyOutputBasePath(path);
                 });
         }
     }
@@ -1286,16 +1536,6 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
             // For FileSystem connection, ensure the file exists at the destination
             if (item.Connection is FileSystemConnection fsConn && !string.IsNullOrWhiteSpace(fsConn.FileSystemPath))
             {
-                var destDir = fsConn.FileSystemPath;
-                Directory.CreateDirectory(destDir);
-                var destPath = Path.Combine(destDir, Path.GetFileName(item.FullPath)!);
-
-                // If source and destination are the same, skip copying
-                if (!string.Equals(Path.GetFullPath(item.FullPath!), Path.GetFullPath(destPath), StringComparison.OrdinalIgnoreCase))
-                {
-                    File.Copy(item.FullPath!, destPath, true);
-                }
-
                 item.ProgressPercentage = 100;
                 item.UploadStatus = FileUploadStatus.Completed;
             }
@@ -1418,6 +1658,26 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
             RuleFor(c => c.PackageFiles).NotEmpty();
             RuleFor(c => c.Authors).NotEmpty();
             RuleFor(c => c.SelectedConnectionString).NotEmpty();
+            RuleFor(c => c.Version).Must(IsSupportedVelopackVersion).WithMessage("Version must be semver2 and cannot be a four-part version.");
+            RuleFor(c => c.DeltaMode).Must(mode => string.IsNullOrWhiteSpace(mode) || new[] { "BestSpeed", "BestSize", "None" }.Contains(mode)).WithMessage("Delta mode must be BestSpeed, BestSize, or None.");
+            RuleFor(c => c.ExcludeRegex).Must(regex =>
+            {
+                if (string.IsNullOrWhiteSpace(regex))
+                {
+                    return true;
+                }
+
+                try
+                {
+                    _ = new Regex(regex);
+                    return true;
+                }
+                catch (ArgumentException)
+                {
+                    return false;
+                }
+            }).WithMessage("Exclude must be a valid regular expression.");
+            RuleFor(c => c.SignParallel).GreaterThan(0);
         }
     }
 }
