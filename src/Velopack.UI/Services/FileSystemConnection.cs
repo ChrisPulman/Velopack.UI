@@ -8,6 +8,7 @@ using FluentValidation.Results;
 using Microsoft.Win32;
 using ReactiveUI;
 using ReactiveUI.SourceGenerators;
+using Velopack.UI.Helpers;
 
 namespace Velopack.UI;
 
@@ -55,7 +56,7 @@ public partial class FileSystemConnection : WebConnectionBase
                 return "Missing Parameter";
             }
 
-            return System.IO.Path.Combine(FileSystemPath, "Setup.exe");
+            return System.IO.Path.Combine(FileSystemPath, PathFolderHelper.ReleasesDirectory);
         }
     }
 

@@ -7,8 +7,7 @@ A simple, focused desktop UI for building and publishing .NET application instal
 Velopack.UI helps you:
 - Configure metadata (App ID, Version, Title, Description, Authors)
 - Curate installer content via drag and drop (tree view)
-- Generate delta packages and optional MSI installers (x86/x64)
-- Configure code signing once and reuse safely
+- Configure Velopack pack options including channel, runtime, release notes, delta mode, excludes, frameworks, shortcuts, portable/installer output, signing, Azure Trusted Signing, and MSI deployment tooling
 - Publish releases to your chosen destination with an upload queue and progress
 
 Important: Do not run Velopack.UI as Administrator. Windows drag and drop is restricted in elevated apps and will not work.
@@ -36,6 +35,7 @@ Before using Velopack.UI, ensure your application is built and ready for packagi
 1) Prerequisites
    - Windows 10/11
    - .NET 9 Desktop Runtime (for running) and SDK if you build Velopack.UI from source
+   - [Velopack.UI Installed](https://github.com/ChrisPulman/Velopack.UI/releases/download/V1.0.6/Velopack.UI-win-Setup.exe)
    - Your application’s build output (Release) ready to package (EXE + all dependencies)
    - A code signing solution (optional but recommended).
 2) Launch Velopack.UI (not elevated)
@@ -52,17 +52,17 @@ Before using Velopack.UI, ensure your application is built and ready for packagi
 7) Configure upload location
    - Pick/edit a connection (Project → Edit Connection). See Publishing destinations for examples.
 8) Adjust Velopack options
-   - Delta packages, MSI generation (x86/x64), and signing.
+   - Channel/runtime, delta mode, release notes, framework bootstrapping, shortcuts, output suppression, signing, Azure Trusted Signing, and MSI deployment tooling.
 9) Publish
    - Publish Only Update Files → push update artifacts only.
    - Publish Complete Setup → push full bootstrapper/setup as well as update artifacts.
 10) Always publish to the same content folder to maintain update continuity.
    - Increment the version for each release. Do not reuse versions.
    - The base folder for the installers can contain multiple apps (different App IDs).
-   - Velopack.UI creates a folder per `App ID` under the content folder i.e. `AppID_Files`
-   - Velopack.UI creates two folders for the releases `AppID_Files\Releases` and `AppID_Files\PackageFiles`
-   - The `AppID_Files\Releases` folder contains the RELEASES file and the setup.exe, this is the folder you point your users to for downloading the installer and should be retained for future updates.
-   - The `AppID_Files\PackageFiles` folder contains the project files ready for publishing, this folder can be deleted after publishing if required.
+   - For File System output, the folder selected in Edit Connection is the project/output root.
+   - Velopack.UI writes only the `.velo` project file at the root and derives two child folders from it: `PackageFiles` and `Releases`.
+   - `Releases` contains Velopack output such as release indexes, nupkg files, portable zips, and setup executables. This is the folder you point users to for downloads and retain for future updates.
+   - `PackageFiles` is a staging folder recreated from the original source paths stored in the `.velo` project whenever publishing runs.
 
 
 ### Features overview
@@ -77,9 +77,11 @@ Before using Velopack.UI, ensure your application is built and ready for packagi
   - Upload queue with progress and status per file
   - Two publish modes: Update-only and Complete setup
 - Velopack options
-  - Delta package generation
-  - MSI generation with bitness selection
-  - Signing: Sign Params + Sign Template
+  - Channel and runtime selection
+  - Release notes, delta mode, package exclude regex, and framework bootstrapping
+  - Portable/installer suppression and shortcut locations
+  - Signing: Sign Params, Sign Template, Sign Exclude, Sign Parallel, and Azure Trusted Signing metadata
+  - MSI deployment tool generation and version override
 - Project management
   - New, Open, Save, Save As
 
@@ -98,9 +100,11 @@ Before using Velopack.UI, ensure your application is built and ready for packagi
 4) Configure Upload Location
    - Select a saved connection or Edit Connection to define a new one (see Publishing destinations).
 5) Configure Velopack Options
-   - Delta Packages: creates smaller update packages between versions to reduce download size.
-   - MSI Generation: adds an MSI installer (choose x86/x64) alongside the standard setup.
-   - Signing: provide parameters or a template controlling how binaries and packages are signed.
+   - Channel/runtime: define update channel and supported OS/architecture.
+   - Delta Mode: choose BestSpeed, BestSize, or None.
+   - Release notes/exclude/frameworks/shortcuts: maps directly to Velopack `vpk pack` options.
+   - Signing: provide parameters, templates, exclusions, parallelism, or Azure Trusted Signing metadata.
+   - MSI Deployment Tool: optionally emit Velopack's machine-wide deployment MSI tooling.
 6) Publish
    - Use Publish Only Update Files for incremental update deployments.
    - Use Publish Complete Setup when you want to distribute the full installer as well.
@@ -166,8 +170,8 @@ For exact configuration strings and provider‑specific options, refer to the Ve
   - Ensure Velopack.UI is not running as Administrator.
 - Versioning mistakes
   - Don’t reuse older versions. Increment versions for each release. Changing App ID breaks update continuity.
-- MSI generation
-  - If MSI output is missing, verify Generate MSI is enabled and a valid bitness is selected.
+- MSI deployment tooling
+  - If MSI deployment-tool output is missing, verify MSI Deployment Tool is enabled and the installed `vpk` version supports it.
 - Signing failures
   - Check certificate access, passwords, and timestamp server availability. Try signing a single file with your params to validate.
 - Upload errors
