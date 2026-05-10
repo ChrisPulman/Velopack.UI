@@ -447,6 +447,7 @@
                             dd:DragDrop.UseDefaultDragAdorner="True"
                             AllowDrop="True"
                             ItemsSource="{Binding PackageFiles}"
+                            SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
                             SelectedItems="{Binding SelectedLink}" />
                         <ui:Border
                             Grid.Row="1"

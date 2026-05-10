@@ -34,6 +34,12 @@ public partial class VelopackUITreeViewControl
         nameof(SelectedItems), typeof(IList), typeof(VelopackUITreeViewControl), new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault, OnSelectedItemsChanged));
 
     /// <summary>
+    /// The selected item property.
+    /// </summary>
+    public static readonly DependencyProperty SelectedItemProperty = DependencyProperty.Register(
+        nameof(SelectedItem), typeof(object), typeof(VelopackUITreeViewControl), new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault));
+
+    /// <summary>
     /// The item template property.
     /// </summary>
     public static readonly DependencyProperty ItemTemplateProperty = DependencyProperty.Register(
@@ -78,6 +84,18 @@ public partial class VelopackUITreeViewControl
     }
 
     /// <summary>
+    /// Gets or sets the first selected item.
+    /// </summary>
+    /// <value>
+    /// The first selected item.
+    /// </value>
+    public object? SelectedItem
+    {
+        get => GetValue(SelectedItemProperty);
+        set => SetValue(SelectedItemProperty, value);
+    }
+
+    /// <summary>
     /// Gets or sets the item template.
     /// </summary>
     /// <value>
@@ -97,6 +115,7 @@ public partial class VelopackUITreeViewControl
     {
         var ctl = (VelopackUITreeViewControl)d;
         ctl.PART_Tree?.Tag = ctl.SelectedItems;
+        ctl.UpdateSelectedItem();
     }
 
     private static bool IsOnExpander(DependencyObject? source)
@@ -208,7 +227,14 @@ public partial class VelopackUITreeViewControl
                 }
             }
         }
+        else if (IsShiftDown)
+        {
+            ClearSelectionInternal();
+            AddToSelection(item);
+            _lastAnchor = item;
+        }
 
+        Keyboard.Focus(container);
         e.Handled = true;
     }
 
@@ -237,6 +263,8 @@ public partial class VelopackUITreeViewControl
             _lastAnchor = item;
         }
 
+        Keyboard.Focus(container);
+
         // allow context menu
     }
 
@@ -255,6 +283,7 @@ public partial class VelopackUITreeViewControl
                 AddToSelection(tvi.DataContext);
             }
 
+            UpdateSelectedItem();
             e.Handled = true;
         }
     }
@@ -271,6 +300,8 @@ public partial class VelopackUITreeViewControl
             SetItemSelected(obj, false);
             SelectedItems.Remove(obj);
         }
+
+        UpdateSelectedItem();
     }
 
     private void AddToSelection(object obj)
@@ -284,6 +315,7 @@ public partial class VelopackUITreeViewControl
         {
             SelectedItems.Add(obj);
             SetItemSelected(obj, true);
+            UpdateSelectedItem();
         }
     }
 
@@ -298,6 +330,12 @@ public partial class VelopackUITreeViewControl
         {
             SelectedItems.Remove(obj);
             SetItemSelected(obj, false);
+            UpdateSelectedItem();
         }
+    }
+
+    private void UpdateSelectedItem()
+    {
+        SetCurrentValue(SelectedItemProperty, SelectedItems?.Cast<object>().FirstOrDefault());
     }
 }
