@@ -98,7 +98,6 @@
                     <Setter Property="Padding" Value="2" />
                     <Setter Property="Margin" Value="0" />
                     <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
-                    <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
                     <Setter Property="FontWeight" Value="Normal" />
                     <Setter Property="Tag" Value="{Binding DataContext, RelativeSource={RelativeSource AncestorType=UserControl}}" />
                     <Setter Property="ContextMenu">
@@ -112,9 +111,9 @@
                         </Setter.Value>
                     </Setter>
                     <Style.Triggers>
-                        <Trigger Property="IsSelected" Value="True">
+                        <DataTrigger Binding="{Binding IsSelected}" Value="True">
                             <Setter Property="FontWeight" Value="Bold" />
-                        </Trigger>
+                        </DataTrigger>
                     </Style.Triggers>
                 </Style>
             </TreeView.Resources>
