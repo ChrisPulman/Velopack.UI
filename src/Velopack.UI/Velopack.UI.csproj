@@ -31,7 +31,7 @@
     <PackageReference Include="DotNetProjects.Extended.Wpf.Toolkit" Version="5.0.129" />
     <PackageReference Include="gong-wpf-dragdrop" Version="4.0.0" />
     <PackageReference Include="FluentValidation" Version="12.1.1" />
-    <PackageReference Update="Microsoft.SourceLink.GitHub" Version="10.0.203" />
+    <PackageReference Update="Microsoft.SourceLink.GitHub" Version="10.0.300" />
   </ItemGroup>
 
   <ItemGroup>
