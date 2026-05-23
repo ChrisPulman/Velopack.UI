@@ -27,6 +27,18 @@ public partial class WebConnectionEdit
         Close();
     }
 
+    private void GitHubCliSignIn_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            GitHubCliReleasePublisher.StartInteractiveSignIn();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(this, $"Unable to start GitHub CLI sign-in: {ex.Message}", "GitHub CLI", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
     private void Hyperlink_Click(object sender, RoutedEventArgs e) =>
         Process.Start("http://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-s3-bucket-naming-requirements.html");
 }

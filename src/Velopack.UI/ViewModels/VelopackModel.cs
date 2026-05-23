@@ -627,6 +627,12 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
             }
         }
 
+        if (SelectedConnection is GitHubReleasesConnection { UseGitHubCliAuthentication: true } githubConnection)
+        {
+            _ = PublishGitHubReleaseWithCliAsync(githubConnection, updatedFiles.ConvertAll(file => file.FullName));
+            return;
+        }
+
         ProcessNextUploadFile();
     }
 
@@ -1516,53 +1522,65 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
         }
     }
 
-    private void ProcessNextUploadFile()
+    private async Task PublishGitHubReleaseWithCliAsync(GitHubReleasesConnection connection, IReadOnlyCollection<string> files)
+    {
+        try
+        {
+            foreach (var item in UploadQueue.Where(item => item.UploadStatus == FileUploadStatus.Queued))
+            {
+                item.UploadStatus = FileUploadStatus.InProgress;
+                item.ProgressPercentage = 5;
+            }
+
+            await GitHubCliReleasePublisher.PublishAsync(connection, files).ConfigureAwait(true);
+
+            foreach (var item in UploadQueue)
+            {
+                item.UploadStatus = FileUploadStatus.Completed;
+                item.ProgressPercentage = 100;
+            }
+        }
+        catch (Exception ex)
+        {
+            foreach (var item in UploadQueue.Where(item => item.UploadStatus != FileUploadStatus.Completed))
+            {
+                item.UploadStatus = FileUploadStatus.Failed;
+            }
+
+            MessageBox.Show(ex.Message, "GitHub Release Publish Failed", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    private async void ProcessNextUploadFile()
     {
         if (UploadQueue == null || UploadQueue.Count == 0)
         {
             return;
         }
 
-        // Find next queued item
-        var item = UploadQueue.FirstOrDefault(f => f.UploadStatus == FileUploadStatus.Queued);
-        if (item == null)
+        foreach (var item in UploadQueue.Where(f => f.UploadStatus == FileUploadStatus.Queued).ToList())
         {
-            return; // nothing left to do
-        }
-
-        item.UploadStatus = FileUploadStatus.InProgress;
-        try
-        {
-            // For FileSystem connection, ensure the file exists at the destination
-            if (item.Connection is FileSystemConnection fsConn && !string.IsNullOrWhiteSpace(fsConn.FileSystemPath))
+            item.UploadStatus = FileUploadStatus.InProgress;
+            try
             {
-                item.ProgressPercentage = 100;
-                item.UploadStatus = FileUploadStatus.Completed;
-            }
-            else
-            {
-                // Fallback: try to use the built-in upload implementation if available
-                try
+                // For FileSystem connection, ensure the file exists at the destination
+                if (item.Connection is FileSystemConnection fsConn && !string.IsNullOrWhiteSpace(fsConn.FileSystemPath))
                 {
-                    item.StartUpload();
-                }
-                catch
-                {
-                    // If upload provider not implemented, mark as completed to keep UI flowing
                     item.ProgressPercentage = 100;
                     item.UploadStatus = FileUploadStatus.Completed;
                 }
+                else
+                {
+                    await item.StartUploadAsync().ConfigureAwait(true);
+                }
+            }
+            catch (Exception ex)
+            {
+                item.ProgressPercentage = 100;
+                item.UploadStatus = FileUploadStatus.Failed;
+                MessageBox.Show(ex.Message, "Upload Failed", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
-        catch
-        {
-            // Mark as completed even on failure for now; extend with error handling as needed
-            item.ProgressPercentage = 100;
-            item.UploadStatus = FileUploadStatus.Completed;
-        }
-
-        // Continue with any remaining items
-        ProcessNextUploadFile();
     }
 
     // -------- Disk sync helpers for PackageFiles mirror --------

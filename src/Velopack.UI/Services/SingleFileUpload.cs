@@ -142,7 +142,7 @@ public partial class SingleFileUpload : RxObject
         }
     }
 
-    internal async void StartUpload()
+    internal async Task StartUploadAsync()
     {
         if (Connection is AmazonS3Connection amazonCon)
         {

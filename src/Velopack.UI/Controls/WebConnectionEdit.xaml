@@ -8,9 +8,9 @@
     xmlns:ui="https://github.com/reactivemarbles/CrissCross.ui"
     Title="{Binding Path=ConnectionName}"
     Width="640"
-    Height="330"
+    Height="470"
     MinWidth="500"
-    MinHeight="380"
+    MinHeight="470"
     ui:Design.Background="{DynamicResource ApplicationBackgroundBrush}"
     ui:Design.Foreground="{DynamicResource TextFillColorPrimaryBrush}"
     ExtendsContentIntoTitleBar="True"
@@ -163,6 +163,8 @@
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
                     </ui:Grid.RowDefinitions>
                     <ui:TextBlock
                         Grid.Row="0"
@@ -214,34 +216,61 @@
                         Grid.Row="5"
                         Grid.Column="0"
                         Width="150"
-                        Text="Personal access token (classic) - repo: "
+                        Text="Authentication:" />
+                    <ui:CheckBoxModern
+                        Grid.Row="5"
+                        Grid.Column="1"
+                        BoxSize="22"
+                        Checked="{Binding UseGitHubCliAuthentication}"
+                        Text="Use GitHub CLI browser sign-in" />
+
+                    <ui:TextBlock
+                        Grid.Row="6"
+                        Grid.Column="0"
+                        Width="150"
+                        Text="GitHub CLI:" />
+                    <ui:Button
+                        Grid.Row="6"
+                        Grid.Column="1"
+                        Width="220"
+                        Margin="0,4,0,4"
+                        HorizontalAlignment="Left"
+                        Click="GitHubCliSignIn_Click"
+                        Content="Sign in with GitHub CLI"
+                        ToolTip="Runs: gh auth login --web --hostname github.com --scopes repo" />
+
+                    <ui:TextBlock
+                        Grid.Row="7"
+                        Grid.Column="0"
+                        Width="150"
+                        Text="Fallback token:"
                         TextWrapping="Wrap" />
                     <ui:TextBox
-                        Grid.Row="5"
+                        Grid.Row="7"
                         Grid.Column="1"
                         Text="{Binding Token, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
 
                     <ui:CheckBoxModern
-                        Grid.Row="6"
+                        Grid.Row="8"
                         Grid.Column="1"
                         BoxSize="22"
                         Checked="{Binding Prerelease}"
                         Text="Prerelease" />
                     <ui:CheckBoxModern
-                        Grid.Row="7"
+                        Grid.Row="9"
                         Grid.Column="1"
                         BoxSize="22"
                         Checked="{Binding Draft}"
                         Text="Draft" />
 
                     <ui:TextBlock
-                        Grid.Row="8"
+                        Grid.Row="10"
                         Grid.Column="0"
                         VerticalAlignment="Center"
                         FontWeight="Bold"
                         Text="Setup Link Url : " />
                     <ui:TextBox
-                        Grid.Row="8"
+                        Grid.Row="10"
                         Grid.Column="1"
                         FontWeight="Bold"
                         IsReadOnly="True"
@@ -261,7 +290,7 @@
             VerticalAlignment="Center"
             FontSize="16"
             Foreground="Red"
-            Text="Credentials are stored in plain text! Do not add *.velo files to public source control" />
+            Text="GitHub CLI uses the system credential store. Fallback tokens are session-only and are not saved to *.velo files." />
         <ui:Button
             Grid.Row="2"
             Width="250"
