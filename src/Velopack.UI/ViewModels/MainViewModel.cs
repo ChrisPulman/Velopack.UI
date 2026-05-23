@@ -115,7 +115,10 @@ public partial class MainViewModel : RxObject
 
         UserPreference = PathFolderHelper.LoadUserPreference();
 
-        var last = UserPreference.LastOpenedProject.LastOrDefault();
+        var startupProject = App.StartupProjectFilePath;
+        var last = string.IsNullOrWhiteSpace(startupProject)
+            ? UserPreference.LastOpenedProject.LastOrDefault()
+            : startupProject;
 
         if (!string.IsNullOrEmpty(last) && File.Exists(last))
         {

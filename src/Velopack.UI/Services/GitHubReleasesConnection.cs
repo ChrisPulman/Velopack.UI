@@ -48,9 +48,13 @@ public partial class GitHubReleasesConnection : WebConnectionBase
     [Reactive]
     private bool _draft;
 
+    [DataMember]
+    [Reactive]
+    private bool _useGitHubCliAuthentication = true;
+
     [Reactive]
     [JsonIgnore]
-    private string? _token; // GitHub PAT with repo scope
+    private string? _token; // Optional fallback token used only for the current session.
 
     /// <summary>
     /// Initializes a new instance of the <see cref="GitHubReleasesConnection"/> class.
@@ -183,7 +187,7 @@ public partial class GitHubReleasesConnection : WebConnectionBase
             RuleFor(c => c.Owner).NotEmpty();
             RuleFor(c => c.Repository).NotEmpty();
             RuleFor(c => c.TagName).NotEmpty();
-            RuleFor(c => c.Token).NotEmpty();
+            RuleFor(c => c.Token).NotEmpty().When(c => !c.UseGitHubCliAuthentication);
         }
     }
 }

@@ -8,6 +8,7 @@ using System.Windows.Threading;
 using ReactiveUI;
 using ReactiveUI.Builder;
 using Velopack.Sources;
+using Velopack.UI.Helpers;
 
 namespace Velopack.UI;
 
@@ -16,6 +17,8 @@ namespace Velopack.UI;
 /// </summary>
 public partial class App
 {
+    internal static string? StartupProjectFilePath { get; private set; }
+
     /// <summary>
     /// Raises the <see cref="E:System.Windows.Application.Startup" /> event.
     /// </summary>
@@ -44,7 +47,16 @@ public partial class App
     [STAThread]
     private static void Main(string[] args)
     {
-        VelopackApp.Build().Run();
+        StartupProjectFilePath = FileAssociationHelper.GetProjectFileArgument(args);
+
+        VelopackApp.Build()
+            .SetArgs(args)
+            .OnAfterInstallFastCallback(_ => FileAssociationHelper.RegisterProjectFileAssociation())
+            .OnAfterUpdateFastCallback(_ => FileAssociationHelper.RegisterProjectFileAssociation())
+            .OnBeforeUninstallFastCallback(_ => FileAssociationHelper.UnregisterProjectFileAssociation())
+            .OnFirstRun(_ => FileAssociationHelper.RegisterProjectFileAssociation())
+            .Run();
+
         App app = new();
         app.InitializeComponent();
         app.Run();

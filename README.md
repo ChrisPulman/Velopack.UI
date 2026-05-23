@@ -162,6 +162,8 @@ Velopack supports multiple publishing options. In Velopack.UI, set the Upload Lo
 - Generic web/FTP server: publish to a web directory that your app will use for updates.
 - Local/network folder: useful for testing / internal / self distribution.
 
+GitHub Releases uses GitHub CLI authentication by default. Install `gh`, run `gh auth login --web --hostname github.com --scopes repo`, then paste a repository URL such as `https://github.com/ChrisPulman/Velopack.UI` in the GitHub Releases connection editor. Velopack.UI uses `gh release create` for a new tag and `gh release upload --clobber` for an existing tag, so personal access tokens do not need to be stored in `.velo` files.
+
 For exact configuration strings and provider‑specific options, refer to the Velopack packaging docs: [Velopack Packaging](https://docs.velopack.io/category/packaging)
 
 
