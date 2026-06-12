@@ -26,7 +26,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Velopack" Version="1.1.1" />
-    <PackageReference Include="AWSSDK.S3" Version="4.0.23.5" />
+    <PackageReference Include="AWSSDK.S3" Version="4.0.24.4" />
     <PackageReference Include="CrissCross.WPF.UI" Version="3.3.6" />
     <PackageReference Include="DotNetProjects.Extended.Wpf.Toolkit" Version="5.0.129" />
     <PackageReference Include="gong-wpf-dragdrop" Version="4.0.0" />
