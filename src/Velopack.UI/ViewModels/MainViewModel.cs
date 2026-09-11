@@ -5,8 +5,6 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
-using System.Reactive;
-using System.Reactive.Linq;
 using System.Runtime.Versioning;
 using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
@@ -14,6 +12,7 @@ using System.Windows;
 using CrissCross;
 using Microsoft.Win32;
 using ReactiveUI;
+using ReactiveUI.Primitives;
 using ReactiveUI.SourceGenerators;
 using Velopack.UI.Helpers;
 
@@ -140,7 +139,7 @@ public partial class MainViewModel : RxObject
     /// Gets the abort package creation command.
     /// </summary>
     /// <value>The abort package creation command.</value>
-    public ReactiveCommand<Unit, Unit> AbortPackageCreationCmd { get; }
+    public ReactiveCommand<RxVoid, RxVoid> AbortPackageCreationCmd { get; }
 
     /// <summary>
     /// Gets or sets the file path.
@@ -516,39 +515,39 @@ public partial class MainViewModel : RxObject
             return;
         }
 
-        var dirtyStreams = new IObservable<Unit>[]
+        var dirtyStreams = new IObservable<RxVoid>[]
         {
-            Model.WhenAnyValue(m => m.Title).Select(_ => Unit.Default),
-            Model.WhenAnyValue(m => m.Authors).Select(_ => Unit.Default),
-            Model.WhenAnyValue(m => m.Description).Select(_ => Unit.Default),
-            Model.WhenAnyValue(m => m.Version).Select(_ => Unit.Default),
-            Model.WhenAnyValue(m => m.AppId).Select(_ => Unit.Default),
-            Model.WhenAnyValue(m => m.MainExeName).Select(_ => Unit.Default),
-            Model.WhenAnyValue(m => m.IconFilepath).Select(_ => Unit.Default),
-            Model.WhenAnyValue(m => m.SplashFilepath).Select(_ => Unit.Default),
-            Model.WhenAnyValue(m => m.SelectedConnectionString).Select(_ => Unit.Default),
-            Model.WhenAnyValue(m => m.PackageFilesOutputPath).Select(_ => Unit.Default),
-            Model.WhenAnyValue(m => m.VelopackOutputPath).Select(_ => Unit.Default),
-            Model.WhenAnyValue(m => m.FileSystemBasePath).Select(_ => Unit.Default),
-            Model.WhenAnyValue(m => m.Channel).Select(_ => Unit.Default),
-            Model.WhenAnyValue(m => m.Runtime).Select(_ => Unit.Default),
-            Model.WhenAnyValue(m => m.ReleaseNotesPath).Select(_ => Unit.Default),
-            Model.WhenAnyValue(m => m.DeltaMode).Select(_ => Unit.Default),
-            Model.WhenAnyValue(m => m.ExcludeRegex).Select(_ => Unit.Default),
-            Model.WhenAnyValue(m => m.NoPortable).Select(_ => Unit.Default),
-            Model.WhenAnyValue(m => m.NoInstaller).Select(_ => Unit.Default),
-            Model.WhenAnyValue(m => m.Frameworks).Select(_ => Unit.Default),
-            Model.WhenAnyValue(m => m.SkipVeloAppCheck).Select(_ => Unit.Default),
-            Model.WhenAnyValue(m => m.Shortcuts).Select(_ => Unit.Default),
-            Model.WhenAnyValue(m => m.SignParams).Select(_ => Unit.Default),
-            Model.WhenAnyValue(m => m.SignTemplate).Select(_ => Unit.Default),
-            Model.WhenAnyValue(m => m.SignExclude).Select(_ => Unit.Default),
-            Model.WhenAnyValue(m => m.SignParallel).Select(_ => Unit.Default),
-            Model.WhenAnyValue(m => m.AzureTrustedSignFile).Select(_ => Unit.Default),
-            Model.WhenAnyValue(m => m.MsiDeploymentTool).Select(_ => Unit.Default),
-            Model.WhenAnyValue(m => m.MsiDeploymentToolVersion).Select(_ => Unit.Default)
+            Model.WhenAnyValue(m => m.Title).Select(_ => RxVoid.Default),
+            Model.WhenAnyValue(m => m.Authors).Select(_ => RxVoid.Default),
+            Model.WhenAnyValue(m => m.Description).Select(_ => RxVoid.Default),
+            Model.WhenAnyValue(m => m.Version).Select(_ => RxVoid.Default),
+            Model.WhenAnyValue(m => m.AppId).Select(_ => RxVoid.Default),
+            Model.WhenAnyValue(m => m.MainExeName).Select(_ => RxVoid.Default),
+            Model.WhenAnyValue(m => m.IconFilepath).Select(_ => RxVoid.Default),
+            Model.WhenAnyValue(m => m.SplashFilepath).Select(_ => RxVoid.Default),
+            Model.WhenAnyValue(m => m.SelectedConnectionString).Select(_ => RxVoid.Default),
+            Model.WhenAnyValue(m => m.PackageFilesOutputPath).Select(_ => RxVoid.Default),
+            Model.WhenAnyValue(m => m.VelopackOutputPath).Select(_ => RxVoid.Default),
+            Model.WhenAnyValue(m => m.FileSystemBasePath).Select(_ => RxVoid.Default),
+            Model.WhenAnyValue(m => m.Channel).Select(_ => RxVoid.Default),
+            Model.WhenAnyValue(m => m.Runtime).Select(_ => RxVoid.Default),
+            Model.WhenAnyValue(m => m.ReleaseNotesPath).Select(_ => RxVoid.Default),
+            Model.WhenAnyValue(m => m.DeltaMode).Select(_ => RxVoid.Default),
+            Model.WhenAnyValue(m => m.ExcludeRegex).Select(_ => RxVoid.Default),
+            Model.WhenAnyValue(m => m.NoPortable).Select(_ => RxVoid.Default),
+            Model.WhenAnyValue(m => m.NoInstaller).Select(_ => RxVoid.Default),
+            Model.WhenAnyValue(m => m.Frameworks).Select(_ => RxVoid.Default),
+            Model.WhenAnyValue(m => m.SkipVeloAppCheck).Select(_ => RxVoid.Default),
+            Model.WhenAnyValue(m => m.Shortcuts).Select(_ => RxVoid.Default),
+            Model.WhenAnyValue(m => m.SignParams).Select(_ => RxVoid.Default),
+            Model.WhenAnyValue(m => m.SignTemplate).Select(_ => RxVoid.Default),
+            Model.WhenAnyValue(m => m.SignExclude).Select(_ => RxVoid.Default),
+            Model.WhenAnyValue(m => m.SignParallel).Select(_ => RxVoid.Default),
+            Model.WhenAnyValue(m => m.AzureTrustedSignFile).Select(_ => RxVoid.Default),
+            Model.WhenAnyValue(m => m.MsiDeploymentTool).Select(_ => RxVoid.Default),
+            Model.WhenAnyValue(m => m.MsiDeploymentToolVersion).Select(_ => RxVoid.Default)
         };
-        _dirtySubscription = Observable.Merge(dirtyStreams)
+        _dirtySubscription = dirtyStreams.Merge()
             .Subscribe(_ => _hasUnsavedNonTreeChanges = true);
     }
 

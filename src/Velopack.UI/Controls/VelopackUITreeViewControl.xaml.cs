@@ -9,7 +9,6 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
-using ReactiveMarbles.ObservableEvents;
 
 namespace Velopack.UI.Controls;
 
@@ -53,10 +52,8 @@ public partial class VelopackUITreeViewControl
     public VelopackUITreeViewControl()
     {
         InitializeComponent();
-        this.Events().Loaded
-            .Subscribe(_ => PART_Tree.Tag = SelectedItems);
-        this.Events().DataContextChanged
-            .Subscribe(_ => PART_Tree.Tag = SelectedItems);
+        Loaded += (_, _) => PART_Tree.Tag = SelectedItems;
+        DataContextChanged += (_, _) => PART_Tree.Tag = SelectedItems;
     }
 
     /// <summary>

@@ -3,6 +3,7 @@
 
 using System.Runtime.Versioning;
 using ReactiveUI;
+using ReactiveUI.Primitives.Disposables;
 using ReactiveUI.SourceGenerators;
 using Splat;
 
@@ -21,6 +22,6 @@ public partial class MainView
     public MainView()
     {
         InitializeComponent();
-        this.WhenActivated(d => DataContext = ViewModel = Locator.Current.GetService<MainViewModel>()!);
+        this.WhenActivated((MultipleDisposable _) => DataContext = ViewModel = Locator.Current.GetService<MainViewModel>()!);
     }
 }
