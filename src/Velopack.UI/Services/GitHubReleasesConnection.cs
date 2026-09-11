@@ -1,13 +1,13 @@
 // Copyright (c) Chris Pulman. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System.Reactive.Linq;
 using System.Runtime.Serialization;
 using System.Runtime.Versioning;
 using System.Text.Json.Serialization;
 using FluentValidation;
 using FluentValidation.Results;
 using ReactiveUI;
+using ReactiveUI.Primitives;
 using ReactiveUI.SourceGenerators;
 
 namespace Velopack.UI;

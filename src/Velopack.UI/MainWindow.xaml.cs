@@ -7,6 +7,7 @@ using System.Windows;
 using CrissCross;
 using CrissCross.WPF.UI.Appearance;
 using ReactiveUI;
+using ReactiveUI.Primitives.Disposables;
 using Splat;
 
 namespace Velopack.UI;
@@ -24,7 +25,7 @@ public partial class MainWindow
     {
         SystemThemeWatcher.Watch(this);
         InitializeComponent();
-        this.WhenActivated(d => this.NavigateToView<MainViewModel>());
+        this.WhenActivated((MultipleDisposable _) => this.NavigateToView(typeof(MainViewModel)));
 
         Closing += OnClosing;
     }

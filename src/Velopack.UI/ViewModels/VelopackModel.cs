@@ -5,8 +5,6 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Cache;
-using System.Reactive;
-using System.Reactive.Linq;
 using System.Runtime.Serialization;
 using System.Runtime.Versioning;
 using System.Text.Json.Serialization;
@@ -18,8 +16,8 @@ using System.Windows.Media.Imaging;
 using FluentValidation;
 using FluentValidation.Results;
 using GongSolutions.Wpf.DragDrop;
-using NuGet.Versioning;
 using ReactiveUI;
+using ReactiveUI.Primitives;
 using ReactiveUI.SourceGenerators;
 using Velopack.UI.Helpers;
 using Velopack.UI.Models;
@@ -90,7 +88,7 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
     private string? _splashFilepath;
     private ObservableCollection<SingleFileUpload> _uploadQueue = [];
     private string? _version;
-    private ReactiveCommand<Unit, Unit>? _selectSplashCmd;
+    private ReactiveCommand<RxVoid, RxVoid>? _selectSplashCmd;
 
     // Velopack options
     [DataMember]
@@ -809,7 +807,7 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
             return false;
         }
 
-        return NuGetVersion.TryParse(value, out _);
+        return SemanticVersion.TryParse(value, out _);
     }
 
     private static void TryDeleteFile(string? path)
