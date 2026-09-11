@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/Config/">
+    <File Path="../.editorconfig" />
+    <File Path="../.gitignore" />
+    <File Path="../Directory.Build.props" />
+    <File Path="../LICENSE" />
+    <File Path="../README.md" />
+    <File Path="../stylecop.json" />
+    <File Path="../version.json" />
+  </Folder>
+  <Project Path="Velopack.UI/Velopack.UI.csproj" />
+</Solution>
