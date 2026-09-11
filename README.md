@@ -26,7 +26,7 @@ Important: Do not run Velopack.UI as Administrator. Windows drag and drop is res
 ### Create your .NET application to package
 Before using Velopack.UI, ensure your application is built and ready for packaging:
 - Build your app in Release mode for the target runtime (framework‑dependent or self‑contained).
-- Add the Velopack NuGet package to your project `<PackageReference Include="Velopack" Version="0.0.1298" />`.
+- Add the Velopack NuGet package to your project `<PackageReference Include="Velopack" Version="1.2.0" />`.
 - Add an `UpdateManager` to your app to handle updates.
 - Add the Velopack bootstrapper/setup to your project `VelopackApp.Build().Run()` [see Velopack docs](https://docs.velopack.io/getting-started/csharp).
 - Collect the output: the main EXE plus all required DLLs/content.
@@ -35,7 +35,7 @@ Before using Velopack.UI, ensure your application is built and ready for packagi
 1) Prerequisites
    - Windows 10/11
    - .NET 9 Desktop Runtime (for running) and SDK if you build Velopack.UI from source
-   - [Velopack.UI Installed](https://github.com/ChrisPulman/Velopack.UI/releases/download/V1.0.6/Velopack.UI-win-Setup.exe)
+   - [Velopack.UI Installed](https://github.com/ChrisPulman/Velopack.UI/releases/download/V1.0.10/Velopack.UI-win-Setup.exe)
    - Your application’s build output (Release) ready to package (EXE + all dependencies)
    - A code signing solution (optional but recommended).
 2) Launch Velopack.UI (not elevated)
