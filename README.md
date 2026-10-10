@@ -1,4 +1,4 @@
-﻿# Velopack.UI — by Chris Pulman
+# Velopack.UI — by Chris Pulman
 
 <img alt="Velopack.UI Application Logo" src="src/Velopack.UI/Images/Application.png" width="128" />
 
@@ -34,8 +34,8 @@ Before using Velopack.UI, ensure your application is built and ready for packagi
 ### Quick start for Velopack.UI
 1) Prerequisites
    - Windows 10/11
-   - .NET 9 Desktop Runtime (for running) and SDK if you build Velopack.UI from source
-   - [Velopack.UI Installed](https://github.com/ChrisPulman/Velopack.UI/releases/download/V1.0.10/Velopack.UI-win-Setup.exe)
+   - .NET 10 SDK if you build Velopack.UI from source; release installers include the runtime
+   - [Latest Velopack.UI release](https://github.com/ChrisPulman/Velopack.UI/releases/latest)
    - Your application’s build output (Release) ready to package (EXE + all dependencies)
    - A code signing solution (optional but recommended).
 2) Launch Velopack.UI (not elevated)
@@ -178,6 +178,18 @@ For exact configuration strings and provider‑specific options, refer to the Ve
   - Check certificate access, passwords, and timestamp server availability. Try signing a single file with your params to validate.
 - Upload errors
   - Validate credentials/permissions and that the destination path exists. Check network/firewall and retry.
+
+### Certum SimplySign cloud signing
+
+Enable **Certum SimplySign (ssign)** in the signing options, select your installed `ssign.exe`, and enter your Certum email and current six-digit authenticator code. The code stays in memory and is passed only through the packaging process environment. It is excluded from saved `.velo` projects.
+
+For unattended signing, start the application with `CERTUM_EMAIL` and exactly one of `CERTUM_OTP` (the authenticator seed) or `CERTUM_TOKEN` (a current code). Enter the account email in the signing options. Clear the other signing modes before selecting SimplySign. MSI generation is unavailable with this option because `ssign` supports PE files. Install and test [ssign](https://github.com/Le-Syl21/ssign) independently before packaging; it is an independent client for the Certum service.
+
+### Application updates and CI
+
+Installed copies check this repository's stable GitHub releases at startup and download available updates through Velopack. The application asks before restarting, warns about unsaved changes, and defers restart while packaging is active. Declining keeps the downloaded update for a later launch. Running from source skips installed-application updates.
+
+Pull requests run the Release build and TUnit suite through `BuildOnly.yml`. Signed releases use the same version for application binaries and Velopack packages. See [CI and signing configuration](docs/CI.md) for the signing runner, required credentials, release tags, and verification steps.
 
 ---
 

@@ -1,5 +1,8 @@
-// Copyright (c) Chris Pulman. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// <copyright file="FileAssociationHelper.cs" company="Chris Pulman">
+// Copyright (c) 2019-2026 Chris Pulman and contributors. All rights reserved.
+// Chris Pulman and contributors licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for full license information.
+// </copyright>
 
 using System.Diagnostics;
 using System.IO;
@@ -13,11 +16,14 @@ namespace Velopack.UI.Helpers;
 /// Registers Velopack.UI project files with Windows for the current user.
 /// </summary>
 [SupportedOSPlatform("windows10.0.19041.0")]
-internal static class FileAssociationHelper
+internal static partial class FileAssociationHelper
 {
     private const string ProgId = "Velopack.UI.Project";
     private const string Extension = PathFolderHelper.ProjectFileExtension;
 
+    /// <summary>Finds the first existing project file supplied on the command line.</summary>
+    /// <param name="args">The command line arguments.</param>
+    /// <returns>The full project path, or null when no project is supplied.</returns>
     internal static string? GetProjectFileArgument(IEnumerable<string>? args)
     {
         if (args == null)
@@ -37,6 +43,7 @@ internal static class FileAssociationHelper
         return null;
     }
 
+    /// <summary>Registers the running executable as the current user's project file handler.</summary>
     internal static void RegisterProjectFileAssociation()
     {
         var executablePath = Environment.ProcessPath;
@@ -76,6 +83,7 @@ internal static class FileAssociationHelper
         NotifyShellAssociationChanged();
     }
 
+    /// <summary>Removes the current user's project file registration for this application.</summary>
     internal static void UnregisterProjectFileAssociation()
     {
         using (var extensionKey = Registry.CurrentUser.OpenSubKey($@"Software\Classes\{Extension}", writable: true))
@@ -107,7 +115,8 @@ internal static class FileAssociationHelper
 
     private static partial class NativeMethods
     {
-        [DllImport("shell32.dll")]
-        internal static extern void SHChangeNotify(uint wEventId, uint uFlags, IntPtr dwItem1, IntPtr dwItem2);
+        [LibraryImport("shell32.dll")]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        internal static partial void SHChangeNotify(uint wEventId, uint uFlags, IntPtr dwItem1, IntPtr dwItem2);
     }
 }

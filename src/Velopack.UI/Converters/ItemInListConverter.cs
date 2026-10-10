@@ -1,5 +1,8 @@
-// Copyright (c) Chris Pulman. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// <copyright file="ItemInListConverter.cs" company="Chris Pulman">
+// Copyright (c) 2019-2026 Chris Pulman and contributors. All rights reserved.
+// Chris Pulman and contributors licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for full license information.
+// </copyright>
 
 using System.Collections;
 using System.Runtime.Versioning;
@@ -33,12 +36,12 @@ public class ItemInListConverter : System.Windows.Data.IMultiValueConverter
             return false;
         }
 
-        if (values.Length == 2 && values[0] is IList list)
+        if (values.Length != 2 || values[0] is not IList list)
         {
-            return list.Contains(values[1]);
+            return false;
         }
 
-        return false;
+        return list.Contains(values[1]);
     }
 
     /// <summary>

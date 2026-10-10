@@ -1,5 +1,8 @@
-// Copyright (c) Chris Pulman. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// <copyright file="GitHubCliReleasePublisher.cs" company="Chris Pulman">
+// Copyright (c) 2019-2026 Chris Pulman and contributors. All rights reserved.
+// Chris Pulman and contributors licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for full license information.
+// </copyright>
 
 using System.ComponentModel;
 using System.Diagnostics;
@@ -15,6 +18,11 @@ namespace Velopack.UI;
 [SupportedOSPlatform("windows10.0.19041.0")]
 internal static class GitHubCliReleasePublisher
 {
+    /// <summary>Creates a release or uploads assets to its existing GitHub release.</summary>
+    /// <param name="connection">The repository and release configuration.</param>
+    /// <param name="files">The release assets to upload.</param>
+    /// <param name="cancellationToken">Cancels GitHub CLI operations.</param>
+    /// <returns>A task that completes when publishing finishes.</returns>
     internal static async Task PublishAsync(GitHubReleasesConnection connection, IReadOnlyCollection<string> files, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(connection);
@@ -41,6 +49,7 @@ internal static class GitHubCliReleasePublisher
         await CreateReleaseAsync(repositorySelector, connection, files, cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>Opens GitHub CLI's interactive browser authentication flow.</summary>
     internal static void StartInteractiveSignIn()
     {
         var startInfo = new ProcessStartInfo
@@ -48,7 +57,7 @@ internal static class GitHubCliReleasePublisher
             FileName = "cmd.exe",
             Arguments = "/k gh auth login --web --hostname github.com --scopes repo",
             UseShellExecute = true,
-            WindowStyle = ProcessWindowStyle.Normal
+            WindowStyle = ProcessWindowStyle.Normal,
         };
 
         Process.Start(startInfo);
@@ -63,10 +72,12 @@ internal static class GitHubCliReleasePublisher
         }
 
         var authStatus = await RunGhAsync(["auth", "status", "--hostname", "github.com"], TimeSpan.FromSeconds(30), cancellationToken).ConfigureAwait(false);
-        if (authStatus.ExitCode != 0)
+        if (authStatus.ExitCode == 0)
         {
-            throw new InvalidOperationException("GitHub CLI is not authenticated for github.com. Click 'Sign in with GitHub CLI' or run: gh auth login --web --hostname github.com --scopes repo");
+            return;
         }
+
+        throw new InvalidOperationException("GitHub CLI is not authenticated for github.com. Click 'Sign in with GitHub CLI' or run: gh auth login --web --hostname github.com --scopes repo");
     }
 
     private static async Task<bool> ReleaseExistsAsync(string repositorySelector, string tagName, CancellationToken cancellationToken)
@@ -137,10 +148,12 @@ internal static class GitHubCliReleasePublisher
     private static async Task RunGhCheckedAsync(IReadOnlyCollection<string> args, TimeSpan timeout, string failurePrefix, CancellationToken cancellationToken)
     {
         var result = await RunGhAsync(args, timeout, cancellationToken).ConfigureAwait(false);
-        if (result.ExitCode != 0)
+        if (result.ExitCode == 0)
         {
-            throw new InvalidOperationException($"{failurePrefix}: {result.CombinedOutput}");
+            return;
         }
+
+        throw new InvalidOperationException($"{failurePrefix}: {result.CombinedOutput}");
     }
 
     private static async Task<ProcessResult> RunGhAsync(IReadOnlyCollection<string> args, TimeSpan timeout, CancellationToken cancellationToken)
@@ -155,8 +168,8 @@ internal static class GitHubCliReleasePublisher
                 RedirectStandardError = true,
                 CreateNoWindow = true,
                 StandardOutputEncoding = Encoding.UTF8,
-                StandardErrorEncoding = Encoding.UTF8
-            }
+                StandardErrorEncoding = Encoding.UTF8,
+            },
         };
 
         foreach (var arg in args)
@@ -216,6 +229,6 @@ internal static class GitHubCliReleasePublisher
     {
         public string CombinedOutput => string.Join(
             Environment.NewLine,
-            new[] { StandardError, StandardOutput }.Where(output => !string.IsNullOrWhiteSpace(output))).Trim();
+            new[] { this.StandardError, this.StandardOutput }.Where(output => !string.IsNullOrWhiteSpace(output))).Trim();
     }
 }

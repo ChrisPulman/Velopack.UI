@@ -1,5 +1,8 @@
-// Copyright (c) Chris Pulman. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// <copyright file="GitHubReleasesConnection.cs" company="Chris Pulman">
+// Copyright (c) 2019-2026 Chris Pulman and contributors. All rights reserved.
+// Chris Pulman and contributors licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for full license information.
+// </copyright>
 
 using System.Runtime.Serialization;
 using System.Runtime.Versioning;
@@ -14,56 +17,71 @@ namespace Velopack.UI;
 
 /// <summary>
 /// Publishes artifacts to GitHub Releases.
-/// Credentials are stored in plain text in the project file.
+/// GitHub CLI credentials stay in its credential store; fallback tokens are session-only.
 /// </summary>
 [DataContract]
 [SupportedOSPlatform("windows10.0.19041.0")]
 public partial class GitHubReleasesConnection : WebConnectionBase
 {
-    private string? _packageChannel = "win";
-    private string? _packageTitle;
-    private string? _repositoryUrl;
+    private string? packageChannel = "win";
+    private string? packageTitle;
+    private string? repositoryUrl;
+    private bool isApplyingRepositoryUrl;
 
     [DataMember]
     [Reactive]
-    private string? _owner;
+    private string? owner;
 
     [DataMember]
     [Reactive]
-    private string? _repository;
+    private string? repository;
 
     [DataMember]
     [Reactive]
-    private string? _tagName;
+    private string? tagName;
 
     [DataMember]
     [Reactive]
-    private string? _releaseName;
+    private string? releaseName;
 
     [DataMember]
     [Reactive]
-    private bool _prerelease;
+    private bool prerelease;
 
     [DataMember]
     [Reactive]
-    private bool _draft;
+    private bool draft;
 
     [DataMember]
     [Reactive]
-    private bool _useGitHubCliAuthentication = true;
+    private bool useGitHubCliAuthentication = true;
 
+    /// <summary>
+    /// Optional fallback token used only for the current session.
+    /// </summary>
     [Reactive]
     [JsonIgnore]
-    private string? _token; // Optional fallback token used only for the current session.
+    private string? token;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="GitHubReleasesConnection"/> class.
     /// </summary>
     public GitHubReleasesConnection()
     {
-        ConnectionName = "GitHub Releases";
-        this.WhenAnyValue(x => x.Owner, x => x.Repository, x => x.TagName)
-            .Subscribe(_ => this.RaisePropertyChanged(nameof(SetupDownloadUrl)));
+        this.ConnectionName = "GitHub Releases";
+        this.WhenAnyValue(x => x.Owner, x => x.Repository)
+            .Subscribe(_ =>
+            {
+                if (!this.isApplyingRepositoryUrl)
+                {
+                    this.repositoryUrl = null;
+                    this.RaisePropertyChanged(nameof(this.RepositoryUrl));
+                }
+
+                this.RefreshDownloadUrls();
+            });
+        this.WhenAnyValue(x => x.TagName)
+            .Subscribe(_ => this.RefreshDownloadUrls());
     }
 
     /// <summary>
@@ -72,12 +90,12 @@ public partial class GitHubReleasesConnection : WebConnectionBase
     [JsonIgnore]
     public string? PackageChannel
     {
-        get => _packageChannel;
+        get => this.packageChannel;
 
         set
         {
-            this.RaiseAndSetIfChanged(ref _packageChannel, value);
-            this.RaisePropertyChanged(nameof(SetupDownloadUrl));
+            this.RaiseAndSetIfChanged(ref this.packageChannel, value);
+            this.RefreshDownloadUrls();
         }
     }
 
@@ -87,14 +105,31 @@ public partial class GitHubReleasesConnection : WebConnectionBase
     [JsonIgnore]
     public string? PackageTitle
     {
-        get => _packageTitle;
+        get => this.packageTitle;
 
         set
         {
-            this.RaiseAndSetIfChanged(ref _packageTitle, value);
-            this.RaisePropertyChanged(nameof(SetupDownloadUrl));
+            this.RaiseAndSetIfChanged(ref this.packageTitle, value);
+            this.RefreshDownloadUrls();
         }
     }
+
+    /// <summary>
+    /// Gets the permanent repository URL to pass to Velopack's GithubSource.
+    /// </summary>
+    [JsonIgnore]
+    public string UpdateSourceUrl =>
+        string.IsNullOrWhiteSpace(this.Owner) || string.IsNullOrWhiteSpace(this.Repository)
+            ? "Missing Parameter"
+            : $"https://github.com/{this.Owner}/{this.Repository}";
+
+    /// <summary>
+    /// Gets the setup link that follows GitHub's latest stable release.
+    /// </summary>
+    [JsonIgnore]
+    public string LatestSetupDownloadUrl => this.UpdateSourceUrl == "Missing Parameter"
+        ? "Missing Parameter"
+        : $"{this.UpdateSourceUrl}/releases/latest/download/{Uri.EscapeDataString(this.GetSetupFileName())}";
 
     /// <summary>
     /// Gets or sets a GitHub repository URL to parse into owner and repository.
@@ -102,12 +137,22 @@ public partial class GitHubReleasesConnection : WebConnectionBase
     [JsonIgnore]
     public string? RepositoryUrl
     {
-        get => _repositoryUrl;
+        get => this.repositoryUrl ?? (string.IsNullOrWhiteSpace(this.Owner) || string.IsNullOrWhiteSpace(this.Repository)
+            ? null
+            : $"https://github.com/{this.Owner}/{this.Repository}");
 
         set
         {
-            this.RaiseAndSetIfChanged(ref _repositoryUrl, value);
-            TryApplyRepositoryUrl(value);
+            this.RaiseAndSetIfChanged(ref this.repositoryUrl, value);
+            this.isApplyingRepositoryUrl = true;
+            try
+            {
+                this.TryApplyRepositoryUrl(value);
+            }
+            finally
+            {
+                this.isApplyingRepositoryUrl = false;
+            }
         }
     }
 
@@ -118,16 +163,12 @@ public partial class GitHubReleasesConnection : WebConnectionBase
     {
         get
         {
-            if (string.IsNullOrWhiteSpace(Owner) || string.IsNullOrWhiteSpace(Repository) || string.IsNullOrWhiteSpace(TagName))
+            if (string.IsNullOrWhiteSpace(this.Owner) || string.IsNullOrWhiteSpace(this.Repository) || string.IsNullOrWhiteSpace(this.TagName))
             {
                 return "Missing Parameter";
             }
 
-            var packageTitle = string.IsNullOrWhiteSpace(PackageTitle) ? Repository : PackageTitle;
-            var packageChannel = string.IsNullOrWhiteSpace(PackageChannel) ? "win" : PackageChannel;
-            var setupFileName = $"{packageTitle}-{packageChannel}-Setup.exe";
-
-            return $"https://github.com/{Owner}/{Repository}/releases/download/{Uri.EscapeDataString(TagName)}/{Uri.EscapeDataString(setupFileName)}";
+            return $"{this.UpdateSourceUrl}/releases/download/{Uri.EscapeDataString(this.TagName)}/{Uri.EscapeDataString(this.GetSetupFileName())}";
         }
     }
 
@@ -137,7 +178,7 @@ public partial class GitHubReleasesConnection : WebConnectionBase
     /// <returns>A ValidationResult.</returns>
     public override ValidationResult Validate()
     {
-        this.RaisePropertyChanged(nameof(SetupDownloadUrl));
+        this.RefreshDownloadUrls();
         var commonValid = new Validator().Validate(this);
         if (!commonValid.IsValid)
         {
@@ -165,8 +206,8 @@ public partial class GitHubReleasesConnection : WebConnectionBase
             return;
         }
 
-        Owner = segments[0];
-        Repository = segments[1].EndsWith(".git", StringComparison.OrdinalIgnoreCase)
+        this.Owner = segments[0];
+        this.Repository = segments[1].EndsWith(".git", StringComparison.OrdinalIgnoreCase)
             ? segments[1][..^4]
             : segments[1];
 
@@ -174,20 +215,35 @@ public partial class GitHubReleasesConnection : WebConnectionBase
             string.Equals(segments[2], "releases", StringComparison.OrdinalIgnoreCase) &&
             string.Equals(segments[3], "tag", StringComparison.OrdinalIgnoreCase))
         {
-            TagName = Uri.UnescapeDataString(segments[4]);
+            this.TagName = Uri.UnescapeDataString(segments[4]);
         }
 
-        this.RaisePropertyChanged(nameof(SetupDownloadUrl));
+        this.RefreshDownloadUrls();
+    }
+
+    private string GetSetupFileName()
+    {
+        var title = string.IsNullOrWhiteSpace(this.PackageTitle) ? this.Repository : this.PackageTitle;
+        var channel = string.IsNullOrWhiteSpace(this.PackageChannel) ? "win" : this.PackageChannel;
+        return $"{title}-{channel}-Setup.exe";
+    }
+
+    private void RefreshDownloadUrls()
+    {
+        this.RaisePropertyChanged(nameof(this.RepositoryUrl));
+        this.RaisePropertyChanged(nameof(this.UpdateSourceUrl));
+        this.RaisePropertyChanged(nameof(this.LatestSetupDownloadUrl));
+        this.RaisePropertyChanged(nameof(this.SetupDownloadUrl));
     }
 
     private class Validator : AbstractValidator<GitHubReleasesConnection>
     {
         public Validator()
         {
-            RuleFor(c => c.Owner).NotEmpty();
-            RuleFor(c => c.Repository).NotEmpty();
-            RuleFor(c => c.TagName).NotEmpty();
-            RuleFor(c => c.Token).NotEmpty().When(c => !c.UseGitHubCliAuthentication);
+            this.RuleFor(c => c.Owner).NotEmpty();
+            this.RuleFor(c => c.Repository).NotEmpty();
+            this.RuleFor(c => c.TagName).NotEmpty();
+            this.RuleFor(c => c.Token).NotEmpty().When(c => !c.UseGitHubCliAuthentication);
         }
     }
 }

@@ -1,5 +1,8 @@
-// Copyright (c) Chris Pulman. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// <copyright file="ConnectionDiscoveryService.cs" company="Chris Pulman">
+// Copyright (c) 2019-2026 Chris Pulman and contributors. All rights reserved.
+// Chris Pulman and contributors licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for full license information.
+// </copyright>
 
 using System.Reflection;
 using System.Runtime.Versioning;
@@ -12,7 +15,7 @@ namespace Velopack.UI;
 [SupportedOSPlatform("windows10.0.19041.0")]
 public class ConnectionDiscoveryService : IConnectionDiscoveryService
 {
-    private Dictionary<string, WebConnectionBase>? _availableConnections;
+    private Dictionary<string, WebConnectionBase>? availableConnections;
 
     /// <summary>
     /// Gets the available connections.
@@ -20,8 +23,8 @@ public class ConnectionDiscoveryService : IConnectionDiscoveryService
     /// <value>The available connections.</value>
     /// <remarks>This will cache all available connections on first request.</remarks>
     public IEnumerable<WebConnectionBase> AvailableConnections =>
-        _availableConnections?.Values ??
-        (_availableConnections =
+        this.availableConnections?.Values ??
+        (this.availableConnections =
             Assembly
                 .GetExecutingAssembly()
                 .GetExportedTypes()
@@ -46,9 +49,9 @@ public class ConnectionDiscoveryService : IConnectionDiscoveryService
     public WebConnectionBase? GetByName(string connectionName)
     {
         // Ensure cache is populated
-        if (_availableConnections == null)
+        if (this.availableConnections == null)
         {
-            _ = AvailableConnections.ToList();
+            _ = this.AvailableConnections.ToList();
         }
 
         if (string.IsNullOrWhiteSpace(connectionName))
@@ -56,6 +59,6 @@ public class ConnectionDiscoveryService : IConnectionDiscoveryService
             return default;
         }
 
-        return _availableConnections!.TryGetValue(connectionName, out var value) ? value : default;
+        return this.availableConnections!.TryGetValue(connectionName, out var value) ? value : default;
     }
 }

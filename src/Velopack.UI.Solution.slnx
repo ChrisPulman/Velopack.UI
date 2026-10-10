@@ -8,5 +8,6 @@
     <File Path="../stylecop.json" />
     <File Path="../version.json" />
   </Folder>
+  <Project Path="Velopack.UI.Tests/Velopack.UI.Tests.csproj" />
   <Project Path="Velopack.UI/Velopack.UI.csproj" />
 </Solution>

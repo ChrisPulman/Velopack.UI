@@ -1,5 +1,8 @@
-﻿// Copyright (c) Chris Pulman. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// <copyright file="ItemLink.cs" company="Chris Pulman">
+// Copyright (c) 2019-2026 Chris Pulman and contributors. All rights reserved.
+// Chris Pulman and contributors licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for full license information.
+// </copyright>
 
 using System.Collections.ObjectModel;
 using System.Drawing;
@@ -22,16 +25,16 @@ namespace Velopack.UI;
 [SupportedOSPlatform("windows10.0.19041.0")]
 public partial class ItemLink : CrissCross.RxObject
 {
-    private static readonly ItemLink dummyChild = new();
+    private static readonly ItemLink DummyChild = new();
 
     [DataMember]
-    private ObservableCollection<ItemLink> _children = [];
+    private ObservableCollection<ItemLink> children = [];
 
     [DataMember]
     [Reactive]
-    private bool _isSelected;
-    private string? _sourceFilepath;
-    private string? _filename;
+    private bool isSelected;
+    private string? sourceFilepath;
+    private string? filename;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ItemLink"/> class.
@@ -45,8 +48,8 @@ public partial class ItemLink : CrissCross.RxObject
     /// </summary>
     public ObservableCollection<ItemLink> Children
     {
-        get => _children;
-        set => this.RaiseAndSetIfChanged(ref _children, value);
+        get => this.children;
+        set => this.RaiseAndSetIfChanged(ref this.children, value);
     }
 
     /// <summary>
@@ -69,21 +72,21 @@ public partial class ItemLink : CrissCross.RxObject
             {
                 Icon? icon = null;
 
-                if (IsDirectory && IsExpanded)
+                if (this.IsDirectory && this.IsExpanded)
                 {
                     icon = GetFolderIcon(IconSize.Large, FolderType.Open);
                 }
-                else if (IsDirectory && !IsExpanded)
+                else if (this.IsDirectory && !this.IsExpanded)
                 {
                     icon = GetFolderIcon(IconSize.Large, FolderType.Closed);
                 }
-                else if (File.Exists(SourceFilepath))
+                else if (File.Exists(this.SourceFilepath))
                 {
-                    icon = Icon.ExtractAssociatedIcon(SourceFilepath);
+                    icon = Icon.ExtractAssociatedIcon(this.SourceFilepath);
                 }
                 else
                 {
-                    return FindIconForFilename(Path.GetFileName(SourceFilepath), true);
+                    return FindIconForFilename(Path.GetFileName(this.SourceFilepath), true);
                 }
 
                 if (icon == null)
@@ -91,7 +94,10 @@ public partial class ItemLink : CrissCross.RxObject
                     return null;
                 }
 
-                return icon.ToImageSource();
+                using (icon)
+                {
+                    return icon.ToImageSource();
+                }
             }
             catch
             {
@@ -110,14 +116,14 @@ public partial class ItemLink : CrissCross.RxObject
     {
         get
         {
-            if (!string.IsNullOrWhiteSpace(OutputFilename))
+            if (!string.IsNullOrWhiteSpace(this.OutputFilename))
             {
-                return OutputFilename;
+                return this.OutputFilename;
             }
 
-            if (!string.IsNullOrWhiteSpace(SourceFilepath))
+            if (!string.IsNullOrWhiteSpace(this.SourceFilepath))
             {
-                return Path.GetFileName(SourceFilepath);
+                return Path.GetFileName(this.SourceFilepath);
             }
 
             return "no_namefile";
@@ -125,8 +131,8 @@ public partial class ItemLink : CrissCross.RxObject
 
         set
         {
-            OutputFilename = value;
-            this.RaiseAndSetIfChanged(ref _filename, value);
+            this.OutputFilename = value;
+            this.RaiseAndSetIfChanged(ref this.filename, value);
         }
     }
 
@@ -134,7 +140,7 @@ public partial class ItemLink : CrissCross.RxObject
     /// Gets a value indicating whether returns true if this object's Children have not yet been populated.
     /// </summary>
     [JsonIgnore]
-    public bool HasDummyChild => Children.Count == 1 && Children[0] == dummyChild;
+    public bool HasDummyChild => this.Children.Count == 1 && this.Children[0] == DummyChild;
 
     /// <summary>
     /// Gets or sets a value indicating whether this instance is directory.
@@ -149,23 +155,25 @@ public partial class ItemLink : CrissCross.RxObject
     [DataMember]
     public bool IsExpanded
     {
-        get => IsExpanded1;
+        get => this.IsExpanded1;
 
         set
         {
-            if (value != IsExpanded1)
+            if (value != this.IsExpanded1)
             {
-                IsExpanded1 = value;
-                this.RaisePropertyChanged(nameof(IsExpanded));
-                this.RaisePropertyChanged(nameof(FileIcon));
+                this.IsExpanded1 = value;
+                this.RaisePropertyChanged(nameof(this.IsExpanded));
+                this.RaisePropertyChanged(nameof(this.FileIcon));
             }
 
             // Lazy load the child items, if necessary.
-            if (HasDummyChild)
+            if (!this.HasDummyChild)
             {
-                Children.Remove(dummyChild);
-                LoadChildren();
+                return;
             }
+
+            this.Children.Remove(DummyChild);
+            this.LoadChildren();
         }
     }
 
@@ -195,30 +203,30 @@ public partial class ItemLink : CrissCross.RxObject
     [DataMember]
     public string? SourceFilepath
     {
-        get => _sourceFilepath;
+        get => this.sourceFilepath;
 
         set
         {
-            _sourceFilepath = value;
-            this.RaisePropertyChanged(nameof(SourceFilepath));
+            this.sourceFilepath = value;
+            this.RaisePropertyChanged(nameof(this.SourceFilepath));
             if (string.IsNullOrWhiteSpace(value))
             {
                 return;
             }
 
-            this.RaisePropertyChanged(nameof(Filename));
+            this.RaisePropertyChanged(nameof(this.Filename));
             try
             {
                 var fa = File.GetAttributes(value);
                 if ((fa & FileAttributes.Directory) != 0)
                 {
-                    SetDirectoryInfo(value);
+                    this.SetDirectoryInfo(value);
                     return;
                 }
 
                 var fileInfo = new FileInfo(value);
-                LastEdit = fileInfo.LastWriteTime.ToString();
-                FileDimension = fileInfo.Length;
+                this.LastEdit = fileInfo.LastWriteTime.ToString();
+                this.FileDimension = fileInfo.Length;
             }
             catch
             {
@@ -289,7 +297,7 @@ public partial class ItemLink : CrissCross.RxObject
     private void SetDirectoryInfo(string folderPath)
     {
         var dirInfo = new DirectoryInfo(folderPath);
-        LastEdit = dirInfo.LastWriteTime.ToString();
-        FileDimension = dirInfo.EnumerateFiles("*.*", SearchOption.AllDirectories).Sum(fi => fi.Length);
+        this.LastEdit = dirInfo.LastWriteTime.ToString();
+        this.FileDimension = dirInfo.EnumerateFiles("*.*", SearchOption.AllDirectories).Sum(fi => fi.Length);
     }
 }

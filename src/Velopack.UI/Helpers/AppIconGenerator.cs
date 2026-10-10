@@ -1,5 +1,8 @@
-// Copyright (c) Chris Pulman. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// <copyright file="AppIconGenerator.cs" company="Chris Pulman">
+// Copyright (c) 2019-2026 Chris Pulman and contributors. All rights reserved.
+// Chris Pulman and contributors licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for full license information.
+// </copyright>
 
 using System.IO;
 using System.Windows;
@@ -8,10 +11,12 @@ using System.Windows.Media.Imaging;
 
 namespace Velopack.UI.Helpers;
 
+/// <summary>Creates the application icon assets used by generated installers.</summary>
 internal static class AppIconGenerator
 {
     private const int IconSize = 256;
 
+    /// <summary>Writes the application PNG and ICO assets to the application images directory.</summary>
     public static void EnsureAppIcons()
     {
         try
@@ -87,7 +92,7 @@ internal static class AppIconGenerator
                     new LineSegment(new Point(boxX + (boxW / 2), lidTop), true),
                     new LineSegment(new Point(boxX + boxW, boxY), true)
                 ],
-                true)
+                true),
         };
         var lidGeo = new PathGeometry(lid);
         var lidBrush = new SolidColorBrush(Color.FromRgb(0xD9, 0x77, 0x06)); // amber 600
@@ -107,9 +112,9 @@ internal static class AppIconGenerator
                 new[]
                 {
                     new LineSegment(new Point(IconSize * 0.45, IconSize * 0.58), true),
-                    new LineSegment(new Point(IconSize * 0.72, IconSize * 0.26), true)
+                    new LineSegment(new Point(IconSize * 0.72, IconSize * 0.26), true),
                 },
-                false)
+                false),
         });
 
         // Glow underlay for readability on any background
@@ -131,16 +136,18 @@ internal static class AppIconGenerator
                     new LineSegment(new Point(arrowX, arrowY + (arrowSize / 2)), true),
                     new LineSegment(new Point(arrowX - (arrowSize * 0.3), arrowY + (arrowSize * 0.2)), true),
                     new LineSegment(new Point(arrowX, arrowY - (arrowSize / 2)), true),
-                    new LineSegment(new Point(arrowX + (arrowSize * 0.3), arrowY + (arrowSize * 0.2)), true)
+                    new LineSegment(new Point(arrowX + (arrowSize * 0.3), arrowY + (arrowSize * 0.2)), true),
                 },
-                true)
+                true),
         });
         var arrowBrush = new SolidColorBrush(Color.FromArgb(0xB0, 0xFF, 0xFF, 0xFF));
         var arrowPen = new Pen(new SolidColorBrush(Color.FromArgb(0x40, 0x00, 0x00, 0x00)), IconSize * 0.01);
         dc.DrawGeometry(arrowBrush, arrowPen, arrowGeo);
     }
 
-    // Minimal ICO writer that wraps a 256x256 PNG as a single-entry icon.
+    /// <summary>
+    /// Minimal ICO writer that wraps a 256x256 PNG as a single-entry icon.
+    /// </summary>
     private static byte[] BuildIcoFromPng(byte[] png)
     {
         using var ms = new MemoryStream();

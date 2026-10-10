@@ -1,4 +1,4 @@
-﻿<UserControl
+<UserControl
     x:Class="Velopack.UI.Views.MainView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -80,7 +80,7 @@
                 Grid.Row="2"
                 DataContext="{Binding Model}">
                 <ui:Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" MinWidth="320" />
+                    <ColumnDefinition Width="*" MinWidth="440" />
                     <ColumnDefinition Width="7" />
                     <ColumnDefinition Width="*" MinWidth="300" />
                 </ui:Grid.ColumnDefinitions>
@@ -322,6 +322,34 @@
                                         BoxSize="22"
                                         Checked="{Binding SkipVeloAppCheck}"
                                         Text="Skip VelopackApp Check" />
+
+                                    <ui:CheckBoxModern
+                                        Margin="4"
+                                        BoxSize="22"
+                                        Checked="{Binding UseSimplySign}"
+                                        Text="Certum SimplySign (ssign)" />
+                                    <ui:TextBlock Style="{StaticResource ResourceKey=Label}" Text="SSIGN.EXE FULL PATH" />
+                                    <ui:StackPanel Orientation="Horizontal">
+                                        <ui:TextBox
+                                            Width="318"
+                                            Background="{x:Null}"
+                                            Text="{Binding SimplySignExecutablePath, UpdateSourceTrigger=PropertyChanged}" />
+                                        <ui:Button
+                                            Margin="4,0,0,0"
+                                            Command="{Binding SelectSimplySignExecutableCommand}"
+                                            Content="Browse" />
+                                    </ui:StackPanel>
+                                    <ui:TextBlock Style="{StaticResource ResourceKey=Label}" Text="SIMPLYSIGN ACCOUNT EMAIL" />
+                                    <ui:TextBox Background="{x:Null}" Text="{Binding SimplySignEmail, UpdateSourceTrigger=PropertyChanged}" />
+                                    <ui:TextBlock Style="{StaticResource ResourceKey=Label}" Text="CURRENT AUTHENTICATOR CODE (NOT SAVED)" />
+                                    <ui:TextBox
+                                        Background="{x:Null}"
+                                        MaxLength="6"
+                                        Text="{Binding SimplySignToken, UpdateSourceTrigger=PropertyChanged}" />
+                                    <ui:TextBlock
+                                        Margin="4"
+                                        Text="Install ssign from github.com/Le-Syl21/ssign. Use a current six-digit code, or set CERTUM_OTP / CERTUM_TOKEN before starting this app. Codes are never saved. ssign caches its cloud session for 20 minutes. PE binaries only; MSI is unsupported. Clear other signing settings."
+                                        TextWrapping="Wrap" />
 
                                     <ui:TextBlock Style="{StaticResource ResourceKey=Label}" Text="SIGN PARAMS" />
                                     <ui:TextBox Background="{x:Null}" Text="{Binding SignParams, UpdateSourceTrigger=PropertyChanged}" />

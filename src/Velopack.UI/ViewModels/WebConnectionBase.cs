@@ -1,5 +1,8 @@
-﻿// Copyright (c) Chris Pulman. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// <copyright file="WebConnectionBase.cs" company="Chris Pulman">
+// Copyright (c) 2019-2026 Chris Pulman and contributors. All rights reserved.
+// Chris Pulman and contributors licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for full license information.
+// </copyright>
 
 using System.ComponentModel;
 using System.Runtime.Serialization;
@@ -24,18 +27,18 @@ public abstract partial class WebConnectionBase : RxObject, IDataErrorInfo
 {
     [DataMember]
     [Reactive]
-    private string? _connectionName;
+    private string? connectionName;
 
     /// <summary>
     /// Gets an error message indicating what is wrong with this object.
     /// </summary>
-    public string Error => GetError(Validate());
+    public string Error => GetError(this.Validate());
 
     /// <summary>
     /// Gets a value indicating whether returns true if ... is valid.
     /// </summary>
     /// <value><c>true</c> if this instance is valid; otherwise, <c>false</c>.</value>
-    public bool IsValid => Validate().IsValid;
+    public bool IsValid => this.Validate().IsValid;
 
     /// <summary>
     /// Gets the <see cref="string"/> with the specified column name.
@@ -47,7 +50,7 @@ public abstract partial class WebConnectionBase : RxObject, IDataErrorInfo
     {
         get
         {
-            var validationResults = Validate();
+            var validationResults = this.Validate();
             if (validationResults == null)
             {
                 return string.Empty;
