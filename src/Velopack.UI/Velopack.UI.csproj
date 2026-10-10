@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
@@ -7,7 +7,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <LangVersion>preview</LangVersion>
+    <LangVersion>14</LangVersion>
     <RootNamespace>Velopack.UI</RootNamespace>
     <ApplicationIcon>icon.ico</ApplicationIcon>
     <Description>Velopack.UI by Chris Pulman — a Windows tool to build, sign, and publish Velopack (vpk) installers. Compose installer contents with drag &amp; drop, set metadata/icons, generate delta/full packages and optional MSI, then build and publish Releases.</Description>
@@ -23,7 +23,7 @@
     <PackageReference Include="ReactiveUI.Primitives" Version="9.0.0" />
     <PackageReference Include="ReactiveUI.SourceGenerators" Version="4.2.0">
       <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <IncludeAssets>compile; runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Velopack" Version="1.2.161" />
     <PackageReference Include="AWSSDK.S3" Version="4.0.104.2" />

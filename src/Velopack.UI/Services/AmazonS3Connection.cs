@@ -1,5 +1,8 @@
-﻿// Copyright (c) Chris Pulman. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// <copyright file="AmazonS3Connection.cs" company="Chris Pulman">
+// Copyright (c) 2019-2026 Chris Pulman and contributors. All rights reserved.
+// Chris Pulman and contributors licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for full license information.
+// </copyright>
 
 using System.Runtime.Serialization;
 using System.Runtime.Versioning;
@@ -21,22 +24,24 @@ public partial class AmazonS3Connection : WebConnectionBase
 {
     [DataMember]
     [Reactive]
-    private string? _accessKey;
-    private List<string>? _availableRegionList;
+    private string? accessKey;
+    private List<string>? availableRegionList;
 
-    // http://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-s3-bucket-naming-requirements.html
-    private string? _bucketName;
+    /// <summary>
+    /// http://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-s3-bucket-naming-requirements.html.
+    /// </summary>
+    private string? bucketName;
 
-    private string? _regionName;
+    private string? regionName;
 
     [DataMember]
     [Reactive]
-    private string? _secretAccessKey;
+    private string? secretAccessKey;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="AmazonS3Connection"/> class.
     /// </summary>
-    public AmazonS3Connection() => ConnectionName = "Amazon S3";
+    public AmazonS3Connection() => this.ConnectionName = "Amazon S3";
 
     /// <summary>
     /// Gets the available region list.
@@ -46,17 +51,17 @@ public partial class AmazonS3Connection : WebConnectionBase
     {
         get
         {
-            if (_availableRegionList == null)
+            if (this.availableRegionList == null)
             {
-                _availableRegionList = [];
+                this.availableRegionList = [];
 
                 foreach (var r in RegionEndpoint.EnumerableAllRegions)
                 {
-                    _availableRegionList.Add(r.DisplayName);
+                    this.availableRegionList.Add(r.DisplayName);
                 }
             }
 
-            return _availableRegionList;
+            return this.availableRegionList;
         }
     }
 
@@ -67,18 +72,18 @@ public partial class AmazonS3Connection : WebConnectionBase
     [DataMember]
     public string? BucketName
     {
-        get => _bucketName;
+        get => this.bucketName;
 
         set
         {
-            _bucketName = value;
-            if (_bucketName != null)
+            this.bucketName = value;
+            if (this.bucketName != null)
             {
-                _bucketName = _bucketName.ToLower().Replace(" ", string.Empty);
+                this.bucketName = this.bucketName.ToLower().Replace(" ", string.Empty);
             }
 
-            this.RaisePropertyChanged(nameof(BucketName));
-            this.RaisePropertyChanged(nameof(SetupDownloadUrl));
+            this.RaisePropertyChanged(nameof(this.BucketName));
+            this.RaisePropertyChanged(nameof(this.SetupDownloadUrl));
         }
     }
 
@@ -89,12 +94,12 @@ public partial class AmazonS3Connection : WebConnectionBase
     [DataMember]
     public string? RegionName
     {
-        get => _regionName;
+        get => this.regionName;
 
         set
         {
-            this.RaiseAndSetIfChanged(ref _regionName, value);
-            this.RaisePropertyChanged(nameof(SetupDownloadUrl));
+            this.RaiseAndSetIfChanged(ref this.regionName, value);
+            this.RaisePropertyChanged(nameof(this.SetupDownloadUrl));
         }
     }
 
@@ -106,12 +111,12 @@ public partial class AmazonS3Connection : WebConnectionBase
     {
         get
         {
-            if (string.IsNullOrWhiteSpace(BucketName) || string.IsNullOrWhiteSpace(RegionName))
+            if (string.IsNullOrWhiteSpace(this.BucketName) || string.IsNullOrWhiteSpace(this.RegionName))
             {
                 return "Missing Parameter";
             }
 
-            return "https://s3-" + GetRegion()?.SystemName + ".amazonaws.com/" + BucketName.ToLower() + "/Setup.exe";
+            return "https://s3-" + this.GetRegion()?.SystemName + ".amazonaws.com/" + this.BucketName.ToLower() + "/Setup.exe";
         }
     }
 
@@ -130,18 +135,20 @@ public partial class AmazonS3Connection : WebConnectionBase
         return base.Validate();
     }
 
+    /// <summary>Resolves the configured display name to an Amazon region.</summary>
+    /// <returns>The matching region, or null when the configuration is invalid.</returns>
     internal RegionEndpoint? GetRegion() =>
-        RegionEndpoint.EnumerableAllRegions.FirstOrDefault(r => r.DisplayName == RegionName);
+        RegionEndpoint.EnumerableAllRegions.FirstOrDefault(r => r.DisplayName == this.RegionName);
 
     private class Validator : AbstractValidator<AmazonS3Connection>
     {
         public Validator()
         {
             // RuleFor(c => c.ConnectionName).NotEmpty();
-            RuleFor(c => c.RegionName).NotEmpty();
-            RuleFor(c => c.SecretAccessKey).NotEmpty();
-            RuleFor(c => c.AccessKey).NotEmpty();
-            RuleFor(c => c.BucketName).Must(CheckBucketName).WithState(x => "Bucket Name not valid ! See Amazon SDK documentation");
+            this.RuleFor(c => c.RegionName).NotEmpty();
+            this.RuleFor(c => c.SecretAccessKey).NotEmpty();
+            this.RuleFor(c => c.AccessKey).NotEmpty();
+            this.RuleFor(c => c.BucketName).Must(CheckBucketName).WithState(x => "Bucket Name not valid ! See Amazon SDK documentation");
         }
 
         private static bool CheckBucketName(string? bucketName) => !string.IsNullOrWhiteSpace(bucketName) && !bucketName.Contains(' ');

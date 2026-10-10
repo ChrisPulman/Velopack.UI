@@ -3,18 +3,15 @@
   <PropertyGroup>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <Authors>Chris Pulman</Authors>
-    <Description>A Reactive Hash Table Library</Description>
+    <Description>A Windows tool to build, sign, and publish Velopack installers.</Description>
     <Copyright>Copyright © https://github.com/ChrisPulman $([System.DateTime]::Now.ToString(yyyy))</Copyright>
     <IsTestProject>$(MSBuildProjectName.Contains('Tests'))</IsTestProject>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <LangVersion>preview</LangVersion>
-    <Configuration>$(TargetFramework)</Configuration>
+    <LangVersion>14</LangVersion>
     <Company>ChrisPulman</Company>
-    <NoWarn>CS1591</NoWarn>
     <Nullable>enable</Nullable>
     <PackageIcon>icon.png</PackageIcon>
-    <PackageReleaseNotes>Compatability with Net 8 / 9 / 10 and netstandard2.0</PackageReleaseNotes>
-    <PackageTags>Hashtable;rx;reactive;extensions;observable;LINQ;net;netstandard</PackageTags>
+    <PackageReleaseNotes>Windows installer packaging, signing, and publishing with Velopack.</PackageReleaseNotes>
+    <PackageTags>Velopack;installer;packaging;signing;WPF;Windows</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <EnableNETAnalyzers>True</EnableNETAnalyzers>
     <AnalysisLevel>latest</AnalysisLevel>
@@ -37,6 +34,15 @@
     <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
   </PropertyGroup>
 
+  <!-- Release tags supply the binary version; local builds retain Git versioning. -->
+  <PropertyGroup Condition="'$(ReleaseVersion)' != ''">
+    <Version>$(ReleaseVersion)</Version>
+    <AssemblyVersion>$(ReleaseVersion).0</AssemblyVersion>
+    <FileVersion>$(ReleaseVersion).0</FileVersion>
+    <InformationalVersion>$(ReleaseVersion)</InformationalVersion>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+  </PropertyGroup>
+
   <PropertyGroup Condition="'$(Configuration)'=='Debug'">
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
@@ -53,9 +59,8 @@
 
   <ItemGroup>
     <!--<Compile Update="**\*.cs" DependentUpon="I%(Filename).cs" />-->
-    <PackageReference Include="Nerdbank.GitVersioning" Version="3.10.94" />
+    <PackageReference Include="Nerdbank.GitVersioning" Version="3.10.94" Condition="'$(ReleaseVersion)' == ''" />
     <PackageReference Include="stylecop.analyzers" Version="1.2.0-beta.556" PrivateAssets="all" />
     <PackageReference Include="Roslynator.Analyzers" Version="5.0.1" PrivateAssets="All" />
-    <AdditionalFiles Include="$(MSBuildThisFileDirectory)stylecop.json" Link="stylecop.json" />
   </ItemGroup>
 </Project>

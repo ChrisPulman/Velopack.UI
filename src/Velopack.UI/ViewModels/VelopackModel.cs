@@ -1,5 +1,8 @@
-﻿// Copyright (c) Chris Pulman. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// <copyright file="VelopackModel.cs" company="Chris Pulman">
+// Copyright (c) 2019-2026 Chris Pulman and contributors. All rights reserved.
+// Chris Pulman and contributors licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for full license information.
+// </copyright>
 
 using System.Collections.ObjectModel;
 using System.Diagnostics;
@@ -33,164 +36,184 @@ namespace Velopack.UI;
 [SupportedOSPlatform("windows10.0.19041.0")]
 public partial class VelopackModel : WebConnectionBase, IDropTarget
 {
-    private readonly ConnectionDiscoveryService _connectionDiscoveryService = new();
-    private readonly string _newFolderName = "NEW FOLDER";
-    private List<string>? _availableUploadLocation;
-    private string? _iconFilepath;
+    private readonly ConnectionDiscoveryService connectionDiscoveryService = new();
+    private readonly string newFolderName = "NEW FOLDER";
+    private List<string>? availableUploadLocation;
+    private string? iconFilepath;
 
     [DataMember]
     [Reactive]
-    private string? _appId;
+    private string? appId;
 
     [DataMember]
     [Reactive]
-    private string? _authors;
+    private string? authors;
 
     [DataMember]
     [Reactive]
-    private string? _description;
+    private string? description;
 
     [DataMember]
     [Reactive]
-    private string? _mainExePath;
+    private string? mainExePath;
 
     [DataMember]
     [Reactive]
-    private string? _mainExeName;
+    private string? mainExeName;
 
     [DataMember]
     [Reactive]
-    private string? _packageFilesOutputPath;
+    private string? packageFilesOutputPath;
 
     [DataMember]
     [Reactive]
-    private ObservableCollection<ItemLink> _packageFiles = [];
+    private ObservableCollection<ItemLink> packageFiles = [];
 
     [DataMember]
     [Reactive]
-    private WebConnectionBase? _selectedConnection;
+    private WebConnectionBase? selectedConnection;
 
     [Reactive]
-    private ItemLink _selectedItem = new();
+    private ItemLink selectedItem = new();
 
     [Reactive]
-    private SingleFileUpload? _selectedUploadItem;
+    private SingleFileUpload? selectedUploadItem;
 
     [DataMember]
     [Reactive]
-    private string? _velopackOutputPath;
+    private string? velopackOutputPath;
 
     [DataMember]
     [Reactive]
-    private string? _title;
-    private string? _selectedConnectionString;
-    private bool _setVersionManually;
-    private string? _splashFilepath;
-    private ObservableCollection<SingleFileUpload> _uploadQueue = [];
-    private string? _version;
-    private ReactiveCommand<RxVoid, RxVoid>? _selectSplashCmd;
+    private string? title;
+    private string? selectedConnectionString;
+    private bool setVersionManually;
+    private string? splashFilepath;
+    private ObservableCollection<SingleFileUpload> uploadQueue = [];
+    private string? version;
+    private ReactiveCommand<RxVoid, RxVoid>? selectSplashCmd;
 
-    // Velopack options
+    /// <summary>
+    /// Velopack options.
+    /// </summary>
     [DataMember]
     [Reactive]
-    private string? _channel = "win";
-
-    [DataMember]
-    [Reactive]
-    private string? _runtime;
-
-    [DataMember]
-    [Reactive]
-    private string? _releaseNotesPath;
+    private string? channel = "win";
 
     [DataMember]
     [Reactive]
-    private string? _deltaMode = "BestSpeed";
+    private string? runtime;
 
     [DataMember]
     [Reactive]
-    private string? _excludeRegex = @".*\.pdb";
+    private string? releaseNotesPath;
 
     [DataMember]
     [Reactive]
-    private bool _noPortable;
+    private string? deltaMode = "BestSpeed";
 
     [DataMember]
     [Reactive]
-    private bool _noInstaller;
+    private string? excludeRegex = @".*\.pdb";
 
     [DataMember]
     [Reactive]
-    private string? _frameworks;
+    private bool noPortable;
 
     [DataMember]
     [Reactive]
-    private bool _skipVeloAppCheck;
+    private bool noInstaller;
 
     [DataMember]
     [Reactive]
-    private string? _shortcuts = "Desktop,StartMenuRoot";
+    private string? frameworks;
 
     [DataMember]
     [Reactive]
-    private bool _generateDeltaPackages = true;
+    private bool skipVeloAppCheck;
 
     [DataMember]
     [Reactive]
-    private bool _generateMsi;
+    private string? shortcuts = "Desktop,StartMenuRoot";
 
     [DataMember]
     [Reactive]
-    private string? _msiBitness = "x64";
+    private bool generateDeltaPackages = true;
 
     [DataMember]
     [Reactive]
-    private string? _signParams;
+    private bool generateMsi;
 
     [DataMember]
     [Reactive]
-    private string? _signTemplate;
+    private string? msiBitness = "x64";
 
     [DataMember]
     [Reactive]
-    private string? _signExclude;
+    private string? signParams;
 
     [DataMember]
     [Reactive]
-    private int _signParallel = 10;
+    private string? signTemplate;
 
     [DataMember]
     [Reactive]
-    private string? _azureTrustedSignFile;
+    private string? signExclude;
 
     [DataMember]
     [Reactive]
-    private bool _msiDeploymentTool;
+    private int signParallel = 10;
 
     [DataMember]
     [Reactive]
-    private string? _msiDeploymentToolVersion;
+    private string? azureTrustedSignFile;
 
-    // Persisted base path for FileSystem connection so it can be saved/restored in *.velo
     [DataMember]
     [Reactive]
-    private string? _fileSystemBasePath;
+    private bool useSimplySign;
 
-    // Track subscription to FileSystemConnection.FileSystemPath changes
-    private IDisposable? _fileSystemConnPathSub;
+    [DataMember]
+    [Reactive]
+    private string? simplySignExecutablePath;
+
+    [DataMember]
+    [Reactive]
+    private string? simplySignEmail;
+
+    private string? simplySignToken;
+
+    [DataMember]
+    [Reactive]
+    private bool msiDeploymentTool;
+
+    [DataMember]
+    [Reactive]
+    private string? msiDeploymentToolVersion;
+
+    /// <summary>
+    /// Persisted base path for FileSystem connection so it can be saved/restored in *.velo.
+    /// </summary>
+    [DataMember]
+    [Reactive]
+    private string? fileSystemBasePath;
+
+    /// <summary>
+    /// Track subscription to FileSystemConnection.FileSystemPath changes.
+    /// </summary>
+    private IDisposable? fileSystemConnPathSub;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="VelopackModel"/> class.
     /// </summary>
     public VelopackModel()
     {
-        PackageFiles = [];
+        this.PackageFiles = [];
 
         // Default to File System connection for ease of use
-        SelectedConnectionString = "File System";
+        this.SelectedConnectionString = "File System";
 
         // Ensure default connection is resolved immediately
-        UpdateSelectedConnection(SelectedConnectionString);
+        this.UpdateSelectedConnection(this.SelectedConnectionString);
     }
 
     /// <summary>
@@ -200,7 +223,19 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
     ///   <c>true</c> if this instance has unsaved tree changes; otherwise, <c>false</c>.
     /// </value>
     [JsonIgnore]
-    public bool HasUnsavedTreeChanges { get; set; }
+    [ReactiveUI.SourceGenerators.Reactive]
+    public partial bool HasUnsavedTreeChanges { get; set; }
+
+    /// <summary>
+    /// Gets or sets the current SimplySign authenticator code for this session.
+    /// </summary>
+    [JsonIgnore]
+    [IgnoreDataMember]
+    public string? SimplySignToken
+    {
+        get => this.simplySignToken;
+        set => this.RaiseAndSetIfChanged(ref this.simplySignToken, value);
+    }
 
     /// <summary>
     /// Gets the cached connection.
@@ -217,8 +252,8 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
     {
         get
         {
-            _availableUploadLocation ??= [.. _connectionDiscoveryService.AvailableConnections.Select(connection => connection.ConnectionName!)];
-            return _availableUploadLocation;
+            this.availableUploadLocation ??= [.. this.connectionDiscoveryService.AvailableConnections.Select(connection => connection.ConnectionName!)];
+            return this.availableUploadLocation;
         }
     }
 
@@ -236,13 +271,13 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
     [DataMember]
     public string? IconFilepath
     {
-        get => _iconFilepath;
+        get => this.iconFilepath;
 
         set
         {
-            _iconFilepath = value;
-            this.RaiseAndSetIfChanged(ref _iconFilepath, value);
-            this.RaisePropertyChanged(nameof(IconSource));
+            this.iconFilepath = value;
+            this.RaiseAndSetIfChanged(ref this.iconFilepath, value);
+            this.RaisePropertyChanged(nameof(this.IconSource));
         }
     }
 
@@ -257,7 +292,7 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
         {
             try
             {
-                return GetImageFromFilepath(IconFilepath);
+                return GetImageFromFilepath(this.IconFilepath);
             }
             catch
             {
@@ -274,17 +309,17 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
     [DataMember]
     public string? SelectedConnectionString
     {
-        get => _selectedConnectionString;
+        get => this.selectedConnectionString;
 
         set
         {
-            if (_selectedConnectionString == value)
+            if (this.selectedConnectionString == value)
             {
                 return;
             }
 
-            UpdateSelectedConnection(value);
-            this.RaiseAndSetIfChanged(ref _selectedConnectionString, value);
+            this.UpdateSelectedConnection(value);
+            this.RaiseAndSetIfChanged(ref this.selectedConnectionString, value);
         }
     }
 
@@ -293,14 +328,15 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
     /// </summary>
     /// <value>The selected link.</value>
     [JsonIgnore]
-    public IList<ItemLink> SelectedLink { get; set; } = [];
+    [ReactiveUI.SourceGenerators.Reactive]
+    public partial IList<ItemLink> SelectedLink { get; set; } = [];
 
     /// <summary>
     /// Gets the select splash command.
     /// </summary>
     /// <value>The select splash command.</value>
     [JsonIgnore]
-    public ICommand SelectSplashCmd => _selectSplashCmd ??= ReactiveCommand.Create(SelectSplash);
+    public ICommand SelectSplashCmd => this.selectSplashCmd ??= ReactiveCommand.Create(this.SelectSplash);
 
     /// <summary>
     /// Gets or sets a value indicating whether [set version manually].
@@ -309,12 +345,12 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
     [DataMember]
     public bool SetVersionManually
     {
-        get => _setVersionManually;
+        get => this.setVersionManually;
 
         set
         {
-            this.RaiseAndSetIfChanged(ref _setVersionManually, value);
-            RefreshPackageVersion();
+            this.RaiseAndSetIfChanged(ref this.setVersionManually, value);
+            this.RefreshPackageVersion();
         }
     }
 
@@ -325,12 +361,12 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
     [DataMember]
     public string? SplashFilepath
     {
-        get => _splashFilepath;
+        get => this.splashFilepath;
 
         set
         {
-            this.RaiseAndSetIfChanged(ref _splashFilepath, value);
-            this.RaisePropertyChanged(nameof(SplashSource));
+            this.RaiseAndSetIfChanged(ref this.splashFilepath, value);
+            this.RaisePropertyChanged(nameof(this.SplashSource));
         }
     }
 
@@ -345,7 +381,7 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
         {
             try
             {
-                return GetImageFromFilepath(SplashFilepath);
+                return GetImageFromFilepath(this.SplashFilepath);
             }
             catch
             {
@@ -361,11 +397,11 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
     [JsonIgnore]
     public ObservableCollection<SingleFileUpload> UploadQueue
     {
-        get => _uploadQueue;
+        get => this.uploadQueue;
         set
         {
-            _uploadQueue = value ?? [];
-            this.RaisePropertyChanged(nameof(UploadQueue));
+            this.uploadQueue = value ?? [];
+            this.RaisePropertyChanged(nameof(this.UploadQueue));
         }
     }
 
@@ -376,17 +412,17 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
     [DataMember]
     public string? Version
     {
-        get => _version;
+        get => this.version;
 
         set
         {
             if (IsSupportedVelopackVersion(value))
             {
-                this.RaiseAndSetIfChanged(ref _version, value);
+                this.RaiseAndSetIfChanged(ref this.version, value);
             }
             else if (System.Windows.MessageBox.Show("Please use Semantic Versioning 2.0.0 for the version number, for example 1.0.0 or 1.0.0-beta.1. Velopack does not support four-part versions such as 1.0.0.0.", "Invalid Version", MessageBoxButton.OK) == MessageBoxResult.OK)
             {
-                RefreshPackageVersion();
+                this.RefreshPackageVersion();
             }
         }
     }
@@ -434,25 +470,27 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
             dropInfo.DropTargetAdorner = DropTargetAdorners.Highlight;
             dropInfo.Effects = System.Windows.DragDropEffects.Move;
 
-            MoveItem(draggedItem, targetItem);
+            this.MoveItem(draggedItem, targetItem);
         }
 
         // FILE ADDED FROM FILE SYSTEM
-        if (dropInfo.Data is DataObject dataObj)
+        if (dropInfo.Data is not DataObject dataObj)
         {
-            if (dataObj.GetDataPresent(System.Windows.DataFormats.FileDrop))
+            return;
+        }
+
+        if (dataObj.GetDataPresent(System.Windows.DataFormats.FileDrop) && dataObj.GetData(System.Windows.DataFormats.FileDrop) is string[] droppedFiles)
+        {
+            foreach (var filePath in droppedFiles)
             {
-                foreach (var filePath in (string[])dataObj.GetData(System.Windows.DataFormats.FileDrop))
+                if (this.ShouldIncludeFile(filePath))
                 {
-                    if (ShouldIncludeFile(filePath))
-                    {
-                        AddFile(filePath, targetItem);
-                    }
+                    this.AddFile(filePath, targetItem);
                 }
             }
-
-            PackageFiles = OrderFileList(PackageFiles);
         }
+
+        this.PackageFiles = OrderFileList(this.PackageFiles);
     }
 
     /// <summary>
@@ -464,7 +502,7 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
         {
             AddExtension = true,
             DefaultExt = ".gif",
-            Filter = "Images|*.gif;*.png;*.jpg;*.jpeg|All Files|*.*"
+            Filter = "Images|*.gif;*.png;*.jpg;*.jpeg|All Files|*.*",
         };
 
         var o = ofd.ShowDialog();
@@ -474,7 +512,7 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
             return;
         }
 
-        SplashFilepath = ofd.FileName;
+        this.SplashFilepath = ofd.FileName;
     }
 
     /// <summary>
@@ -483,8 +521,8 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
     /// <param name="item">The item.</param>
     public void SetSelectedItem(IList<ItemLink> item)
     {
-        SelectedLink = item;
-        SelectedItem = SelectedLink.FirstOrDefault() ?? new ItemLink();
+        this.SelectedLink = item;
+        this.SelectedItem = this.SelectedLink.FirstOrDefault() ?? new ItemLink();
     }
 
     /// <summary>
@@ -502,6 +540,23 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
         return base.Validate();
     }
 
+    /// <summary>Includes update packages and feeds while excluding standalone installer artifacts.</summary>
+    /// <param name="path">The release artifact path.</param>
+    /// <returns>True when the artifact should be published for updates.</returns>
+    internal static bool IsUpdateArtifact(string path)
+    {
+        var name = Path.GetFileName(path);
+        return !name.Equals("Setup.exe", StringComparison.OrdinalIgnoreCase) &&
+            !name.EndsWith("-Setup.exe", StringComparison.OrdinalIgnoreCase) &&
+            !name.EndsWith("-Portable.zip", StringComparison.OrdinalIgnoreCase) &&
+            !Path.GetExtension(path).Equals(".msi", StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// Loads an image without retaining a lock on its source file.
+    /// </summary>
+    /// <param name="path">The image path.</param>
+    /// <returns>The loaded image, or null when the file is unavailable.</returns>
     internal static BitmapImage? GetImageFromFilepath(string? path)
     {
         if (!File.Exists(path))
@@ -526,6 +581,11 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
         return new BitmapImage();
     }
 
+    /// <summary>
+    /// Sorts each folder with directories first and files ordered by name.
+    /// </summary>
+    /// <param name="packageFiles">The package tree.</param>
+    /// <returns>The ordered package tree.</returns>
     internal static ObservableCollection<ItemLink> OrderFileList(ObservableCollection<ItemLink> packageFiles)
     {
         foreach (var node in packageFiles)
@@ -547,13 +607,13 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
     internal void BeginUpdatedFiles(int mode)
     {
         // Determine the folder where vpk outputs artifacts
-        var releasesPath = VelopackOutputPath;
-        if (SelectedConnection is FileSystemConnection fsc && !string.IsNullOrWhiteSpace(fsc.FileSystemPath))
+        var releasesPath = this.VelopackOutputPath;
+        if (this.SelectedConnection is FileSystemConnection fsc && !string.IsNullOrWhiteSpace(fsc.FileSystemPath))
         {
             var expected = Path.Combine(fsc.FileSystemPath, PathFolderHelper.ReleasesDirectory);
-            if (!string.IsNullOrWhiteSpace(VelopackOutputPath) && Directory.Exists(VelopackOutputPath))
+            if (!string.IsNullOrWhiteSpace(this.VelopackOutputPath) && Directory.Exists(this.VelopackOutputPath))
             {
-                releasesPath = VelopackOutputPath;
+                releasesPath = this.VelopackOutputPath;
             }
             else
             {
@@ -563,16 +623,16 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
 
         if (string.IsNullOrWhiteSpace(releasesPath) || !Directory.Exists(releasesPath))
         {
-            throw new Exception("Releases directory " + releasesPath + " not found !");
+            throw new DirectoryNotFoundException("Releases directory " + releasesPath + " not found !");
         }
 
-        if (SelectedConnection == null)
+        if (this.SelectedConnection == null)
         {
-            throw new Exception("No selected upload location !");
+            throw new InvalidOperationException("No selected upload location !");
         }
 
         SingleFileUpload.ResetErrorNotifications();
-        ApplyPackageContextToConnection(SelectedConnection);
+        this.ApplyPackageContextToConnection(this.SelectedConnection);
 
         // Gather all artifacts from releases folder (top-level only)
         var allFiles = Directory.EnumerateFiles(releasesPath, "*", SearchOption.TopDirectoryOnly).ToList();
@@ -580,39 +640,19 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
         // Filter for OnlyUpdate mode (mode == 1). mode == 0 => full publish
         if (mode == 1)
         {
-            allFiles = [.. allFiles.Where(p =>
-            {
-                var name = Path.GetFileName(p);
-                var ext = Path.GetExtension(p);
-                if (name.Equals("Setup.exe", StringComparison.OrdinalIgnoreCase))
-                {
-                    return false;
-                }
-
-                if (ext.Equals(".msi", StringComparison.OrdinalIgnoreCase))
-                {
-                    return false;
-                }
-
-                if (name.Contains("-full.nupkg", StringComparison.OrdinalIgnoreCase))
-                {
-                    return false;
-                }
-
-                return true;
-            })];
+            allFiles = [.. allFiles.Where(IsUpdateArtifact)];
         }
 
         var updatedFiles = allFiles.Where(File.Exists).Select(p => new FileInfo(p)).ToList();
 
-        UploadQueue ??= [];
-        UploadQueue.Clear();
+        this.UploadQueue ??= [];
+        this.UploadQueue.Clear();
 
-        foreach (var connection in new List<WebConnectionBase>() { SelectedConnection })
+        foreach (var connection in new List<WebConnectionBase>() { this.SelectedConnection })
         {
             foreach (var file in updatedFiles)
             {
-                UploadQueue.Add(new SingleFileUpload()
+                this.UploadQueue.Add(new SingleFileUpload()
                 {
                     Filename = Path.GetFileName(file.FullName),
                     ConnectionName = connection.ConnectionName,
@@ -625,13 +665,13 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
             }
         }
 
-        if (SelectedConnection is GitHubReleasesConnection { UseGitHubCliAuthentication: true } githubConnection)
+        if (this.SelectedConnection is GitHubReleasesConnection { UseGitHubCliAuthentication: true } githubConnection)
         {
-            _ = PublishGitHubReleaseWithCliAsync(githubConnection, updatedFiles.ConvertAll(file => file.FullName));
+            _ = this.PublishGitHubReleaseWithCliAsync(githubConnection, updatedFiles.ConvertAll(file => file.FullName));
             return;
         }
 
-        ProcessNextUploadFile();
+        this.ProcessNextUploadFile();
     }
 
     /// <summary>
@@ -639,58 +679,71 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
     /// </summary>
     internal void ResyncAfterLoad()
     {
-        UpdateSelectedConnection(SelectedConnectionString);
+        this.UpdateSelectedConnection(this.SelectedConnectionString);
 
-        if (!GenerateDeltaPackages &&
-            (string.IsNullOrWhiteSpace(DeltaMode) || string.Equals(DeltaMode, "BestSpeed", StringComparison.OrdinalIgnoreCase)))
+        if (!this.GenerateDeltaPackages &&
+            (string.IsNullOrWhiteSpace(this.DeltaMode) || string.Equals(this.DeltaMode, "BestSpeed", StringComparison.OrdinalIgnoreCase)))
         {
-            DeltaMode = "None";
+            this.DeltaMode = "None";
         }
 
-        if (string.IsNullOrWhiteSpace(DeltaMode))
+        if (string.IsNullOrWhiteSpace(this.DeltaMode))
         {
-            DeltaMode = "BestSpeed";
+            this.DeltaMode = "BestSpeed";
         }
 
-        if (string.IsNullOrWhiteSpace(ExcludeRegex))
+        if (string.IsNullOrWhiteSpace(this.ExcludeRegex))
         {
-            ExcludeRegex = @".*\.pdb";
+            this.ExcludeRegex = @".*\.pdb";
         }
 
-        if (string.IsNullOrWhiteSpace(Shortcuts))
+        if (string.IsNullOrWhiteSpace(this.Shortcuts))
         {
-            Shortcuts = "Desktop,StartMenuRoot";
+            this.Shortcuts = "Desktop,StartMenuRoot";
         }
 
-        if (string.IsNullOrWhiteSpace(MainExeName) && !string.IsNullOrWhiteSpace(MainExePath))
-        {
-            MainExeName = Path.GetFileName(MainExePath);
-        }
-    }
-
-    internal string GetResolvedDeltaMode()
-    {
-        if (!GenerateDeltaPackages && string.IsNullOrWhiteSpace(DeltaMode))
-        {
-            return "None";
-        }
-
-        return string.IsNullOrWhiteSpace(DeltaMode) ? "BestSpeed" : DeltaMode;
-    }
-
-    internal void ClearPackageFilesDirectory()
-    {
-        if (string.IsNullOrWhiteSpace(PackageFilesOutputPath))
+        if (!string.IsNullOrWhiteSpace(this.MainExeName) || string.IsNullOrWhiteSpace(this.MainExePath))
         {
             return;
         }
 
-        Directory.CreateDirectory(PackageFilesOutputPath);
-        TryDeleteDirectoryContents(PackageFilesOutputPath);
-        Directory.CreateDirectory(PackageFilesOutputPath);
+        this.MainExeName = Path.GetFileName(this.MainExePath);
     }
 
-    internal void SetOutputBasePath(string basePath) => ApplyOutputBasePath(basePath);
+    /// <summary>
+    /// Returns the effective delta package mode.
+    /// </summary>
+    /// <returns>The delta package mode.</returns>
+    internal string GetResolvedDeltaMode()
+    {
+        if (!this.GenerateDeltaPackages && string.IsNullOrWhiteSpace(this.DeltaMode))
+        {
+            return "None";
+        }
+
+        return string.IsNullOrWhiteSpace(this.DeltaMode) ? "BestSpeed" : this.DeltaMode;
+    }
+
+    /// <summary>
+    /// Clears the package staging directory and recreates it.
+    /// </summary>
+    internal void ClearPackageFilesDirectory()
+    {
+        if (string.IsNullOrWhiteSpace(this.PackageFilesOutputPath))
+        {
+            return;
+        }
+
+        Directory.CreateDirectory(this.PackageFilesOutputPath);
+        TryDeleteDirectoryContents(this.PackageFilesOutputPath);
+        Directory.CreateDirectory(this.PackageFilesOutputPath);
+    }
+
+    /// <summary>
+    /// Updates the package and release output directories.
+    /// </summary>
+    /// <param name="basePath">The base output directory.</param>
+    internal void SetOutputBasePath(string basePath) => this.ApplyOutputBasePath(basePath);
 
     /// <summary>
     /// Read the main exe version and set it as package version.
@@ -698,19 +751,19 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
     [ReactiveCommand]
     internal void RefreshPackageVersion()
     {
-        if (!File.Exists(MainExePath))
+        if (!File.Exists(this.MainExePath))
         {
             return;
         }
 
-        if (SetVersionManually)
+        if (this.SetVersionManually)
         {
             return;
         }
 
-        var versInfo = FileVersionInfo.GetVersionInfo(MainExePath);
+        var versInfo = FileVersionInfo.GetVersionInfo(this.MainExePath);
 
-        Version = $"{versInfo.ProductMajorPart}.{versInfo.ProductMinorPart}.{versInfo.ProductBuildPart}";
+        this.Version = $"{versInfo.ProductMajorPart}.{versInfo.ProductMinorPart}.{versInfo.ProductBuildPart}";
     }
 
     /// <summary>
@@ -721,33 +774,35 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
     protected override void Dispose(bool disposing)
     {
         base.Dispose(disposing);
-        if (disposing)
+        if (!disposing)
         {
-            try
-            {
-                _selectedItem?.Dispose();
-            }
-            catch
-            {
-            }
+            return;
+        }
 
-            if (_uploadQueue != null)
+        try
+        {
+            this.selectedItem?.Dispose();
+        }
+        catch
+        {
+        }
+
+        if (this.uploadQueue != null)
+        {
+            foreach (var u in this.uploadQueue)
             {
-                foreach (var u in _uploadQueue)
+                try
                 {
-                    try
-                    {
-                        u?.Dispose();
-                    }
-                    catch
-                    {
-                    }
+                    u?.Dispose();
+                }
+                catch
+                {
                 }
             }
-
-            _fileSystemConnPathSub?.Dispose();
-            _fileSystemConnPathSub = null;
         }
+
+        this.fileSystemConnPathSub?.Dispose();
+        this.fileSystemConnPathSub = null;
     }
 
     private static string BytesToString(long byteCount)
@@ -888,11 +943,13 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
         Process.Start(new ProcessStartInfo
         {
             FileName = path,
-            UseShellExecute = true
+            UseShellExecute = true,
         });
     }
 
-    // -------- Helpers added for filtering and upload processing --------
+    /// <summary>
+    /// -------- Helpers added for filtering and upload processing --------.
+    /// </summary>
     private bool ShouldIncludeFile(string path)
     {
         if (string.IsNullOrWhiteSpace(path))
@@ -908,8 +965,8 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
                 return true; // always include directories
             }
 
-            if (!string.IsNullOrWhiteSpace(ExcludeRegex) &&
-                Regex.IsMatch(path, ExcludeRegex, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
+            if (!string.IsNullOrWhiteSpace(this.ExcludeRegex) &&
+                Regex.IsMatch(path, this.ExcludeRegex, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
             {
                 return false;
             }
@@ -929,18 +986,20 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
             return;
         }
 
-        FileSystemBasePath = basePath;
-        PackageFilesOutputPath = Path.Combine(basePath, PathFolderHelper.PackageFilesDirectory);
-        VelopackOutputPath = Path.Combine(basePath, PathFolderHelper.ReleasesDirectory);
+        this.FileSystemBasePath = basePath;
+        this.PackageFilesOutputPath = Path.Combine(basePath, PathFolderHelper.PackageFilesDirectory);
+        this.VelopackOutputPath = Path.Combine(basePath, PathFolderHelper.ReleasesDirectory);
     }
 
     private void ApplyPackageContextToConnection(WebConnectionBase? connection)
     {
-        if (connection is GitHubReleasesConnection github)
+        if (connection is not GitHubReleasesConnection github)
         {
-            github.PackageTitle = Title;
-            github.PackageChannel = Channel;
+            return;
         }
+
+        github.PackageTitle = this.Title;
+        github.PackageChannel = this.Channel;
     }
 
     /// <summary>
@@ -950,44 +1009,48 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
     private void EditCurrentConnection()
     {
         // Ensure we have a connection instance matching the selected string
-        if (string.IsNullOrWhiteSpace(SelectedConnectionString))
+        if (string.IsNullOrWhiteSpace(this.SelectedConnectionString))
         {
             return;
         }
 
-        var conn = SelectedConnection ?? _connectionDiscoveryService.GetByName(SelectedConnectionString);
+        var conn = this.SelectedConnection ?? this.connectionDiscoveryService.GetByName(this.SelectedConnectionString);
         if (conn == null)
         {
             return;
         }
 
         // Cache the instance so changes persist across selection switches
-        CachedConnection ??= [];
-        if (!CachedConnection.Contains(conn))
+        this.CachedConnection ??= [];
+        if (!this.CachedConnection.Contains(conn))
         {
-            CachedConnection.Add(conn);
+            this.CachedConnection.Add(conn);
         }
 
-        ApplyPackageContextToConnection(conn);
+        this.ApplyPackageContextToConnection(conn);
 
         var dlg = new WebConnectionEdit
         {
             DataContext = conn,
-            Owner = Application.Current?.Windows.OfType<Window>().FirstOrDefault(w => w.IsActive) ?? Application.Current?.MainWindow
+            Owner = Application.Current?.Windows.OfType<Window>().FirstOrDefault(w => w.IsActive) ?? Application.Current?.MainWindow,
         };
 
         var ok = dlg.ShowDialog();
-        if (ok == true)
+        if (ok != true)
         {
-            // Keep SelectedConnection in sync
-            SelectedConnection = conn;
-
-            // If editing a FileSystem connection, mirror path into model for visibility/persistence
-            if (conn is FileSystemConnection fsc && !string.IsNullOrWhiteSpace(fsc.FileSystemPath))
-            {
-                ApplyOutputBasePath(fsc.FileSystemPath);
-            }
+            return;
         }
+
+        // Keep SelectedConnection in sync
+        this.SelectedConnection = conn;
+
+        // If editing a FileSystem connection, mirror path into model for visibility/persistence
+        if (conn is not FileSystemConnection fsc || string.IsNullOrWhiteSpace(fsc.FileSystemPath))
+        {
+            return;
+        }
+
+        this.ApplyOutputBasePath(fsc.FileSystemPath);
     }
 
     /// <summary>
@@ -1000,20 +1063,22 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
         {
             Multiselect = true,
             CheckFileExists = true,
-            Title = "Select files to include"
+            Title = "Select files to include",
         };
-        if (ofd.ShowDialog() == true)
+        if (ofd.ShowDialog() != true)
         {
-            foreach (var f in ofd.FileNames)
-            {
-                if (ShouldIncludeFile(f))
-                {
-                    AddFile(f, null);
-                }
-            }
-
-            PackageFiles = OrderFileList(PackageFiles);
+            return;
         }
+
+        foreach (var f in ofd.FileNames)
+        {
+            if (this.ShouldIncludeFile(f))
+            {
+                this.AddFile(f, null);
+            }
+        }
+
+        this.PackageFiles = OrderFileList(this.PackageFiles);
     }
 
     /// <summary>
@@ -1024,11 +1089,13 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
     {
         using var dialog = new System.Windows.Forms.FolderBrowserDialog();
         var result = dialog.ShowDialog();
-        if (result == System.Windows.Forms.DialogResult.OK && Directory.Exists(dialog.SelectedPath))
+        if (result != System.Windows.Forms.DialogResult.OK || !Directory.Exists(dialog.SelectedPath))
         {
-            AddFile(dialog.SelectedPath, null);
-            PackageFiles = OrderFileList(PackageFiles);
+            return;
         }
+
+        this.AddFile(dialog.SelectedPath, null);
+        this.PackageFiles = OrderFileList(this.PackageFiles);
     }
 
     /// <summary>
@@ -1039,9 +1106,9 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
     {
         var dialog = new System.Windows.Forms.FolderBrowserDialog();
 
-        if (Directory.Exists(PackageFilesOutputPath))
+        if (Directory.Exists(this.PackageFilesOutputPath))
         {
-            dialog.SelectedPath = PackageFilesOutputPath;
+            dialog.SelectedPath = this.PackageFilesOutputPath;
         }
 
         var result = dialog.ShowDialog();
@@ -1051,7 +1118,7 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
             return;
         }
 
-        PackageFilesOutputPath = dialog.SelectedPath;
+        this.PackageFilesOutputPath = dialog.SelectedPath;
     }
 
     /// <summary>
@@ -1062,9 +1129,9 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
     {
         var dialog = new System.Windows.Forms.FolderBrowserDialog();
 
-        if (Directory.Exists(VelopackOutputPath))
+        if (Directory.Exists(this.VelopackOutputPath))
         {
-            dialog.SelectedPath = VelopackOutputPath;
+            dialog.SelectedPath = this.VelopackOutputPath;
         }
 
         var result = dialog.ShowDialog();
@@ -1074,14 +1141,16 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
             return;
         }
 
-        VelopackOutputPath = dialog.SelectedPath;
+        this.VelopackOutputPath = dialog.SelectedPath;
 
         // If FileSystem connection is selected, align its path and use it for uploads
-        if (SelectedConnection is FileSystemConnection fsc)
+        if (this.SelectedConnection is not FileSystemConnection fsc)
         {
-            fsc.FileSystemPath = Path.GetDirectoryName(VelopackOutputPath) ?? VelopackOutputPath;
-            ApplyOutputBasePath(fsc.FileSystemPath);
+            return;
         }
+
+        fsc.FileSystemPath = Path.GetDirectoryName(this.VelopackOutputPath) ?? this.VelopackOutputPath;
+        this.ApplyOutputBasePath(fsc.FileSystemPath);
     }
 
     /// <summary>
@@ -1090,12 +1159,12 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
     [ReactiveCommand]
     private void OpenPackageFiles()
     {
-        if (string.IsNullOrWhiteSpace(PackageFilesOutputPath))
+        if (string.IsNullOrWhiteSpace(this.PackageFilesOutputPath))
         {
             return;
         }
 
-        OpenFolder(PackageFilesOutputPath);
+        OpenFolder(this.PackageFilesOutputPath);
     }
 
     /// <summary>
@@ -1104,12 +1173,12 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
     [ReactiveCommand]
     private void OpenReleases()
     {
-        if (string.IsNullOrWhiteSpace(VelopackOutputPath))
+        if (string.IsNullOrWhiteSpace(this.VelopackOutputPath))
         {
             return;
         }
 
-        OpenFolder(VelopackOutputPath);
+        OpenFolder(this.VelopackOutputPath);
     }
 
     /// <summary>
@@ -1118,7 +1187,7 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
     [ReactiveCommand]
     private void ClearPackageFiles()
     {
-        ClearPackageFilesDirectory();
+        this.ClearPackageFilesDirectory();
     }
 
     /// <summary>
@@ -1132,7 +1201,7 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
             AddExtension = true,
             DefaultExt = ".ico",
             Filter = "Icon or Image|*.ico;*.png;*.jpg;*.jpeg;*.bmp|All Files|*.*",
-            Title = "Select application icon"
+            Title = "Select application icon",
         };
 
         var result = ofd.ShowDialog();
@@ -1141,7 +1210,7 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
             return;
         }
 
-        IconFilepath = ofd.FileName;
+        this.IconFilepath = ofd.FileName;
     }
 
     /// <summary>
@@ -1155,7 +1224,7 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
             AddExtension = true,
             DefaultExt = ".md",
             Filter = "Release notes|*.md;*.txt|All Files|*.*",
-            Title = "Select release notes"
+            Title = "Select release notes",
         };
 
         var result = ofd.ShowDialog();
@@ -1164,7 +1233,7 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
             return;
         }
 
-        ReleaseNotesPath = ofd.FileName;
+        this.ReleaseNotesPath = ofd.FileName;
     }
 
     /// <summary>
@@ -1178,7 +1247,7 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
             AddExtension = true,
             DefaultExt = ".json",
             Filter = "JSON|*.json|All Files|*.*",
-            Title = "Select Azure Trusted Signing metadata"
+            Title = "Select Azure Trusted Signing metadata",
         };
 
         var result = ofd.ShowDialog();
@@ -1187,7 +1256,27 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
             return;
         }
 
-        AzureTrustedSignFile = ofd.FileName;
+        this.AzureTrustedSignFile = ofd.FileName;
+    }
+
+    /// <summary>
+    /// Selects the installed SimplySign command line executable.
+    /// </summary>
+    [ReactiveCommand]
+    private void SelectSimplySignExecutable()
+    {
+        using var dialog = new System.Windows.Forms.OpenFileDialog
+        {
+            Filter = "ssign executable|ssign.exe|Executable files|*.exe",
+            Title = "Select installed ssign.exe",
+            CheckFileExists = true,
+        };
+        if (dialog.ShowDialog() != System.Windows.Forms.DialogResult.OK)
+        {
+            return;
+        }
+
+        this.SimplySignExecutablePath = dialog.FileName;
     }
 
     private void AddFile(string filePath, ItemLink? targetItem)
@@ -1199,7 +1288,7 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
             isDir = true;
         }
 
-        RemoveItemBySourceFilepath(filePath);
+        this.RemoveItemBySourceFilepath(filePath);
 
         var node = new ItemLink() { SourceFilepath = filePath, IsDirectory = isDir };
 
@@ -1207,13 +1296,13 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
         if (targetItem == null)
         {
             // Add to root
-            _packageFiles.Add(node);
+            this.packageFiles.Add(node);
         }
         else
         {
             if (!targetItem.IsDirectory)
             {
-                parent = targetItem.GetParent(PackageFiles);
+                parent = targetItem.GetParent(this.PackageFiles);
             }
 
             if (parent != null)
@@ -1224,11 +1313,11 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
             else
             {
                 // Insert into treeview root
-                _packageFiles.Add(node);
+                this.packageFiles.Add(node);
             }
         }
 
-        HasUnsavedTreeChanges = true;
+        this.HasUnsavedTreeChanges = true;
 
         if (isDir)
         {
@@ -1239,15 +1328,15 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
 
             foreach (var f in files)
             {
-                if (ShouldIncludeFile(f.FullName))
+                if (this.ShouldIncludeFile(f.FullName))
                 {
-                    AddFile(f.FullName, node);
+                    this.AddFile(f.FullName, node);
                 }
             }
 
             foreach (var f in subDirectory)
             {
-                AddFile(f.FullName, node);
+                this.AddFile(f.FullName, node);
             }
         }
         else
@@ -1257,34 +1346,34 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
 
             if (ext == ".exe")
             {
-                var nodeParent = node.GetParent(PackageFiles);
+                var nodeParent = node.GetParent(this.PackageFiles);
                 if (nodeParent == null)
                 {
                     var fileName = Path.GetFileNameWithoutExtension(filePath);
-                    if (string.IsNullOrWhiteSpace(AppId))
+                    if (string.IsNullOrWhiteSpace(this.AppId))
                     {
-                        AppId = fileName;
+                        this.AppId = fileName;
                     }
 
-                    if (string.IsNullOrWhiteSpace(Title))
+                    if (string.IsNullOrWhiteSpace(this.Title))
                     {
-                        Title = fileName;
+                        this.Title = fileName;
                     }
 
-                    MainExePath = filePath;
-                    MainExeName = Path.GetFileName(filePath);
-                    var versInfo = FileVersionInfo.GetVersionInfo(MainExePath);
-                    if (string.IsNullOrWhiteSpace(Description))
+                    this.MainExePath = filePath;
+                    this.MainExeName = Path.GetFileName(filePath);
+                    var versInfo = FileVersionInfo.GetVersionInfo(this.MainExePath);
+                    if (string.IsNullOrWhiteSpace(this.Description))
                     {
-                        Description = versInfo.Comments;
+                        this.Description = versInfo.Comments;
                     }
 
-                    if (string.IsNullOrWhiteSpace(Authors))
+                    if (string.IsNullOrWhiteSpace(this.Authors))
                     {
-                        Authors = versInfo.CompanyName;
+                        this.Authors = versInfo.CompanyName;
                     }
 
-                    RefreshPackageVersion();
+                    this.RefreshPackageVersion();
                 }
             }
         }
@@ -1293,64 +1382,68 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
     [ReactiveCommand]
     private void AddDirectory()
     {
-        if (SelectedLink.Count != 1)
+        if (this.SelectedLink.Count != 1)
         {
             return;
         }
 
-        var selectedLink = SelectedLink[0];
+        var selectedLink = this.SelectedLink[0];
         if (selectedLink != null)
         {
-            var validFolderName = GetValidName(_newFolderName, selectedLink.Children);
+            var validFolderName = GetValidName(this.newFolderName, selectedLink.Children);
 
             selectedLink.Children.Add(new ItemLink { OutputFilename = validFolderName, IsDirectory = true });
         }
         else
         {
-            var validFolderName = GetValidName(_newFolderName, PackageFiles);
+            var validFolderName = GetValidName(this.newFolderName, this.PackageFiles);
 
-            PackageFiles.Add(new ItemLink { OutputFilename = validFolderName, IsDirectory = true });
+            this.PackageFiles.Add(new ItemLink { OutputFilename = validFolderName, IsDirectory = true });
         }
 
-        HasUnsavedTreeChanges = true;
+        this.HasUnsavedTreeChanges = true;
     }
 
-    // Remove selected item(s) from the tree
+    /// <summary>
+    /// Remove selected item(s) from the tree.
+    /// </summary>
     [ReactiveCommand]
     private void RemoveItem()
     {
-        if (SelectedLink == null || SelectedLink.Count == 0)
+        if (this.SelectedLink == null || this.SelectedLink.Count == 0)
         {
             return;
         }
 
-        foreach (var item in SelectedLink.ToList())
+        foreach (var item in this.SelectedLink.ToList())
         {
-            RemoveFromTreeview(item);
+            this.RemoveFromTreeview(item);
         }
 
-        PackageFiles = OrderFileList(PackageFiles);
-        HasUnsavedTreeChanges = true;
+        this.PackageFiles = OrderFileList(this.PackageFiles);
+        this.HasUnsavedTreeChanges = true;
     }
 
-    // Remove all items (if one selected, clear its parent children, otherwise clear root)
+    /// <summary>
+    /// Remove all items (if one selected, clear its parent children, otherwise clear root).
+    /// </summary>
     [ReactiveCommand]
     private void RemoveAllItems()
     {
-        if (SelectedLink?.Count == 1)
+        if (this.SelectedLink?.Count == 1)
         {
-            RemoveAllFromTreeview(SelectedLink[0]);
+            this.RemoveAllFromTreeview(this.SelectedLink[0]);
         }
         else
         {
             // Also clean PackageFiles folder on disk
-            TryDeleteDirectoryContents(PackageFilesOutputPath);
+            TryDeleteDirectoryContents(this.PackageFilesOutputPath);
 
-            _packageFiles.Clear();
-            this.RaisePropertyChanged(nameof(PackageFiles));
-            MainExePath = string.Empty;
-            RefreshPackageVersion();
-            HasUnsavedTreeChanges = true;
+            this.packageFiles.Clear();
+            this.RaisePropertyChanged(nameof(this.PackageFiles));
+            this.MainExePath = string.Empty;
+            this.RefreshPackageVersion();
+            this.HasUnsavedTreeChanges = true;
         }
     }
 
@@ -1362,20 +1455,20 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
     private void MoveItem(ItemLink draggedItem, ItemLink? targetItem)
     {
         // Remove from current location
-        RemoveFromTreeview(draggedItem);
+        this.RemoveFromTreeview(draggedItem);
 
         // Add to target position
         var parent = targetItem;
         if (targetItem == null)
         {
             // Porto su root
-            _packageFiles.Add(draggedItem);
+            this.packageFiles.Add(draggedItem);
         }
         else
         {
             if (!targetItem.IsDirectory)
             {
-                parent = targetItem.GetParent(PackageFiles);
+                parent = targetItem.GetParent(this.PackageFiles);
             }
 
             if (parent != null)
@@ -1386,59 +1479,59 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
             else
             {
                 // Insert into treeview root
-                _packageFiles.Add(draggedItem);
+                this.packageFiles.Add(draggedItem);
             }
         }
 
-        HasUnsavedTreeChanges = true;
-        this.RaisePropertyChanged(nameof(PackageFiles));
+        this.HasUnsavedTreeChanges = true;
+        this.RaisePropertyChanged(nameof(this.PackageFiles));
     }
 
     private void RemoveAllFromTreeview(ItemLink item)
     {
-        var parent = item.GetParent(PackageFiles);
+        var parent = item.GetParent(this.PackageFiles);
 
         // Element is in the treeview root.
         if (parent == null)
         {
             // Clear disk mirror under PackageFiles root
-            TryDeleteDirectoryContents(PackageFilesOutputPath);
+            TryDeleteDirectoryContents(this.PackageFilesOutputPath);
 
-            _packageFiles.Clear();
-            this.RaisePropertyChanged(nameof(PackageFiles));
+            this.packageFiles.Clear();
+            this.RaisePropertyChanged(nameof(this.PackageFiles));
         }
         else
         {
             // Remove all children from disk under this parent's directory
-            var parentPath = BuildDirectoryFullPath(parent);
+            var parentPath = this.BuildDirectoryFullPath(parent);
             TryDeleteDirectoryContents(parentPath);
 
             // Remove it from children list
             parent.Children.Clear();
         }
 
-        MainExePath = string.Empty;
-        RefreshPackageVersion();
-        HasUnsavedTreeChanges = true;
+        this.MainExePath = string.Empty;
+        this.RefreshPackageVersion();
+        this.HasUnsavedTreeChanges = true;
     }
 
     private void RemoveFromTreeview(ItemLink item)
     {
-        var parent = item.GetParent(PackageFiles);
+        var parent = item.GetParent(this.PackageFiles);
 
-        if (MainExePath != null && item.SourceFilepath != null && string.Equals(MainExePath, item.SourceFilepath, StringComparison.CurrentCultureIgnoreCase))
+        if (this.MainExePath != null && item.SourceFilepath != null && string.Equals(this.MainExePath, item.SourceFilepath, StringComparison.CurrentCultureIgnoreCase))
         {
-            MainExePath = string.Empty;
-            RefreshPackageVersion();
+            this.MainExePath = string.Empty;
+            this.RefreshPackageVersion();
         }
 
         // Delete corresponding file/folder from disk mirror
-        TryDeleteNodeFromDisk(item);
+        this.TryDeleteNodeFromDisk(item);
 
         // Element is in the treeview root.
         if (parent == null)
         {
-            _packageFiles.Remove(item);
+            this.packageFiles.Remove(item);
         }
         else
         {
@@ -1446,18 +1539,18 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
             parent.Children.Remove(item);
         }
 
-        HasUnsavedTreeChanges = true;
+        this.HasUnsavedTreeChanges = true;
     }
 
     private void RemoveItemBySourceFilepath(string filepath)
     {
         var list = new List<ItemLink>();
 
-        SearchNodeByFilepath(filepath, PackageFiles, list);
+        SearchNodeByFilepath(filepath, this.PackageFiles, list);
 
         foreach (var node in list)
         {
-            RemoveFromTreeview(node);
+            this.RemoveFromTreeview(node);
         }
     }
 
@@ -1474,57 +1567,56 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
         }
 
         // Instantiate cache if null
-        CachedConnection ??= [];
+        this.CachedConnection ??= [];
 
         // Retrieve cached connection or take new instance from connection service
         var con =
-            CachedConnection.FirstOrDefault(c => c.ConnectionName == connectionType) ??
-            _connectionDiscoveryService.GetByName(connectionType);
+            this.CachedConnection.FirstOrDefault(c => c.ConnectionName == connectionType) ??
+            this.connectionDiscoveryService.GetByName(connectionType);
 
         // Cache connection if not cached already
-        if (con != null && !CachedConnection.Contains(con))
+        if (con != null && !this.CachedConnection.Contains(con))
         {
-            CachedConnection.Add(con);
+            this.CachedConnection.Add(con);
         }
 
-        SelectedConnection = con;
-        ApplyPackageContextToConnection(SelectedConnection);
+        this.SelectedConnection = con;
+        this.ApplyPackageContextToConnection(this.SelectedConnection);
 
         // Remove previous subscription
-        _fileSystemConnPathSub?.Dispose();
-        _fileSystemConnPathSub = null;
+        this.fileSystemConnPathSub?.Dispose();
+        this.fileSystemConnPathSub = null;
 
         // If FileSystem connection becomes active, sync paths both ways for persistence and UI visibility
-        if (SelectedConnection is FileSystemConnection fsc)
+        if (this.SelectedConnection is not FileSystemConnection fsc)
         {
-            if (!string.IsNullOrWhiteSpace(FileSystemBasePath))
-            {
-                // Prefer restored model value when available
-                fsc.FileSystemPath = FileSystemBasePath;
-            }
-            else if (!string.IsNullOrWhiteSpace(fsc.FileSystemPath))
-            {
-                // If connection already has a path, mirror to model
-                FileSystemBasePath = fsc.FileSystemPath;
-            }
-
-            ApplyOutputBasePath(fsc.FileSystemPath);
-
-            // Observe changes to the connection path and propagate into model for persistence/dirty tracking
-            _fileSystemConnPathSub = fsc
-                .WhenAnyValue(x => x.FileSystemPath)
-                .Subscribe(path =>
-                {
-                    ApplyOutputBasePath(path);
-                });
+            return;
         }
+
+        if (!string.IsNullOrWhiteSpace(this.FileSystemBasePath))
+        {
+            // Prefer restored model value when available
+            fsc.FileSystemPath = this.FileSystemBasePath;
+        }
+        else if (!string.IsNullOrWhiteSpace(fsc.FileSystemPath))
+        {
+            // If connection already has a path, mirror to model
+            this.FileSystemBasePath = fsc.FileSystemPath;
+        }
+
+        this.ApplyOutputBasePath(fsc.FileSystemPath);
+
+        // Observe changes to the connection path and propagate into model for persistence/dirty tracking
+        this.fileSystemConnPathSub = fsc
+            .WhenAnyValue(x => x.FileSystemPath)
+            .Subscribe(path => this.ApplyOutputBasePath(path));
     }
 
     private async Task PublishGitHubReleaseWithCliAsync(GitHubReleasesConnection connection, IReadOnlyCollection<string> files)
     {
         try
         {
-            foreach (var item in UploadQueue.Where(item => item.UploadStatus == FileUploadStatus.Queued))
+            foreach (var item in this.UploadQueue.Where(item => item.UploadStatus == FileUploadStatus.Queued))
             {
                 item.UploadStatus = FileUploadStatus.InProgress;
                 item.ProgressPercentage = 5;
@@ -1532,7 +1624,7 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
 
             await GitHubCliReleasePublisher.PublishAsync(connection, files).ConfigureAwait(true);
 
-            foreach (var item in UploadQueue)
+            foreach (var item in this.UploadQueue)
             {
                 item.UploadStatus = FileUploadStatus.Completed;
                 item.ProgressPercentage = 100;
@@ -1540,7 +1632,7 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
         }
         catch (Exception ex)
         {
-            foreach (var item in UploadQueue.Where(item => item.UploadStatus != FileUploadStatus.Completed))
+            foreach (var item in this.UploadQueue.Where(item => item.UploadStatus != FileUploadStatus.Completed))
             {
                 item.UploadStatus = FileUploadStatus.Failed;
             }
@@ -1551,12 +1643,12 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
 
     private async void ProcessNextUploadFile()
     {
-        if (UploadQueue == null || UploadQueue.Count == 0)
+        if (this.UploadQueue == null || this.UploadQueue.Count == 0)
         {
             return;
         }
 
-        foreach (var item in UploadQueue.Where(f => f.UploadStatus == FileUploadStatus.Queued).ToList())
+        foreach (var item in this.UploadQueue.Where(f => f.UploadStatus == FileUploadStatus.Queued).ToList())
         {
             item.UploadStatus = FileUploadStatus.InProgress;
             try
@@ -1581,10 +1673,12 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
         }
     }
 
-    // -------- Disk sync helpers for PackageFiles mirror --------
+    /// <summary>
+    /// -------- Disk sync helpers for PackageFiles mirror --------.
+    /// </summary>
     private string? BuildDirectoryFullPath(ItemLink? node)
     {
-        if (node == null || string.IsNullOrWhiteSpace(PackageFilesOutputPath))
+        if (node == null || string.IsNullOrWhiteSpace(this.PackageFilesOutputPath))
         {
             return null;
         }
@@ -1595,7 +1689,7 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
         var current = node;
         while (true)
         {
-            var parent = current.GetParent(PackageFiles);
+            var parent = current.GetParent(this.PackageFiles);
             if (parent == null)
             {
                 // current is at root level
@@ -1608,46 +1702,46 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
         }
 
         parts.Reverse();
-        return Path.Combine(PackageFilesOutputPath!, Path.Combine([.. parts]));
+        return Path.Combine(this.PackageFilesOutputPath!, Path.Combine([.. parts]));
     }
 
     private string? BuildParentsDirectoryFullPath(ItemLink? node)
     {
-        if (node == null || string.IsNullOrWhiteSpace(PackageFilesOutputPath))
+        if (node == null || string.IsNullOrWhiteSpace(this.PackageFilesOutputPath))
         {
             return null;
         }
 
         var stack = new Stack<string>();
-        var current = node.GetParent(PackageFiles);
+        var current = node.GetParent(this.PackageFiles);
         while (current != null)
         {
             stack.Push(current.Filename);
-            current = current.GetParent(PackageFiles);
+            current = current.GetParent(this.PackageFiles);
         }
 
         return stack.Count == 0
-            ? PackageFilesOutputPath
-            : Path.Combine(PackageFilesOutputPath!, Path.Combine([.. stack]));
+            ? this.PackageFilesOutputPath
+            : Path.Combine(this.PackageFilesOutputPath!, Path.Combine([.. stack]));
     }
 
     private void TryDeleteNodeFromDisk(ItemLink item)
     {
         try
         {
-            if (string.IsNullOrWhiteSpace(PackageFilesOutputPath))
+            if (string.IsNullOrWhiteSpace(this.PackageFilesOutputPath))
             {
                 return;
             }
 
             if (item.IsDirectory)
             {
-                var dir = BuildDirectoryFullPath(item);
+                var dir = this.BuildDirectoryFullPath(item);
                 TryDeleteDirectory(dir);
             }
             else
             {
-                var parentDir = BuildParentsDirectoryFullPath(item);
+                var parentDir = this.BuildParentsDirectoryFullPath(item);
                 if (string.IsNullOrWhiteSpace(parentDir))
                 {
                     return;
@@ -1667,16 +1761,16 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
     {
         public Validator()
         {
-            RuleFor(c => c.AppId).NotEmpty();
-            RuleFor(c => c.Title).NotEmpty();
-            RuleFor(c => c.Description).NotEmpty();
-            RuleFor(c => c.Version).NotEmpty();
-            RuleFor(c => c.PackageFiles).NotEmpty();
-            RuleFor(c => c.Authors).NotEmpty();
-            RuleFor(c => c.SelectedConnectionString).NotEmpty();
-            RuleFor(c => c.Version).Must(IsSupportedVelopackVersion).WithMessage("Version must be semver2 and cannot be a four-part version.");
-            RuleFor(c => c.DeltaMode).Must(mode => string.IsNullOrWhiteSpace(mode) || new[] { "BestSpeed", "BestSize", "None" }.Contains(mode)).WithMessage("Delta mode must be BestSpeed, BestSize, or None.");
-            RuleFor(c => c.ExcludeRegex).Must(regex =>
+            this.RuleFor(c => c.AppId).NotEmpty();
+            this.RuleFor(c => c.Title).NotEmpty();
+            this.RuleFor(c => c.Description).NotEmpty();
+            this.RuleFor(c => c.Version).NotEmpty();
+            this.RuleFor(c => c.PackageFiles).NotEmpty();
+            this.RuleFor(c => c.Authors).NotEmpty();
+            this.RuleFor(c => c.SelectedConnectionString).NotEmpty();
+            this.RuleFor(c => c.Version).Must(IsSupportedVelopackVersion).WithMessage("Version must be semver2 and cannot be a four-part version.");
+            this.RuleFor(c => c.DeltaMode).Must(mode => string.IsNullOrWhiteSpace(mode) || new[] { "BestSpeed", "BestSize", "None" }.Contains(mode)).WithMessage("Delta mode must be BestSpeed, BestSize, or None.");
+            this.RuleFor(c => c.ExcludeRegex).Must(regex =>
             {
                 if (string.IsNullOrWhiteSpace(regex))
                 {
@@ -1693,7 +1787,16 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
                     return false;
                 }
             }).WithMessage("Exclude must be a valid regular expression.");
-            RuleFor(c => c.SignParallel).GreaterThan(0);
+            this.RuleFor(c => c.SignParallel).GreaterThan(0);
+            this.RuleFor(c => c).Custom((model, context) =>
+            {
+                if (!model.UseSimplySign || !(SimplySignSigning.GetValidationError(model) is { } error))
+                {
+                    return;
+                }
+
+                context.AddFailure(nameof(VelopackModel.UseSimplySign), error);
+            });
         }
     }
 }

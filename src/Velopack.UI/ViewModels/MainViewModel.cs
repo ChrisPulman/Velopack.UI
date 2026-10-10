@@ -1,5 +1,8 @@
-﻿// Copyright (c) Chris Pulman. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// <copyright file="MainViewModel.cs" company="Chris Pulman">
+// Copyright (c) 2019-2026 Chris Pulman and contributors. All rights reserved.
+// Chris Pulman and contributors licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for full license information.
+// </copyright>
 
 using System.ComponentModel;
 using System.Diagnostics;
@@ -25,28 +28,28 @@ namespace Velopack.UI;
 [SupportedOSPlatform("windows10.0.19041.0")]
 public partial class MainViewModel : RxObject
 {
-    private readonly JsonSerializerOptions _saveOptions;
-    private BackgroundWorker? _activeBackgroungWorker;
-    private bool _abortPackageFlag;
+    private readonly JsonSerializerOptions saveOptions;
+    private BackgroundWorker? activeBackgroungWorker;
+    private bool abortPackageFlag;
     [Reactive]
-    private string? _currentPackageCreationStage;
+    private string? currentPackageCreationStage;
     [Reactive]
-    private bool _isBusy;
+    private bool isBusy;
     [Reactive]
-    private VelopackModel? _model;
-    private bool _isSaved;
-    private int _publishMode;
-    private Process? _exeProcess;
-    private string? _filePath;
-    private IDisposable? _dirtySubscription;
-    private bool _hasUnsavedNonTreeChanges;
+    private VelopackModel? model;
+    private bool isSaved;
+    private int publishMode;
+    private Process? exeProcess;
+    private string? filePath;
+    private IDisposable? dirtySubscription;
+    private bool hasUnsavedNonTreeChanges;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MainViewModel"/> class.
     /// </summary>
     public MainViewModel()
     {
-        _saveOptions = new JsonSerializerOptions
+        this.saveOptions = new JsonSerializerOptions
         {
             WriteIndented = false,
             TypeInfoResolver = new DefaultJsonTypeInfoResolver
@@ -66,7 +69,7 @@ public partial class MainViewModel : RxObject
                                 nameof(VelopackModel.UploadQueue),
                                 nameof(VelopackModel.SelectedConnection),
                                 nameof(VelopackModel.SelectedUploadItem),
-                                nameof(VelopackModel.HasUnsavedTreeChanges)
+                                nameof(VelopackModel.HasUnsavedTreeChanges),
                             };
                             foreach (var prop in ti.Properties.ToList())
                             {
@@ -81,7 +84,7 @@ public partial class MainViewModel : RxObject
                             var namesToRemove = new HashSet<string>
                             {
                                 nameof(ItemLink.FileIcon),
-                                nameof(ItemLink.HasDummyChild)
+                                nameof(ItemLink.HasDummyChild),
                             };
                             foreach (var prop in ti.Properties.ToList())
                             {
@@ -101,30 +104,30 @@ public partial class MainViewModel : RxObject
                                     new JsonDerivedType(typeof(GitHubReleasesConnection), "GitHubReleasesConnection"),
                                     new JsonDerivedType(typeof(AmazonS3Connection), "AmazonS3Connection"),
                                     new JsonDerivedType(typeof(FileSystemConnection), "FileSystemConnection"),
-                                }
+                                },
                             };
                         }
-                    }
-                }
-            }
+                    },
+                },
+            },
         };
 
-        Model = new VelopackModel();
-        SetupDirtyTracking();
+        this.Model = new VelopackModel();
+        this.SetupDirtyTracking();
 
-        UserPreference = PathFolderHelper.LoadUserPreference();
+        this.UserPreference = PathFolderHelper.LoadUserPreference();
 
         var startupProject = App.StartupProjectFilePath;
         var last = string.IsNullOrWhiteSpace(startupProject)
-            ? UserPreference.LastOpenedProject.LastOrDefault()
+            ? this.UserPreference.LastOpenedProject.LastOrDefault()
             : startupProject;
 
         if (!string.IsNullOrEmpty(last) && File.Exists(last))
         {
-            OpenProject(last);
+            this.OpenProject(last);
         }
 
-        AbortPackageCreationCmd = ReactiveCommand.Create(AbortPackageCreation);
+        this.AbortPackageCreationCmd = ReactiveCommand.Create(this.AbortPackageCreation);
     }
 
     /// <summary>
@@ -133,7 +136,7 @@ public partial class MainViewModel : RxObject
     /// <value>
     ///   <c>true</c> if this instance has unsaved changes; otherwise, <c>false</c>.
     /// </value>
-    public bool HasUnsavedChanges => (Model?.HasUnsavedTreeChanges ?? false) || _hasUnsavedNonTreeChanges || string.IsNullOrWhiteSpace(FilePath);
+    public bool HasUnsavedChanges => (this.Model?.HasUnsavedTreeChanges ?? false) || this.hasUnsavedNonTreeChanges || string.IsNullOrWhiteSpace(this.FilePath);
 
     /// <summary>
     /// Gets the abort package creation command.
@@ -147,13 +150,13 @@ public partial class MainViewModel : RxObject
     /// <value>The file path.</value>
     public string? FilePath
     {
-        get => _filePath;
+        get => this.filePath;
 
         set
         {
-            Model?.CurrentFilePath = value;
+            this.Model?.CurrentFilePath = value;
 
-            this.RaiseAndSetIfChanged(ref _filePath, value);
+            this.RaiseAndSetIfChanged(ref this.filePath, value);
         }
     }
 
@@ -171,9 +174,9 @@ public partial class MainViewModel : RxObject
         get
         {
             var fp = "New Project*";
-            if (!string.IsNullOrWhiteSpace(FilePath))
+            if (!string.IsNullOrWhiteSpace(this.FilePath))
             {
-                fp = Path.GetFileNameWithoutExtension(FilePath);
+                fp = Path.GetFileNameWithoutExtension(this.FilePath);
             }
 
             return $"{PathFolderHelper.ProgramName} {PathFolderHelper.GetProgramVersion()} - {fp}";
@@ -185,14 +188,14 @@ public partial class MainViewModel : RxObject
     /// </summary>
     public void AbortPackageCreation()
     {
-        if (_activeBackgroungWorker != null)
+        if (this.activeBackgroungWorker != null)
         {
-            _activeBackgroungWorker.CancelAsync();
+            this.activeBackgroungWorker.CancelAsync();
 
-            _exeProcess?.Kill();
+            this.exeProcess?.Kill();
         }
 
-        _abortPackageFlag = true;
+        this.abortPackageFlag = true;
     }
 
     /// <summary>
@@ -210,14 +213,14 @@ public partial class MainViewModel : RxObject
 
         if (rslt == MessageBoxResult.Yes)
         {
-            Save();
+            this.Save();
         }
 
-        Model = new VelopackModel();
-        SetupDirtyTracking();
-        _hasUnsavedNonTreeChanges = false;
-        Model.HasUnsavedTreeChanges = false;
-        this.RaisePropertyChanged(nameof(HasUnsavedChanges));
+        this.Model = new VelopackModel();
+        this.SetupDirtyTracking();
+        this.hasUnsavedNonTreeChanges = false;
+        this.Model.HasUnsavedTreeChanges = false;
+        this.RaisePropertyChanged(nameof(this.HasUnsavedChanges));
     }
 
     /// <summary>
@@ -233,7 +236,7 @@ public partial class MainViewModel : RxObject
                 AddExtension = true,
                 DefaultExt = PathFolderHelper.ProjectFileExtension,
                 Filter = PathFolderHelper.FileDialogName,
-                Multiselect = false
+                Multiselect = false,
             };
 
             var iniDir = PathFolderHelper.GetMyDirectory(MyDirectory.Project);
@@ -247,7 +250,7 @@ public partial class MainViewModel : RxObject
                 return;
             }
 
-            OpenProject(ofd.FileName);
+            this.OpenProject(ofd.FileName);
         }
         catch (Exception ex)
         {
@@ -269,38 +272,38 @@ public partial class MainViewModel : RxObject
                 return;
             }
 
-            FilePath = filepath;
+            this.FilePath = filepath;
 
-            var m = JsonSerializer.Deserialize<VelopackModel>(File.ReadAllText(filepath), _saveOptions);
+            var m = JsonSerializer.Deserialize<VelopackModel>(File.ReadAllText(filepath), this.saveOptions);
 
             if (m == null)
             {
                 return;
             }
 
-            Model = m;
+            this.Model = m;
 
             // Resync connection instances and mirror saved FileSystemBasePath into the active FileSystemConnection
-            Model.ResyncAfterLoad();
-            if (Model.SelectedConnection is not FileSystemConnection)
+            this.Model.ResyncAfterLoad();
+            if (this.Model.SelectedConnection is not FileSystemConnection)
             {
                 var projectDir = Path.GetDirectoryName(filepath);
                 if (!string.IsNullOrWhiteSpace(projectDir))
                 {
-                    Model.SetOutputBasePath(projectDir);
+                    this.Model.SetOutputBasePath(projectDir);
                 }
             }
 
-            SetupDirtyTracking();
-            Model.PackageFiles = VelopackModel.OrderFileList(Model.PackageFiles);
-            Model.RefreshPackageVersion();
-            AddLastProject(filepath);
-            this.RaisePropertyChanged(nameof(WindowTitle));
+            this.SetupDirtyTracking();
+            this.Model.PackageFiles = VelopackModel.OrderFileList(this.Model.PackageFiles);
+            this.Model.RefreshPackageVersion();
+            this.AddLastProject(filepath);
+            this.RaisePropertyChanged(nameof(this.WindowTitle));
 
             // opened from disk -> clean dirty flags
-            _hasUnsavedNonTreeChanges = false;
-            Model.HasUnsavedTreeChanges = false;
-            this.RaisePropertyChanged(nameof(HasUnsavedChanges));
+            this.hasUnsavedNonTreeChanges = false;
+            this.Model.HasUnsavedTreeChanges = false;
+            this.RaisePropertyChanged(nameof(this.HasUnsavedChanges));
         }
         catch (Exception ex)
         {
@@ -318,48 +321,48 @@ public partial class MainViewModel : RxObject
     {
         try
         {
-            if (_activeBackgroungWorker?.IsBusy == true)
+            if (this.activeBackgroungWorker?.IsBusy == true)
             {
                 Trace.TraceError("You shouldn't be here !");
                 return;
             }
 
-            Model?.UploadQueue.Clear();
-            Model?.RefreshPackageVersion();
+            this.Model?.UploadQueue.Clear();
+            this.Model?.RefreshPackageVersion();
 
-            Trace.WriteLine("START PUBLISHING ! : " + Model?.Title);
+            Trace.WriteLine("START PUBLISHING ! : " + this.Model?.Title);
 
             // 1) Check validity
-            if (Model?.IsValid == false)
+            if (this.Model?.IsValid == false)
             {
-                throw new Exception("Package Details are invalid or incomplete !");
+                throw new InvalidOperationException("Package Details are invalid or incomplete !");
             }
 
-            if (Model?.SelectedConnection == null || !Model.SelectedConnection.IsValid)
+            if (this.Model?.SelectedConnection == null || !this.Model.SelectedConnection.IsValid)
             {
-                throw new Exception("Selected connection details are not valid !");
+                throw new InvalidOperationException("Selected connection details are not valid !");
             }
 
             Trace.WriteLine("DATA VALIDATE - OK ! ");
 
-            Save();
+            this.Save();
 
             // I proceed only if i created the project .velo file and directory I need existing
             // directory to create the packages.
-            if (!_isSaved)
+            if (!this.isSaved)
             {
                 return;
             }
 
-            IsBusy = true;
+            this.IsBusy = true;
 
-            _activeBackgroungWorker = new BackgroundWorker() { WorkerReportsProgress = true, WorkerSupportsCancellation = true };
+            this.activeBackgroungWorker = new BackgroundWorker() { WorkerReportsProgress = true, WorkerSupportsCancellation = true };
 
-            _activeBackgroungWorker.DoWork += ActiveBackgroungWorker_DoWork;
-            _activeBackgroungWorker.RunWorkerCompleted += PackageCreationCompleted;
-            _activeBackgroungWorker.ProgressChanged += ActiveBackgroungWorker_ProgressChanged;
+            this.activeBackgroungWorker.DoWork += this.ActiveBackgroungWorker_DoWork;
+            this.activeBackgroungWorker.RunWorkerCompleted += this.PackageCreationCompleted;
+            this.activeBackgroungWorker.ProgressChanged += this.ActiveBackgroungWorker_ProgressChanged;
 
-            _activeBackgroungWorker.RunWorkerAsync(this);
+            this.activeBackgroungWorker.RunWorkerAsync(this);
         }
         catch (Exception ex)
         {
@@ -379,8 +382,8 @@ public partial class MainViewModel : RxObject
     [ReactiveCommand]
     public void PublishPackageComplete()
     {
-        _publishMode = 0;
-        PublishPackage();
+        this.publishMode = 0;
+        this.PublishPackage();
     }
 
     /// <summary>
@@ -389,8 +392,8 @@ public partial class MainViewModel : RxObject
     [ReactiveCommand]
     public void PublishPackageOnlyUpdate()
     {
-        _publishMode = 1;
-        PublishPackage();
+        this.publishMode = 1;
+        this.PublishPackage();
     }
 
     /// <summary>
@@ -399,63 +402,63 @@ public partial class MainViewModel : RxObject
     [ReactiveCommand]
     public void Save()
     {
-        if (Model == null)
+        if (this.Model == null)
         {
             return;
         }
 
-        var fileSystemPath = Model.SelectedConnection is FileSystemConnection fsc && !string.IsNullOrWhiteSpace(fsc.FileSystemPath)
+        var fileSystemPath = this.Model.SelectedConnection is FileSystemConnection fsc && !string.IsNullOrWhiteSpace(fsc.FileSystemPath)
             ? fsc.FileSystemPath
             : null;
 
-        if (string.IsNullOrWhiteSpace(FilePath))
+        if (string.IsNullOrWhiteSpace(this.FilePath))
         {
             if (!string.IsNullOrWhiteSpace(fileSystemPath))
             {
-                FilePath = fileSystemPath;
+                this.FilePath = fileSystemPath;
             }
             else
             {
-                SaveAs();
+                this.SaveAs();
                 return;
             }
         }
 
-        if (FilePath.Contains(PathFolderHelper.ProjectFileExtension))
+        if (this.FilePath.Contains(PathFolderHelper.ProjectFileExtension))
         {
-            FilePath = Path.GetDirectoryName(FilePath);
+            this.FilePath = Path.GetDirectoryName(this.FilePath);
         }
 
-        var baseDir = !string.IsNullOrWhiteSpace(fileSystemPath) ? fileSystemPath : FilePath!;
-        FilePath = baseDir;
+        var baseDir = !string.IsNullOrWhiteSpace(fileSystemPath) ? fileSystemPath : this.FilePath!;
+        this.FilePath = baseDir;
 
         // Persist the single local output root so all upload targets reuse the same staging layout.
-        Model.FileSystemBasePath = baseDir;
+        this.Model.FileSystemBasePath = baseDir;
 
         // Build output directories
-        Model.PackageFilesOutputPath = Path.Combine(baseDir, PathFolderHelper.PackageFilesDirectory);
-        Model.VelopackOutputPath = Path.Combine(baseDir, PathFolderHelper.ReleasesDirectory);
+        this.Model.PackageFilesOutputPath = Path.Combine(baseDir, PathFolderHelper.PackageFilesDirectory);
+        this.Model.VelopackOutputPath = Path.Combine(baseDir, PathFolderHelper.ReleasesDirectory);
 
-        Directory.CreateDirectory(FilePath!);
-        Directory.CreateDirectory(Model.PackageFilesOutputPath);
-        Directory.CreateDirectory(Model.VelopackOutputPath);
-        CleanLegacyReleaseArtifactsFromRoot(baseDir);
+        Directory.CreateDirectory(this.FilePath!);
+        Directory.CreateDirectory(this.Model.PackageFilesOutputPath);
+        Directory.CreateDirectory(this.Model.VelopackOutputPath);
+        this.CleanLegacyReleaseArtifactsFromRoot(baseDir);
 
-        var asProj = Path.Combine(FilePath!, $"{Model.AppId}{PathFolderHelper.ProjectFileExtension}");
+        var asProj = Path.Combine(this.FilePath!, $"{this.Model.AppId}{PathFolderHelper.ProjectFileExtension}");
 
         // Serialize with a resolver that ignores non-persistable/runtime properties
-        File.WriteAllText(asProj, JsonSerializer.Serialize(Model, _saveOptions));
-        Trace.WriteLine("FILE SAVED ! : " + FilePath);
+        File.WriteAllText(asProj, JsonSerializer.Serialize(this.Model, this.saveOptions));
+        Trace.WriteLine("FILE SAVED ! : " + this.FilePath);
 
-        _isSaved = true;
+        this.isSaved = true;
 
         // reset dirty flags
-        _hasUnsavedNonTreeChanges = false;
-        Model.HasUnsavedTreeChanges = false;
-        this.RaisePropertyChanged(nameof(HasUnsavedChanges));
+        this.hasUnsavedNonTreeChanges = false;
+        this.Model.HasUnsavedTreeChanges = false;
+        this.RaisePropertyChanged(nameof(this.HasUnsavedChanges));
 
-        AddLastProject(asProj);
-        this.RaisePropertyChanged(nameof(WindowTitle));
+        this.AddLastProject(asProj);
+        this.RaisePropertyChanged(nameof(this.WindowTitle));
     }
 
     /// <summary>
@@ -464,14 +467,14 @@ public partial class MainViewModel : RxObject
     [ReactiveCommand]
     public void SaveAs()
     {
-        var previousFilePath = FilePath;
+        var previousFilePath = this.FilePath;
 
         try
         {
             var saveFileDialog = new System.Windows.Forms.FolderBrowserDialog
             {
                 SelectedPath = PathFolderHelper.GetMyDirectory(MyDirectory.Project),
-                ShowNewFolderButton = true
+                ShowNewFolderButton = true,
             };
 
             if (saveFileDialog.ShowDialog() != System.Windows.Forms.DialogResult.OK)
@@ -479,15 +482,15 @@ public partial class MainViewModel : RxObject
                 return;
             }
 
-            FilePath = saveFileDialog.SelectedPath;
+            this.FilePath = saveFileDialog.SelectedPath;
 
-            Save();
+            this.Save();
         }
         catch (Exception)
         {
             MessageBox.Show("Error on saving");
 
-            FilePath = previousFilePath;
+            this.FilePath = previousFilePath;
         }
     }
 
@@ -499,81 +502,86 @@ public partial class MainViewModel : RxObject
     protected override void Dispose(bool disposing)
     {
         base.Dispose(disposing);
-        if (disposing)
+        if (!disposing)
         {
-            _activeBackgroungWorker?.Dispose();
-            _exeProcess?.Dispose();
-            _dirtySubscription?.Dispose();
+            return;
         }
+
+        this.activeBackgroungWorker?.Dispose();
+        this.exeProcess?.Dispose();
+        this.dirtySubscription?.Dispose();
     }
 
     private void SetupDirtyTracking()
     {
-        _dirtySubscription?.Dispose();
-        if (Model == null)
+        this.dirtySubscription?.Dispose();
+        if (this.Model == null)
         {
             return;
         }
 
         var dirtyStreams = new IObservable<RxVoid>[]
         {
-            Model.WhenAnyValue(m => m.Title).Select(_ => RxVoid.Default),
-            Model.WhenAnyValue(m => m.Authors).Select(_ => RxVoid.Default),
-            Model.WhenAnyValue(m => m.Description).Select(_ => RxVoid.Default),
-            Model.WhenAnyValue(m => m.Version).Select(_ => RxVoid.Default),
-            Model.WhenAnyValue(m => m.AppId).Select(_ => RxVoid.Default),
-            Model.WhenAnyValue(m => m.MainExeName).Select(_ => RxVoid.Default),
-            Model.WhenAnyValue(m => m.IconFilepath).Select(_ => RxVoid.Default),
-            Model.WhenAnyValue(m => m.SplashFilepath).Select(_ => RxVoid.Default),
-            Model.WhenAnyValue(m => m.SelectedConnectionString).Select(_ => RxVoid.Default),
-            Model.WhenAnyValue(m => m.PackageFilesOutputPath).Select(_ => RxVoid.Default),
-            Model.WhenAnyValue(m => m.VelopackOutputPath).Select(_ => RxVoid.Default),
-            Model.WhenAnyValue(m => m.FileSystemBasePath).Select(_ => RxVoid.Default),
-            Model.WhenAnyValue(m => m.Channel).Select(_ => RxVoid.Default),
-            Model.WhenAnyValue(m => m.Runtime).Select(_ => RxVoid.Default),
-            Model.WhenAnyValue(m => m.ReleaseNotesPath).Select(_ => RxVoid.Default),
-            Model.WhenAnyValue(m => m.DeltaMode).Select(_ => RxVoid.Default),
-            Model.WhenAnyValue(m => m.ExcludeRegex).Select(_ => RxVoid.Default),
-            Model.WhenAnyValue(m => m.NoPortable).Select(_ => RxVoid.Default),
-            Model.WhenAnyValue(m => m.NoInstaller).Select(_ => RxVoid.Default),
-            Model.WhenAnyValue(m => m.Frameworks).Select(_ => RxVoid.Default),
-            Model.WhenAnyValue(m => m.SkipVeloAppCheck).Select(_ => RxVoid.Default),
-            Model.WhenAnyValue(m => m.Shortcuts).Select(_ => RxVoid.Default),
-            Model.WhenAnyValue(m => m.SignParams).Select(_ => RxVoid.Default),
-            Model.WhenAnyValue(m => m.SignTemplate).Select(_ => RxVoid.Default),
-            Model.WhenAnyValue(m => m.SignExclude).Select(_ => RxVoid.Default),
-            Model.WhenAnyValue(m => m.SignParallel).Select(_ => RxVoid.Default),
-            Model.WhenAnyValue(m => m.AzureTrustedSignFile).Select(_ => RxVoid.Default),
-            Model.WhenAnyValue(m => m.MsiDeploymentTool).Select(_ => RxVoid.Default),
-            Model.WhenAnyValue(m => m.MsiDeploymentToolVersion).Select(_ => RxVoid.Default)
+            this.Model.WhenAnyValue(m => m.Title).Select(_ => RxVoid.Default),
+            this.Model.WhenAnyValue(m => m.Authors).Select(_ => RxVoid.Default),
+            this.Model.WhenAnyValue(m => m.Description).Select(_ => RxVoid.Default),
+            this.Model.WhenAnyValue(m => m.Version).Select(_ => RxVoid.Default),
+            this.Model.WhenAnyValue(m => m.AppId).Select(_ => RxVoid.Default),
+            this.Model.WhenAnyValue(m => m.MainExeName).Select(_ => RxVoid.Default),
+            this.Model.WhenAnyValue(m => m.IconFilepath).Select(_ => RxVoid.Default),
+            this.Model.WhenAnyValue(m => m.SplashFilepath).Select(_ => RxVoid.Default),
+            this.Model.WhenAnyValue(m => m.SelectedConnectionString).Select(_ => RxVoid.Default),
+            this.Model.WhenAnyValue(m => m.PackageFilesOutputPath).Select(_ => RxVoid.Default),
+            this.Model.WhenAnyValue(m => m.VelopackOutputPath).Select(_ => RxVoid.Default),
+            this.Model.WhenAnyValue(m => m.FileSystemBasePath).Select(_ => RxVoid.Default),
+            this.Model.WhenAnyValue(m => m.Channel).Select(_ => RxVoid.Default),
+            this.Model.WhenAnyValue(m => m.Runtime).Select(_ => RxVoid.Default),
+            this.Model.WhenAnyValue(m => m.ReleaseNotesPath).Select(_ => RxVoid.Default),
+            this.Model.WhenAnyValue(m => m.DeltaMode).Select(_ => RxVoid.Default),
+            this.Model.WhenAnyValue(m => m.ExcludeRegex).Select(_ => RxVoid.Default),
+            this.Model.WhenAnyValue(m => m.NoPortable).Select(_ => RxVoid.Default),
+            this.Model.WhenAnyValue(m => m.NoInstaller).Select(_ => RxVoid.Default),
+            this.Model.WhenAnyValue(m => m.Frameworks).Select(_ => RxVoid.Default),
+            this.Model.WhenAnyValue(m => m.SkipVeloAppCheck).Select(_ => RxVoid.Default),
+            this.Model.WhenAnyValue(m => m.Shortcuts).Select(_ => RxVoid.Default),
+            this.Model.WhenAnyValue(m => m.SignParams).Select(_ => RxVoid.Default),
+            this.Model.WhenAnyValue(m => m.SignTemplate).Select(_ => RxVoid.Default),
+            this.Model.WhenAnyValue(m => m.UseSimplySign).Select(_ => RxVoid.Default),
+            this.Model.WhenAnyValue(m => m.SimplySignExecutablePath).Select(_ => RxVoid.Default),
+            this.Model.WhenAnyValue(m => m.SimplySignEmail).Select(_ => RxVoid.Default),
+            this.Model.WhenAnyValue(m => m.SignExclude).Select(_ => RxVoid.Default),
+            this.Model.WhenAnyValue(m => m.SignParallel).Select(_ => RxVoid.Default),
+            this.Model.WhenAnyValue(m => m.AzureTrustedSignFile).Select(_ => RxVoid.Default),
+            this.Model.WhenAnyValue(m => m.MsiDeploymentTool).Select(_ => RxVoid.Default),
+            this.Model.WhenAnyValue(m => m.MsiDeploymentToolVersion).Select(_ => RxVoid.Default),
         };
-        _dirtySubscription = dirtyStreams.Merge()
-            .Subscribe(_ => _hasUnsavedNonTreeChanges = true);
+        this.dirtySubscription = dirtyStreams.Merge()
+            .Subscribe(_ => this.hasUnsavedNonTreeChanges = true);
     }
 
     private void ActiveBackgroungWorker_DoWork(object? sender, DoWorkEventArgs e)
     {
         try
         {
-            _activeBackgroungWorker?.ReportProgress(20, "VELOPACK PACKAGE CREATING");
+            this.activeBackgroungWorker?.ReportProgress(20, "VELOPACK PACKAGE CREATING");
 
-            if (_activeBackgroungWorker?.CancellationPending == true)
+            if (this.activeBackgroungWorker?.CancellationPending == true)
             {
                 return;
             }
 
-            if (Model?.PackageFilesOutputPath == null)
+            if (this.Model?.PackageFilesOutputPath == null)
             {
-                throw new Exception("PackageFilesOutputPath is null");
+                throw new InvalidOperationException("PackageFilesOutputPath is null");
             }
 
             // Recreate the staging directory from the original source paths every time.
-            Model.ClearPackageFilesDirectory();
+            this.Model.ClearPackageFilesDirectory();
 
             // Copy all selected items preserving folder structure
             void CopyNode(ItemLink node, List<string> parents)
             {
-                if (_activeBackgroungWorker?.CancellationPending == true)
+                if (this.activeBackgroungWorker?.CancellationPending == true)
                 {
                     return;
                 }
@@ -595,23 +603,23 @@ public partial class MainViewModel : RxObject
                     }
 
                     var relDir = Path.Combine([.. parents]);
-                    var targetDir = string.IsNullOrEmpty(relDir) ? Model!.PackageFilesOutputPath : Path.Combine(Model!.PackageFilesOutputPath, relDir);
+                    var targetDir = string.IsNullOrEmpty(relDir) ? this.Model!.PackageFilesOutputPath : Path.Combine(this.Model!.PackageFilesOutputPath, relDir);
                     Directory.CreateDirectory(targetDir);
                     var targetFile = Path.Combine(targetDir, node.Filename);
                     File.Copy(node.SourceFilepath, targetFile, true);
                 }
             }
 
-            _activeBackgroungWorker?.ReportProgress(40, "COPYING CONTENT");
-            foreach (var node in Model!.PackageFiles.ToList())
+            this.activeBackgroungWorker?.ReportProgress(40, "COPYING CONTENT");
+            foreach (var node in this.Model!.PackageFiles.ToList())
             {
                 CopyNode(node, []);
             }
 
-            _activeBackgroungWorker?.ReportProgress(60, "VELOPACK RELEASIFY");
+            this.activeBackgroungWorker?.ReportProgress(60, "VELOPACK RELEASIFY");
 
-            VelopackPack();
-            Trace.WriteLine("CREATED VELOPACK PACKAGE to : " + Model.VelopackOutputPath);
+            this.VelopackPack();
+            Trace.WriteLine("CREATED VELOPACK PACKAGE to : " + this.Model.VelopackOutputPath);
         }
         catch (Exception ex)
         {
@@ -627,19 +635,19 @@ public partial class MainViewModel : RxObject
             return;
         }
 
-        CurrentPackageCreationStage = message;
+        this.CurrentPackageCreationStage = message;
     }
 
     private void AddLastProject(string filePath)
     {
-        foreach (var fp in UserPreference.LastOpenedProject.Where(p => string.Equals(p, filePath, StringComparison.CurrentCultureIgnoreCase)).ToList())
+        foreach (var fp in this.UserPreference.LastOpenedProject.Where(p => string.Equals(p, filePath, StringComparison.CurrentCultureIgnoreCase)).ToList())
         {
-            UserPreference.LastOpenedProject.Remove(fp);
+            this.UserPreference.LastOpenedProject.Remove(fp);
         }
 
-        UserPreference.LastOpenedProject.Add(filePath);
+        this.UserPreference.LastOpenedProject.Add(filePath);
 
-        PathFolderHelper.SavePreference(UserPreference);
+        PathFolderHelper.SavePreference(this.UserPreference);
     }
 
     /// <summary>
@@ -649,19 +657,19 @@ public partial class MainViewModel : RxObject
     /// <param name="e">The <see cref="RunWorkerCompletedEventArgs"/> instance containing the event data.</param>
     private void PackageCreationCompleted(object? sender, RunWorkerCompletedEventArgs e)
     {
-        IsBusy = false;
+        this.IsBusy = false;
 
-        CurrentPackageCreationStage = string.Empty;
+        this.CurrentPackageCreationStage = string.Empty;
 
-        _activeBackgroungWorker?.Dispose();
+        this.activeBackgroungWorker?.Dispose();
 
-        _activeBackgroungWorker = null;
+        this.activeBackgroungWorker = null;
 
-        if (_abortPackageFlag)
+        if (this.abortPackageFlag)
         {
-            Model?.UploadQueue?.Clear();
+            this.Model?.UploadQueue?.Clear();
 
-            _abortPackageFlag = false;
+            this.abortPackageFlag = false;
 
             return;
         }
@@ -680,41 +688,41 @@ public partial class MainViewModel : RxObject
         }
 
         // Start uploading generated files.
-        Model?.BeginUpdatedFiles(_publishMode);
+        this.Model?.BeginUpdatedFiles(this.publishMode);
     }
 
     private void VelopackPack()
     {
-        if (Model == null)
+        if (this.Model == null)
         {
-            throw new Exception("Model is null");
+            throw new InvalidOperationException("Model is null");
         }
 
-        var packDir = Path.GetFullPath(Model.PackageFilesOutputPath!);
-        var outDir = Path.GetFullPath(Model.VelopackOutputPath!);
-        var startInfo = CreateVelopackPackStartInfo(packDir, outDir);
+        var packDir = Path.GetFullPath(this.Model.PackageFilesOutputPath!);
+        var outDir = Path.GetFullPath(this.Model.VelopackOutputPath!);
+        var startInfo = this.CreateVelopackPackStartInfo(packDir, outDir);
 
-        using (_exeProcess = Process.Start(startInfo))
+        using (this.exeProcess = Process.Start(startInfo))
         {
-            var stdout = _exeProcess!.StandardOutput.ReadToEnd();
-            var stderr = _exeProcess!.StandardError.ReadToEnd();
-            _exeProcess!.WaitForExit();
+            var stdout = this.exeProcess!.StandardOutput.ReadToEnd();
+            var stderr = this.exeProcess!.StandardError.ReadToEnd();
+            this.exeProcess!.WaitForExit();
             Trace.WriteLine(stdout);
             if (!string.IsNullOrWhiteSpace(stderr))
             {
                 Trace.TraceError(stderr);
             }
 
-            if (_exeProcess!.ExitCode != 0)
+            if (this.exeProcess!.ExitCode != 0)
             {
-                throw new Exception($"vpk exited with code {_exeProcess.ExitCode}.\n{stderr}\n{stdout}");
+                throw new InvalidOperationException($"vpk exited with code {this.exeProcess.ExitCode}.\n{stderr}\n{stdout}");
             }
         }
     }
 
     private void CleanLegacyReleaseArtifactsFromRoot(string baseDir)
     {
-        if (Model == null || string.IsNullOrWhiteSpace(Model.AppId) || string.IsNullOrWhiteSpace(baseDir) || !Directory.Exists(baseDir))
+        if (this.Model == null || string.IsNullOrWhiteSpace(this.Model.AppId) || string.IsNullOrWhiteSpace(baseDir) || !Directory.Exists(baseDir))
         {
             return;
         }
@@ -724,10 +732,10 @@ public partial class MainViewModel : RxObject
             "assets.*.json",
             "releases.*.json",
             "RELEASES",
-            $"{Model.AppId}-*.nupkg",
-            $"{Model.AppId}-*.zip",
-            $"{Model.AppId}-*.exe",
-            $"{Model.AppId}-*.msi"
+            $"{this.Model.AppId}-*.nupkg",
+            $"{this.Model.AppId}-*.zip",
+            $"{this.Model.AppId}-*.exe",
+            $"{this.Model.AppId}-*.msi",
         };
 
         foreach (var pattern in patterns)
@@ -754,9 +762,9 @@ public partial class MainViewModel : RxObject
 
     private ProcessStartInfo CreateVelopackPackStartInfo(string packDir, string outDir)
     {
-        if (Model == null)
+        if (this.Model == null)
         {
-            throw new Exception("Model is null");
+            throw new InvalidOperationException("Model is null");
         }
 
         var startInfo = new ProcessStartInfo
@@ -766,69 +774,71 @@ public partial class MainViewModel : RxObject
             UseShellExecute = false,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
-            CreateNoWindow = true
+            CreateNoWindow = true,
         };
 
         var args = startInfo.ArgumentList;
         args.Add("pack");
 
-        AddOption(args, "--packId", Model.AppId);
-        AddOption(args, "--packVersion", Model.Version);
+        AddOption(args, "--packId", this.Model.AppId);
+        AddOption(args, "--packVersion", this.Model.Version);
         AddOption(args, "--packDir", packDir);
         AddOption(args, "--outputDir", outDir);
-        AddOption(args, "--channel", Model.Channel);
-        AddOption(args, "--runtime", Model.Runtime);
-        AddOption(args, "--packAuthors", Model.Authors);
-        AddOption(args, "--packTitle", Model.Title);
-        AddOption(args, "--releaseNotes", Model.ReleaseNotesPath);
-        AddOption(args, "--delta", Model.GetResolvedDeltaMode());
+        AddOption(args, "--channel", this.Model.Channel);
+        AddOption(args, "--runtime", this.Model.Runtime);
+        AddOption(args, "--packAuthors", this.Model.Authors);
+        AddOption(args, "--packTitle", this.Model.Title);
+        AddOption(args, "--releaseNotes", this.Model.ReleaseNotesPath);
+        AddOption(args, "--delta", this.Model.GetResolvedDeltaMode());
 
-        if (File.Exists(Model.IconFilepath))
+        if (File.Exists(this.Model.IconFilepath))
         {
-            AddOption(args, "--icon", Path.GetFullPath(Model.IconFilepath));
+            AddOption(args, "--icon", Path.GetFullPath(this.Model.IconFilepath));
         }
 
-        var mainExe = Model.MainExeName;
-        if (string.IsNullOrWhiteSpace(mainExe) && !string.IsNullOrWhiteSpace(Model.MainExePath))
+        var mainExe = this.Model.MainExeName;
+        if (string.IsNullOrWhiteSpace(mainExe) && !string.IsNullOrWhiteSpace(this.Model.MainExePath))
         {
-            mainExe = Path.GetFileName(Model.MainExePath);
+            mainExe = Path.GetFileName(this.Model.MainExePath);
         }
 
         AddOption(args, "--mainExe", mainExe);
-        AddOption(args, "--exclude", Model.ExcludeRegex);
-        AddFlag(args, "--noPortable", Model.NoPortable);
-        AddFlag(args, "--noInst", Model.NoInstaller);
-        AddOption(args, "--framework", Model.Frameworks);
+        AddOption(args, "--exclude", this.Model.ExcludeRegex);
+        AddFlag(args, "--noPortable", this.Model.NoPortable);
+        AddFlag(args, "--noInst", this.Model.NoInstaller);
+        AddOption(args, "--framework", this.Model.Frameworks);
 
-        if (File.Exists(Model.SplashFilepath))
+        if (File.Exists(this.Model.SplashFilepath))
         {
-            AddOption(args, "--splashImage", Path.GetFullPath(Model.SplashFilepath));
+            AddOption(args, "--splashImage", Path.GetFullPath(this.Model.SplashFilepath));
         }
 
-        AddFlag(args, "--skipVeloAppCheck", Model.SkipVeloAppCheck);
-        AddOption(args, "--signTemplate", Model.SignTemplate);
-        AddOption(args, "--signExclude", Model.SignExclude);
+        AddFlag(args, "--skipVeloAppCheck", this.Model.SkipVeloAppCheck);
+        AddOption(args, "--signTemplate", this.Model.UseSimplySign ? SimplySignSigning.Configure(startInfo, this.Model) : this.Model.SignTemplate);
+        AddOption(args, "--signExclude", this.Model.SignExclude);
 
-        if (Model.SignParallel != 10)
+        if (this.Model.UseSimplySign || this.Model.SignParallel != 10)
         {
-            AddOption(args, "--signParallel", Model.SignParallel.ToString(CultureInfo.InvariantCulture));
+            AddOption(args, "--signParallel", this.Model.UseSimplySign ? "1" : this.Model.SignParallel.ToString(CultureInfo.InvariantCulture));
         }
 
-        AddOption(args, "--shortcuts", Model.Shortcuts);
-        AddOption(args, "--signParams", Model.SignParams);
-        AddOption(args, "--azureTrustedSignFile", Model.AzureTrustedSignFile);
-        AddFlag(args, "--msiDeploymentTool", Model.MsiDeploymentTool);
-        AddOption(args, "--msiDeploymentToolVersion", Model.MsiDeploymentToolVersion);
+        AddOption(args, "--shortcuts", this.Model.Shortcuts);
+        AddOption(args, "--signParams", this.Model.SignParams);
+        AddOption(args, "--azureTrustedSignFile", this.Model.AzureTrustedSignFile);
+        AddFlag(args, "--msiDeploymentTool", this.Model.MsiDeploymentTool);
+        AddOption(args, "--msiDeploymentToolVersion", this.Model.MsiDeploymentToolVersion);
 
         Trace.WriteLine("vpk " + string.Join(" ", args.Select(FormatArgumentForTrace)));
         return startInfo;
 
         static void AddFlag(ICollection<string> args, string option, bool enabled)
         {
-            if (enabled)
+            if (!enabled)
             {
-                args.Add(option);
+                return;
             }
+
+            args.Add(option);
         }
 
         static void AddOption(ICollection<string> args, string option, string? value)

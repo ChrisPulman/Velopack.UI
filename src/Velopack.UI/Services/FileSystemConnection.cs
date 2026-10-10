@@ -1,5 +1,8 @@
-﻿// Copyright (c) Chris Pulman. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// <copyright file="FileSystemConnection.cs" company="Chris Pulman">
+// Copyright (c) 2019-2026 Chris Pulman and contributors. All rights reserved.
+// Chris Pulman and contributors licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for full license information.
+// </copyright>
 
 using System.Runtime.Serialization;
 using System.Runtime.Versioning;
@@ -20,12 +23,12 @@ namespace Velopack.UI;
 [SupportedOSPlatform("windows10.0.19041.0")]
 public partial class FileSystemConnection : WebConnectionBase
 {
-    private string? _fileSystemPath;
+    private string? fileSystemPath;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="FileSystemConnection"/> class.
     /// </summary>
-    public FileSystemConnection() => ConnectionName = "File System";
+    public FileSystemConnection() => this.ConnectionName = "File System";
 
     /// <summary>
     /// Gets or sets the file system path.
@@ -34,12 +37,12 @@ public partial class FileSystemConnection : WebConnectionBase
     [DataMember]
     public string? FileSystemPath
     {
-        get => _fileSystemPath;
+        get => this.fileSystemPath;
 
         set
         {
-            this.RaiseAndSetIfChanged(ref _fileSystemPath, value);
-            this.RaisePropertyChanged(nameof(SetupDownloadUrl));
+            this.RaiseAndSetIfChanged(ref this.fileSystemPath, value);
+            this.RaisePropertyChanged(nameof(this.SetupDownloadUrl));
         }
     }
 
@@ -51,12 +54,12 @@ public partial class FileSystemConnection : WebConnectionBase
     {
         get
         {
-            if (string.IsNullOrWhiteSpace(FileSystemPath))
+            if (string.IsNullOrWhiteSpace(this.FileSystemPath))
             {
                 return "Missing Parameter";
             }
 
-            return System.IO.Path.Combine(FileSystemPath, PathFolderHelper.ReleasesDirectory);
+            return System.IO.Path.Combine(this.FileSystemPath, PathFolderHelper.ReleasesDirectory);
         }
     }
 
@@ -83,17 +86,19 @@ public partial class FileSystemConnection : WebConnectionBase
         {
             Title = "Select a folder for your Application Installer",
             InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
-            Multiselect = false
+            Multiselect = false,
         };
 
-        if (dialog.ShowDialog() == true)
+        if (dialog.ShowDialog() != true)
         {
-            FileSystemPath = dialog.FolderName;
+            return;
         }
+
+        this.FileSystemPath = dialog.FolderName;
     }
 
     private class Validator : AbstractValidator<FileSystemConnection>
     {
-        public Validator() => RuleFor(c => c.FileSystemPath).NotEmpty();
+        public Validator() => this.RuleFor(c => c.FileSystemPath).NotEmpty();
     }
 }

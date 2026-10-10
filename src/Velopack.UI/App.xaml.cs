@@ -1,5 +1,8 @@
-﻿// Copyright (c) Chris Pulman. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// <copyright file="App.xaml.cs" company="Chris Pulman">
+// Copyright (c) 2019-2026 Chris Pulman and contributors. All rights reserved.
+// Chris Pulman and contributors licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for full license information.
+// </copyright>
 
 using System.Diagnostics;
 using System.Security.Principal;
@@ -7,6 +10,7 @@ using System.Windows;
 using System.Windows.Threading;
 using ReactiveUI;
 using ReactiveUI.Builder;
+using Splat;
 using Velopack.Sources;
 using Velopack.UI.Helpers;
 
@@ -17,6 +21,9 @@ namespace Velopack.UI;
 /// </summary>
 public partial class App
 {
+    /// <summary>
+    /// Gets the project file supplied on the command line.
+    /// </summary>
     internal static string? StartupProjectFilePath { get; private set; }
 
     /// <summary>
@@ -30,7 +37,7 @@ public partial class App
         base.OnStartup(e);
 
         // Check if running as administrator
-        var identity = WindowsIdentity.GetCurrent();
+        using var identity = WindowsIdentity.GetCurrent();
         var principal = new WindowsPrincipal(identity);
         if (principal.IsInRole(WindowsBuiltInRole.Administrator))
         {
@@ -41,7 +48,7 @@ public partial class App
             }
         }
 
-        _ = Dispatcher.BeginInvoke(new Action(QueuePostStartupChecks), DispatcherPriority.ApplicationIdle);
+        _ = this.Dispatcher.BeginInvoke(new Action(QueuePostStartupChecks), DispatcherPriority.ApplicationIdle);
     }
 
     [STAThread]
@@ -102,14 +109,16 @@ public partial class App
         }
 
         var installResult = await RunProcessAsync("dotnet", TimeSpan.FromMinutes(2), "tool", "install", "-g", "vpk").ConfigureAwait(false);
-        if (installResult.ExitCode != 0)
+        if (installResult.ExitCode == 0)
         {
-            await ShowMessageBoxAsync(
-                $"Failed to install vpk:\n{installResult.StandardError}\n{installResult.StandardOutput}",
-                "Install Error",
-                MessageBoxButton.OK,
-                MessageBoxImage.Error).ConfigureAwait(false);
+            return;
         }
+
+        await ShowMessageBoxAsync(
+            $"Failed to install vpk:\n{installResult.StandardError}\n{installResult.StandardOutput}",
+            "Install Error",
+            MessageBoxButton.OK,
+            MessageBoxImage.Error).ConfigureAwait(false);
     }
 
     private static void QueuePostStartupChecks()
@@ -141,31 +150,73 @@ public partial class App
             return; // not installed with Velopack, so skip update check
         }
 
-        // check for new version
-        var newVersion = await WithTimeout(mgr.CheckForUpdatesAsync(), TimeSpan.FromSeconds(30), "checking for updates").ConfigureAwait(false);
-        if (newVersion == null)
+        // A previously downloaded update remains usable when the network is offline.
+        var updateToApply = mgr.UpdatePendingRestart;
+        if (updateToApply == null)
         {
-            return; // no update available
+            var newVersion = await WithTimeout(mgr.CheckForUpdatesAsync(), TimeSpan.FromSeconds(30), "checking for updates").ConfigureAwait(false);
+            if (newVersion == null)
+            {
+                return;
+            }
+
+            using var downloadTimeout = new CancellationTokenSource(TimeSpan.FromMinutes(10));
+            await mgr.DownloadUpdatesAsync(newVersion, cancelToken: downloadTimeout.Token).ConfigureAwait(false);
+            updateToApply = newVersion.TargetFullRelease;
         }
 
-        // download new version
-        await mgr.DownloadUpdatesAsync(newVersion);
+        // Keep the final check and restart together on the UI thread so a build
+        // cannot start between checking its state and closing the application.
+        var dispatcher = Current?.Dispatcher;
+        if (dispatcher?.HasShutdownStarted != false)
+        {
+            return;
+        }
 
-        // install new version and restart app
-        mgr.ApplyUpdatesAndRestart(newVersion);
+        await dispatcher.InvokeAsync(() =>
+        {
+            var viewModel = Locator.Current.GetService<MainViewModel>();
+            if (viewModel?.IsBusy == true)
+            {
+                return; // The downloaded update will be available next launch.
+            }
+
+            var message = viewModel?.HasUnsavedChanges == true
+                ? "An update is ready. Save your project before restarting. Restart now and discard unsaved changes?"
+                : "An update is ready. Restart Velopack.UI now to install it?";
+            if (ShowMessageBox(message, "Update ready", MessageBoxButton.YesNo, MessageBoxImage.Information) != MessageBoxResult.Yes)
+            {
+                return;
+            }
+
+            mgr.ApplyUpdatesAndRestart(updateToApply);
+        }).Task.ConfigureAwait(false);
     }
 
     private static async Task<T?> WithTimeout<T>(Task<T?> task, TimeSpan timeout, string operation)
     {
-        var timeoutTask = Task.Delay(timeout);
-        var completedTask = await Task.WhenAny(task, timeoutTask).ConfigureAwait(false);
-        if (completedTask == timeoutTask)
+        try
+        {
+            return await task.WaitAsync(timeout).ConfigureAwait(false);
+        }
+        catch (TimeoutException)
         {
             Trace.TraceWarning($"Velopack timed out while {operation} after {timeout}.");
+            _ = ObserveTimedOutTaskAsync(task);
             return default;
         }
+    }
 
-        return await task.ConfigureAwait(false);
+    private static async Task ObserveTimedOutTaskAsync(Task task)
+    {
+        try
+        {
+            await task.ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            Trace.TraceWarning($"Velopack background operation failed after timing out: {ex}");
+        }
     }
 
     private static async Task<ProcessResult> RunProcessAsync(string fileName, TimeSpan timeout, params string[] arguments)
@@ -178,8 +229,8 @@ public partial class App
                 UseShellExecute = false,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
-                CreateNoWindow = true
-            }
+                CreateNoWindow = true,
+            },
         };
 
         foreach (var argument in arguments)
@@ -215,7 +266,7 @@ public partial class App
     private static Task<MessageBoxResult> ShowMessageBoxAsync(string message, string title, MessageBoxButton buttons, MessageBoxImage image)
     {
         var dispatcher = Current?.Dispatcher;
-        if (dispatcher == null || dispatcher.CheckAccess())
+        if (dispatcher?.CheckAccess() != false)
         {
             return Task.FromResult(ShowMessageBox(message, title, buttons, image));
         }

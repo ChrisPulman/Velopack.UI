@@ -1,5 +1,8 @@
-﻿// Copyright (c) Chris Pulman. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// <copyright file="SingleFileUpload.cs" company="Chris Pulman">
+// Copyright (c) 2019-2026 Chris Pulman and contributors. All rights reserved.
+// Chris Pulman and contributors licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for full license information.
+// </copyright>
 
 using System.Diagnostics;
 using System.IO;
@@ -28,14 +31,16 @@ namespace Velopack.UI;
 [SupportedOSPlatform("windows10.0.19041.0")]
 public partial class SingleFileUpload : RxObject
 {
-    // Cache resolved GitHub release IDs to prevent duplicate release creation across assets
-    private static readonly SemaphoreSlim releaseLock = new(1, 1);
-    private static readonly Dictionary<string, long> releaseIdCache = new(StringComparer.OrdinalIgnoreCase);
-    private static readonly HashSet<string> shownUploadErrors = new(StringComparer.Ordinal);
-    private static readonly object shownUploadErrorsLock = new();
+    /// <summary>
+    /// Cache resolved GitHub release IDs to prevent duplicate release creation across assets.
+    /// </summary>
+    private static readonly SemaphoreSlim ReleaseLock = new(1, 1);
+    private static readonly Dictionary<string, long> ReleaseIdCache = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly HashSet<string> ShownUploadErrors = new(StringComparer.Ordinal);
+    private static readonly object ShownUploadErrorsLock = new();
 
-    private FileUploadStatus _uploadStatus;
-    private TransferUtility? _fileTransferUtility;
+    private FileUploadStatus uploadStatus;
+    private TransferUtility? fileTransferUtility;
 
     /// <summary>
     /// Occurs when [on upload completed].
@@ -55,23 +60,23 @@ public partial class SingleFileUpload : RxObject
     {
         get
         {
-            if (Connection is FileSystemConnection)
+            if (this.Connection is FileSystemConnection)
             {
                 // Files are already in the Releases folder produced by vpk; FullPath is the destination
-                return FullPath;
+                return this.FullPath;
             }
 
-            if (Connection is AmazonS3Connection s3 && !string.IsNullOrWhiteSpace(s3.BucketName) && !string.IsNullOrWhiteSpace(FullPath))
+            if (this.Connection is AmazonS3Connection s3 && !string.IsNullOrWhiteSpace(s3.BucketName) && !string.IsNullOrWhiteSpace(this.FullPath))
             {
-                return $"s3://{s3.BucketName}/{Path.GetFileName(FullPath)}";
+                return $"s3://{s3.BucketName}/{Path.GetFileName(this.FullPath)}";
             }
 
-            if (Connection is GitHubReleasesConnection gh && !string.IsNullOrWhiteSpace(gh.Owner) && !string.IsNullOrWhiteSpace(gh.Repository) && !string.IsNullOrWhiteSpace(gh.TagName) && !string.IsNullOrWhiteSpace(FullPath))
+            if (this.Connection is not GitHubReleasesConnection gh || string.IsNullOrWhiteSpace(gh.Owner) || string.IsNullOrWhiteSpace(gh.Repository) || string.IsNullOrWhiteSpace(gh.TagName) || string.IsNullOrWhiteSpace(this.FullPath))
             {
-                return $"github://{gh.Owner}/{gh.Repository}/releases/{gh.TagName}/{Path.GetFileName(FullPath)}";
+                return null;
             }
 
-            return null;
+            return $"github://{gh.Owner}/{gh.Repository}/releases/{gh.TagName}/{Path.GetFileName(this.FullPath)}";
         }
     }
 
@@ -103,7 +108,7 @@ public partial class SingleFileUpload : RxObject
     /// Gets the formatted status.
     /// </summary>
     /// <value>The formatted status.</value>
-    public string FormattedStatus => UploadStatus.ToString();
+    public string FormattedStatus => this.UploadStatus.ToString();
 
     /// <summary>
     /// Gets the full path.
@@ -125,37 +130,40 @@ public partial class SingleFileUpload : RxObject
     /// <value>The upload status.</value>
     public FileUploadStatus UploadStatus
     {
-        get => _uploadStatus;
+        get => this.uploadStatus;
 
         set
         {
-            this.RaiseAndSetIfChanged(ref _uploadStatus, value);
-            this.RaisePropertyChanged(nameof(FormattedStatus));
+            this.RaiseAndSetIfChanged(ref this.uploadStatus, value);
+            this.RaisePropertyChanged(nameof(this.FormattedStatus));
         }
     }
 
+    /// <summary>Allows upload error notifications to be shown for a new upload batch.</summary>
     internal static void ResetErrorNotifications()
     {
-        lock (shownUploadErrorsLock)
+        lock (ShownUploadErrorsLock)
         {
-            shownUploadErrors.Clear();
+            ShownUploadErrors.Clear();
         }
     }
 
+    /// <summary>Uploads the selected file through its configured connection.</summary>
+    /// <returns>A task that completes when the upload finishes.</returns>
     internal async Task StartUploadAsync()
     {
-        if (Connection is AmazonS3Connection amazonCon)
+        if (this.Connection is AmazonS3Connection amazonCon)
         {
             if (!CheckInternetConnection.IsConnectedToInternet())
             {
-                throw new Exception("Internet Connection not available");
+                throw new InvalidOperationException("Internet Connection not available");
             }
 
-            UploadStatus = FileUploadStatus.InProgress;
+            this.UploadStatus = FileUploadStatus.InProgress;
 
             var amazonClient = new AmazonS3Client(amazonCon.AccessKey, amazonCon.SecretAccessKey, amazonCon.GetRegion());
 
-            _fileTransferUtility = new TransferUtility(amazonClient);
+            this.fileTransferUtility = new TransferUtility(amazonClient);
 
             if (!await AmazonS3Util.DoesS3BucketExistV2Async(amazonClient, amazonCon.BucketName))
             {
@@ -166,44 +174,44 @@ public partial class SingleFileUpload : RxObject
                 new TransferUtilityUploadRequest
                 {
                     BucketName = amazonCon.BucketName,
-                    FilePath = FullPath,
+                    FilePath = this.FullPath,
                     CannedACL = S3CannedACL.PublicRead,
-                    Key = Path.GetFileName(FullPath)
+                    Key = Path.GetFileName(this.FullPath),
                 };
 
-            uploadRequest.UploadProgressEvent += UploadRequest_UploadPartProgressEvent;
+            uploadRequest.UploadProgressEvent += this.UploadRequest_UploadPartProgressEvent;
 
-            await _fileTransferUtility.UploadAsync(uploadRequest);
+            await this.fileTransferUtility.UploadAsync(uploadRequest);
 
-            Trace.WriteLine("Start Upload : " + FullPath);
+            Trace.WriteLine("Start Upload : " + this.FullPath);
         }
-        else if (Connection is FileSystemConnection)
+        else if (this.Connection is FileSystemConnection)
         {
             // For File System destination, vpk already wrote artifacts to the Releases folder.
             // No copy is required; mark as completed so the queue reflects final state.
-            UploadStatus = FileUploadStatus.InProgress;
-            UploadRequest_UploadPartProgressEvent(this, new UploadProgressArgs(100, 100, 100));
+            this.UploadStatus = FileUploadStatus.InProgress;
+            this.UploadRequest_UploadPartProgressEvent(this, new UploadProgressArgs(100, 100, 100));
         }
-        else if (Connection is GitHubReleasesConnection ghCon)
+        else if (this.Connection is GitHubReleasesConnection ghCon)
         {
             try
             {
                 if (!CheckInternetConnection.IsConnectedToInternet())
                 {
-                    throw new Exception("Internet Connection not available");
+                    throw new InvalidOperationException("Internet Connection not available");
                 }
 
-                if (string.IsNullOrWhiteSpace(ghCon.Token) || string.IsNullOrWhiteSpace(ghCon.Owner) || string.IsNullOrWhiteSpace(ghCon.Repository) || string.IsNullOrWhiteSpace(ghCon.TagName) || string.IsNullOrWhiteSpace(FullPath))
+                if (string.IsNullOrWhiteSpace(ghCon.Token) || string.IsNullOrWhiteSpace(ghCon.Owner) || string.IsNullOrWhiteSpace(ghCon.Repository) || string.IsNullOrWhiteSpace(ghCon.TagName) || string.IsNullOrWhiteSpace(this.FullPath))
                 {
-                    throw new Exception("Missing GitHub configuration");
+                    throw new InvalidOperationException("Missing GitHub configuration");
                 }
 
-                UploadStatus = FileUploadStatus.InProgress;
-                System.Windows.Application.Current.Dispatcher.Invoke(() => ProgressPercentage = 5); // coarse update
+                this.UploadStatus = FileUploadStatus.InProgress;
+                System.Windows.Application.Current.Dispatcher.Invoke(() => this.ProgressPercentage = 5); // coarse update
 
                 var client = new GitHubClient(new ProductHeaderValue("Velopack.UI"))
                 {
-                    Credentials = new Credentials(ghCon.Token)
+                    Credentials = new Credentials(ghCon.Token),
                 };
 
                 var owner = ghCon.Owner!.Trim();
@@ -213,10 +221,10 @@ public partial class SingleFileUpload : RxObject
 
                 // Resolve or create release ID only once per (owner,repo,tag)
                 long releaseId;
-                await releaseLock.WaitAsync();
+                await ReleaseLock.WaitAsync();
                 try
                 {
-                    if (!releaseIdCache.TryGetValue(cacheKey, out releaseId))
+                    if (!ReleaseIdCache.TryGetValue(cacheKey, out releaseId))
                     {
                         // Fetch repo for default branch
                         var repoInfo = await client.Repository.Get(owner, repo);
@@ -266,20 +274,20 @@ public partial class SingleFileUpload : RxObject
                             }
                         }
 
-                        releaseIdCache[cacheKey] = releaseId;
+                        ReleaseIdCache[cacheKey] = releaseId;
                     }
                 }
                 finally
                 {
-                    releaseLock.Release();
+                    ReleaseLock.Release();
                 }
 
                 // Work against the resolved release
                 var release = await client.Repository.Release.Get(owner, repo, releaseId);
 
-                System.Windows.Application.Current.Dispatcher.Invoke(() => ProgressPercentage = 25);
+                System.Windows.Application.Current.Dispatcher.Invoke(() => this.ProgressPercentage = 25);
 
-                var fileName = Path.GetFileName(FullPath);
+                var fileName = Path.GetFileName(this.FullPath);
 
                 // Ensure we have up-to-date assets, delete existing if name matches
                 try
@@ -304,12 +312,12 @@ public partial class SingleFileUpload : RxObject
                 // Upload asset with one retry on NotFound or ApiValidationException
                 async Task UploadOnceAsync()
                 {
-                    await using var fs = File.OpenRead(FullPath);
+                    await using var fs = File.OpenRead(this.FullPath);
                     var upload = new ReleaseAssetUpload
                     {
                         FileName = fileName,
                         ContentType = "application/octet-stream",
-                        RawData = fs
+                        RawData = fs,
                     };
                     _ = await client.Repository.Release.UploadAsset(release, upload);
                 }
@@ -331,11 +339,11 @@ public partial class SingleFileUpload : RxObject
                     await UploadOnceAsync();
                 }
 
-                System.Windows.Application.Current.Dispatcher.Invoke(() => RequesteUploadComplete(new UploadCompleteEventArgs(this)));
+                System.Windows.Application.Current.Dispatcher.Invoke(() => this.RequesteUploadComplete(new UploadCompleteEventArgs(this)));
             }
             catch (Exception ex)
             {
-                System.Windows.Application.Current.Dispatcher.Invoke(() => UploadStatus = FileUploadStatus.Failed);
+                System.Windows.Application.Current.Dispatcher.Invoke(() => this.UploadStatus = FileUploadStatus.Failed);
                 var message = ex is AuthorizationException || ex.Message.Contains("Bad credentials", StringComparison.OrdinalIgnoreCase)
                     ? "Authentication failed: Bad credentials. Please verify your GitHub token."
                     : $"GitHub upload failed: {ex.Message}";
@@ -354,7 +362,7 @@ public partial class SingleFileUpload : RxObject
     {
         if (disposing)
         {
-            _fileTransferUtility?.Dispose();
+            this.fileTransferUtility?.Dispose();
         }
 
         base.Dispose(disposing);
@@ -365,7 +373,7 @@ public partial class SingleFileUpload : RxObject
         var putRequest1 = new PutBucketRequest
         {
             BucketName = bucketName,
-            UseClientRegion = true
+            UseClientRegion = true,
         };
         _ = await client.PutBucketAsync(putRequest1);
 
@@ -374,9 +382,9 @@ public partial class SingleFileUpload : RxObject
 
     private static void ShowUploadErrorOnce(string message)
     {
-        lock (shownUploadErrorsLock)
+        lock (ShownUploadErrorsLock)
         {
-            if (!shownUploadErrors.Add(message))
+            if (!ShownUploadErrors.Add(message))
             {
                 return;
             }
@@ -388,28 +396,30 @@ public partial class SingleFileUpload : RxObject
 
     private void RequesteUploadComplete(UploadCompleteEventArgs uploadEvent)
     {
-        UploadStatus = FileUploadStatus.Completed;
-        ProgressPercentage = 100;
+        this.UploadStatus = FileUploadStatus.Completed;
+        this.ProgressPercentage = 100;
 
-        OnUploadCompleted?.Invoke(null, uploadEvent);
+        this.OnUploadCompleted?.Invoke(null, uploadEvent);
     }
 
     private void UploadRequest_UploadPartProgressEvent(object? sender, UploadProgressArgs e)
     {
-        System.Windows.Application.Current.Dispatcher.Invoke(() => ProgressPercentage = e.PercentDone);
+        System.Windows.Application.Current.Dispatcher.Invoke(() => this.ProgressPercentage = e.PercentDone);
 
-        if (e.PercentDone == 100)
+        if (e.PercentDone != 100)
         {
-            if (System.Windows.Application.Current.Dispatcher.CheckAccess())
-            {
-                RequesteUploadComplete(new UploadCompleteEventArgs(this));
-            }
-            else
-            {
-                System.Windows.Application.Current.Dispatcher.BeginInvoke(
-                  DispatcherPriority.Background,
-                  new Action(() => RequesteUploadComplete(new UploadCompleteEventArgs(this))));
-            }
+            return;
+        }
+
+        if (System.Windows.Application.Current.Dispatcher.CheckAccess())
+        {
+            this.RequesteUploadComplete(new UploadCompleteEventArgs(this));
+        }
+        else
+        {
+            System.Windows.Application.Current.Dispatcher.BeginInvoke(
+              DispatcherPriority.Background,
+              new Action(() => this.RequesteUploadComplete(new UploadCompleteEventArgs(this))));
         }
     }
 }
