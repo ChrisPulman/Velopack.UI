@@ -1,0 +1,42 @@
+name: Build and test
+
+on:
+  pull_request:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: windows-2025
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Restore
+        run: dotnet restore src/Velopack.UI.Solution.slnx
+      - name: Clean Release build
+        run: dotnet build src/Velopack.UI.Solution.slnx --configuration Release --no-restore --warnaserror
+      - name: TUnit tests
+        run: dotnet run --project src/Velopack.UI.Tests/Velopack.UI.Tests.csproj --configuration Release --no-build -- --report-trx --results-directory artifacts/test-results
+      - name: Test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: artifacts/test-results
+          if-no-files-found: ignore

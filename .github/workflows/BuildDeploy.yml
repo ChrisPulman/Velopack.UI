@@ -1,0 +1,46 @@
+name: Signed Windows release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: signed-windows-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: github.event.release.prerelease == false
+    # Configure a dedicated Windows signing runner; this job never runs PR code.
+    runs-on: ${{ fromJSON(vars.RELEASE_RUNNER || '["self-hosted","Windows","X64","velopack-signing"]') }}
+    environment: release-signing
+    permissions:
+      contents: write
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+          fetch-depth: 0
+          clean: true
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Build, test, sign, pack and upload to published release
+        run: ./.github/scripts/Publish-Release.ps1
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          GH_TOKEN: ${{ github.token }}
+          CERTUM_EMAIL: ${{ secrets.CERTUM_EMAIL }}
+          CERTUM_OTP: ${{ secrets.CERTUM_OTP }}
+          CERTUM_TOKEN: ${{ secrets.CERTUM_TOKEN }}
+          SSIGN_PATH: ${{ vars.SSIGN_PATH }}
+          SSIGN_SHA256: ${{ vars.SSIGN_SHA256 }}
+          SIGNING_CERTIFICATE_THUMBPRINT: ${{ vars.SIGNING_CERTIFICATE_THUMBPRINT }}
