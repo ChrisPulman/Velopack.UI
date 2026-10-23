@@ -36,6 +36,13 @@ public partial class MainWindow
     private void OnClosing(object? sender, CancelEventArgs e)
     {
         var vm = Locator.Current.GetService<MainViewModel>();
+        if (vm?.IsBusy == true)
+        {
+            e.Cancel = true;
+            MessageBox.Show("Cancel package creation before closing the application.", "Package creation in progress", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+
         if (vm?.HasUnsavedChanges != true)
         {
             return;
@@ -54,5 +61,6 @@ public partial class MainWindow
         }
 
         vm.Save();
+        e.Cancel = vm.HasUnsavedChanges;
     }
 }

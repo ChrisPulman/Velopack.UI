@@ -20,5 +20,6 @@ public class Preference
     /// </summary>
     [DataMember]
     [JsonInclude]
+    [JsonObjectCreationHandling(JsonObjectCreationHandling.Populate)]
     public List<string> LastOpenedProject { get; } = [];
 }

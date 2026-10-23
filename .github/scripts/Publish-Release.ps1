@@ -30,13 +30,7 @@ $workRoot = Join-Path $env:RUNNER_TEMP ("velopack-release-" + [guid]::NewGuid().
 $publishDir = Join-Path $workRoot 'publish'
 $releaseDir = Join-Path $workRoot 'Releases'
 $verifyDir = Join-Path $workRoot 'verify'
-$cacheDir = Join-Path $workRoot 'signing-cache'
-New-Item -ItemType Directory -Path $publishDir, $releaseDir, $cacheDir | Out-Null
-# ssign uses XDG_RUNTIME_DIR for its bearer-token cache, including on Windows.
-$previousCacheDir = $env:XDG_RUNTIME_DIR
-$env:XDG_RUNTIME_DIR = $cacheDir
-$identity = [Security.Principal.WindowsIdentity]::GetCurrent().User.Value
-Invoke-Checked 'icacls' @($cacheDir, '/inheritance:r', '/grant:r', "*${identity}:(OI)(CI)F")
+New-Item -ItemType Directory -Path $publishDir, $releaseDir | Out-Null
 
 try {
     $releasesJson = & gh api --paginate --slurp "repos/$repository/releases?per_page=100"
@@ -73,8 +67,15 @@ try {
         if ($info.FileVersion -ne "$version.0" -or $info.ProductVersion -ne $version) { throw "Published $binary version does not match the release tag." }
     }
 
+    # Sign additional payloads before packing, including scripts and nested installers that
+    # Velopack's PE-only payload scan does not visit. Keep valid vendor signatures.
+    $signableExtensions = @('.efi', '.msi', '.msp', '.mst', '.cab', '.cat', '.ps1', '.psm1', '.psd1', '.ps1xml', '.vbs', '.vbe', '.js', '.wsf')
+    foreach ($file in Get-ChildItem -LiteralPath $publishDir -Recurse -File | Where-Object { $_.Extension.ToLowerInvariant() -in $signableExtensions }) {
+        Invoke-ReleaseSigning $file.FullName
+    }
     Invoke-Checked 'dotnet' @('tool', 'install', 'vpk', '--version', '1.2.161', '--tool-path', (Join-Path $workRoot 'tools'))
     $vpk = Join-Path $workRoot 'tools/vpk.exe'
+    # Velopack signs EXE/DLL after resource edits, and signs installer artifacts.
     # Velopack supplies a quoted path for {{file}}. Secrets stay in inherited env.
     $signScript = Join-Path $PSScriptRoot 'Sign-ReleaseFile.ps1'
     $env:VPK_SIGN_TEMPLATE = 'pwsh -NoProfile -NonInteractive -File "' + $signScript + '" -FilePath {{file}}'
@@ -113,8 +114,4 @@ try {
 }
 finally {
     Remove-Item Env:VPK_SIGN_TEMPLATE -ErrorAction SilentlyContinue
-    $env:XDG_RUNTIME_DIR = $previousCacheDir
-    # Verify this computed directory is a direct child of our unique work root.
-    if ([IO.Path]::GetFullPath((Split-Path $cacheDir -Parent)) -ne [IO.Path]::GetFullPath($workRoot)) { throw 'Unsafe signing-cache cleanup path.' }
-    if (Test-Path -LiteralPath $cacheDir) { Remove-Item -LiteralPath $cacheDir -Recurse -Force }
 }

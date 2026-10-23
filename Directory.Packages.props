@@ -1,1 +1,23 @@
-<Project />
+<Project>
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <VelopackVersion>1.2.161</VelopackVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageVersion Include="AWSSDK.S3" Version="4.0.104.6" />
+    <PackageVersion Include="CrissCross.WPF.UI" Version="5.0.2" />
+    <PackageVersion Include="FluentValidation" Version="12.2.0" />
+    <PackageVersion Include="gong-wpf-dragdrop" Version="4.0.0" />
+    <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="10.0.402" />
+    <PackageVersion Include="Microsoft.Testing.Extensions.CodeCoverage" Version="18.12.0" />
+    <PackageVersion Include="Nerdbank.GitVersioning" Version="3.10.94" />
+    <PackageVersion Include="Octokit" Version="14.0.0" />
+    <PackageVersion Include="ReactiveUI.Primitives" Version="9.0.0" />
+    <PackageVersion Include="ReactiveUI.SourceGenerators" Version="4.2.0" />
+    <PackageVersion Include="Roslynator.Analyzers" Version="5.0.1" />
+    <PackageVersion Include="stylecop.analyzers" Version="1.2.0-beta.556" />
+    <PackageVersion Include="TUnit" Version="1.76.0" />
+    <PackageVersion Include="Velopack" Version="$(VelopackVersion)" />
+  </ItemGroup>
+</Project>
