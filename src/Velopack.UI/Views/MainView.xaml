@@ -9,7 +9,6 @@
     xmlns:sys="clr-namespace:System;assembly=mscorlib"
     xmlns:ui="https://github.com/reactivemarbles/CrissCross.ui"
     xmlns:vtv="clr-namespace:Velopack.UI.Controls"
-    xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
     x:Name="mainView"
     MinWidth="525"
     MinHeight="400"
@@ -18,42 +17,51 @@
     d:DesignWidth="1024"
     mc:Ignorable="d">
 
-    <xctk:BusyIndicator
-        x:Name="ShellBusyIndicator"
-        DisplayAfter="0"
-        IsBusy="{Binding Path=IsBusy}">
-        <xctk:BusyIndicator.BusyContentTemplate>
-            <DataTemplate>
-                <ui:StackPanel
-                    Width="250"
-                    Margin="4"
-                    DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType={x:Type xctk:BusyIndicator}}}">
-                    <ui:TextBlock
-                        HorizontalAlignment="Center"
-                        FontSize="18"
-                        FontWeight="Bold"
-                        Text="PACKAGE CREATION" />
-                    <ui:StackPanel Margin="4" HorizontalAlignment="Stretch">
-                        <ui:TextBlock FontSize="12" Text="{Binding CurrentPackageCreationStage}" />
-                        <ProgressBar
-                            Height="25"
-                            Margin="5"
-                            IsIndeterminate="True" />
-                    </ui:StackPanel>
-                    <ui:Button
-                        Grid.Column="1"
-                        Margin="2,0,0,0"
-                        HorizontalAlignment="Center"
-                        Command="{Binding AbortPackageCreationCmd}"
-                        Content="Cancel" />
-                </ui:StackPanel>
-            </DataTemplate>
-        </xctk:BusyIndicator.BusyContentTemplate>
-        <xctk:BusyIndicator.ProgressBarStyle>
-            <Style TargetType="ProgressBar">
-                <Setter Property="Visibility" Value="Collapsed" />
-            </Style>
-        </xctk:BusyIndicator.ProgressBarStyle>
+    <ui:BusyOverlay x:Name="ShellBusyIndicator" IsBusy="{Binding IsBusy}">
+        <ui:BusyOverlay.Template>
+            <ControlTemplate TargetType="{x:Type ui:BusyOverlay}">
+                <Grid>
+                    <ContentPresenter x:Name="MainContent" Content="{TemplateBinding Content}" />
+                    <Border x:Name="BusyPanel" Background="#80000000" Visibility="Collapsed">
+                        <Border
+                            Width="280"
+                            Padding="16"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Background="{DynamicResource ApplicationBackgroundBrush}"
+                            CornerRadius="8">
+                            <ui:StackPanel>
+                                <ui:TextBlock
+                                    HorizontalAlignment="Center"
+                                    FontSize="18"
+                                    FontWeight="Bold"
+                                    Text="PACKAGE CREATION" />
+                                <ui:TextBlock
+                                    Margin="0,12,0,8"
+                                    Text="{Binding CurrentPackageCreationStage}"
+                                    TextWrapping="Wrap" />
+                                <ui:ProgressRing
+                                    Width="40"
+                                    Height="40"
+                                    HorizontalAlignment="Center"
+                                    IsIndeterminate="True" />
+                                <ui:Button
+                                    Margin="0,12,0,0"
+                                    HorizontalAlignment="Center"
+                                    Command="{Binding AbortPackageCreationCmd}"
+                                    Content="Cancel" />
+                            </ui:StackPanel>
+                        </Border>
+                    </Border>
+                </Grid>
+                <ControlTemplate.Triggers>
+                    <Trigger Property="IsBusy" Value="True">
+                        <Setter TargetName="BusyPanel" Property="Visibility" Value="Visible" />
+                        <Setter TargetName="MainContent" Property="IsEnabled" Value="False" />
+                    </Trigger>
+                </ControlTemplate.Triggers>
+            </ControlTemplate>
+        </ui:BusyOverlay.Template>
 
         <ui:Grid>
             <ui:Grid.Resources>
@@ -63,7 +71,7 @@
 
                 <Style x:Key="Label" TargetType="{x:Type ui:TextBlock}">
                     <Setter Property="FontSize" Value="14" />
-                    <Setter Property="Foreground" Value="#555" />
+                    <Setter Property="Foreground" Value="{ui:ThemeResource TextFillColorSecondaryBrush}" />
                     <Setter Property="FontWeight" Value="Normal" />
                     <Setter Property="Margin" Value="4" />
                 </Style>
@@ -327,8 +335,10 @@
                                         Margin="4"
                                         BoxSize="22"
                                         Checked="{Binding UseSimplySign}"
-                                        Text="Certum SimplySign (ssign)" />
-                                    <ui:TextBlock Style="{StaticResource ResourceKey=Label}" Text="SSIGN.EXE FULL PATH" />
+                                        Text="SafeSign cloud signing" />
+                                    <ui:TextBlock Style="{StaticResource ResourceKey=Label}" Text="SAFESIGN PROVIDER" />
+                                    <ui:ComboBox ItemsSource="{Binding SafeSignProviders}" SelectedItem="{Binding SafeSignProvider}" />
+                                    <ui:TextBlock Style="{StaticResource ResourceKey=Label}" Text="SAFESIGN.EXE FULL PATH" />
                                     <ui:StackPanel Orientation="Horizontal">
                                         <ui:TextBox
                                             Width="318"
@@ -339,17 +349,29 @@
                                             Command="{Binding SelectSimplySignExecutableCommand}"
                                             Content="Browse" />
                                     </ui:StackPanel>
-                                    <ui:TextBlock Style="{StaticResource ResourceKey=Label}" Text="SIMPLYSIGN ACCOUNT EMAIL" />
+                                    <ui:TextBlock Style="{StaticResource ResourceKey=Label}" Text="CERTUM SIMPLYSIGN EMAIL (OPTIONAL)" />
                                     <ui:TextBox Background="{x:Null}" Text="{Binding SimplySignEmail, UpdateSourceTrigger=PropertyChanged}" />
-                                    <ui:TextBlock Style="{StaticResource ResourceKey=Label}" Text="CURRENT AUTHENTICATOR CODE (NOT SAVED)" />
+                                    <ui:TextBlock Style="{StaticResource ResourceKey=Label}" Text="CERTUM AUTHENTICATOR CODE (NOT SAVED)" />
                                     <ui:TextBox
                                         Background="{x:Null}"
                                         MaxLength="6"
                                         Text="{Binding SimplySignToken, UpdateSourceTrigger=PropertyChanged}" />
                                     <ui:TextBlock
                                         Margin="4"
-                                        Text="Install ssign from github.com/Le-Syl21/ssign. Use a current six-digit code, or set CERTUM_OTP / CERTUM_TOKEN before starting this app. Codes are never saved. ssign caches its cloud session for 20 minutes. PE binaries only; MSI is unsupported. Clear other signing settings."
+                                        Text="Select a SafeSign provider and executable. For Certum, enter an email and current six-digit code or configure CERTUM_SIMPLYSIGN_EMAIL / CERTUM_SIMPLYSIGN_OTP. Session credentials are not saved. Unsigned Windows payloads are signed before packaging. Clear other signing settings."
                                         TextWrapping="Wrap" />
+
+                                    <ui:TextBlock Style="{StaticResource ResourceKey=Label}" Text="SAFESIGN TIMESTAMP URL" />
+                                    <ui:TextBox Background="{x:Null}" Text="{Binding SafeSignTimestampUrl, UpdateSourceTrigger=PropertyChanged}" />
+                                    <ui:TextBlock Style="{StaticResource ResourceKey=Label}" Text="SAFESIGN SESSION ENVIRONMENT (NOT SAVED)" />
+                                    <ui:TextBox
+                                        MinHeight="72"
+                                        AcceptsReturn="True"
+                                        Background="{x:Null}"
+                                        Text="{Binding SafeSignEnvironment, UpdateSourceTrigger=PropertyChanged}"
+                                        TextWrapping="Wrap"
+                                        VerticalScrollBarVisibility="Auto" />
+                                    <ui:TextBlock Margin="4" Text="One NAME=value per line. Provider credentials and options apply only to this signing session." TextWrapping="Wrap" />
 
                                     <ui:TextBlock Style="{StaticResource ResourceKey=Label}" Text="SIGN PARAMS" />
                                     <ui:TextBox Background="{x:Null}" Text="{Binding SignParams, UpdateSourceTrigger=PropertyChanged}" />
@@ -364,7 +386,13 @@
                                         </ui:StackPanel>
                                         <ui:StackPanel Width="128">
                                             <ui:TextBlock Style="{StaticResource ResourceKey=Label}" Text="SIGN PARALLEL" />
-                                            <xctk:IntegerUpDown Minimum="1" Value="{Binding SignParallel, UpdateSourceTrigger=PropertyChanged}" />
+                                            <ui:NumberBox
+                                                AcceptsExpression="False"
+                                                MaxDecimalPlaces="0"
+                                                Maximum="2147483647"
+                                                Minimum="1"
+                                                SmallChange="1"
+                                                Value="{Binding SignParallel, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                                         </ui:StackPanel>
                                     </ui:StackPanel>
 
@@ -746,5 +774,5 @@
                 </ui:Grid>
             </ui:Grid>
         </ui:Grid>
-    </xctk:BusyIndicator>
+    </ui:BusyOverlay>
 </UserControl>

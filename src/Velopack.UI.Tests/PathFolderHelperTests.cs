@@ -5,6 +5,7 @@
 // </copyright>
 
 using System.IO;
+using System.Text.Json;
 using Velopack.UI.Helpers;
 
 namespace Velopack.UI.Tests;
@@ -14,6 +15,17 @@ namespace Velopack.UI.Tests;
 /// </summary>
 public sealed class PathFolderHelperTests
 {
+    /// <summary>Verifies recent projects survive a preference save and reload.</summary>
+    /// <returns>A task that completes after the assertion.</returns>
+    [Test]
+    public async Task Preferences_Roundtrip_RestoresRecentProject()
+    {
+        var original = new Preference();
+        original.LastOpenedProject.Add("C:\\Projects\\Example.velo");
+        var restored = JsonSerializer.Deserialize<Preference>(JsonSerializer.Serialize(original));
+        await Assert.That(restored!.LastOpenedProject).IsEquivalentTo(original.LastOpenedProject);
+    }
+
     /// <summary>
     /// Verifies Windows filenames lose invalid characters and trailing dots.
     /// </summary>

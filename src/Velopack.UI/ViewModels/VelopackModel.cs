@@ -181,6 +181,15 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
     private string? simplySignEmail;
 
     private string? simplySignToken;
+    private string? safeSignEnvironment;
+
+    [DataMember]
+    [Reactive]
+    private string safeSignProvider = "certum";
+
+    [DataMember]
+    [Reactive]
+    private string? safeSignTimestampUrl = "http://timestamp.digicert.com";
 
     [DataMember]
     [Reactive]
@@ -235,6 +244,20 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
     {
         get => this.simplySignToken;
         set => this.RaiseAndSetIfChanged(ref this.simplySignToken, value);
+    }
+
+    /// <summary>Gets the available SafeSign provider identifiers.</summary>
+    [JsonIgnore]
+    [IgnoreDataMember]
+    public IReadOnlyList<string> SafeSignProviders => SimplySignSigning.Providers;
+
+    /// <summary>Gets or sets provider environment credentials for this session only.</summary>
+    [JsonIgnore]
+    [IgnoreDataMember]
+    public string? SafeSignEnvironment
+    {
+        get => this.safeSignEnvironment;
+        set => this.RaiseAndSetIfChanged(ref this.safeSignEnvironment, value);
     }
 
     /// <summary>
@@ -1260,15 +1283,15 @@ public partial class VelopackModel : WebConnectionBase, IDropTarget
     }
 
     /// <summary>
-    /// Selects the installed SimplySign command line executable.
+    /// Selects the installed SafeSign command line executable.
     /// </summary>
     [ReactiveCommand]
     private void SelectSimplySignExecutable()
     {
         using var dialog = new System.Windows.Forms.OpenFileDialog
         {
-            Filter = "ssign executable|ssign.exe|Executable files|*.exe",
-            Title = "Select installed ssign.exe",
+            Filter = "SafeSign executable|safesign.exe|Executable files|*.exe",
+            Title = "Select installed safesign.exe",
             CheckFileExists = true,
         };
         if (dialog.ShowDialog() != System.Windows.Forms.DialogResult.OK)

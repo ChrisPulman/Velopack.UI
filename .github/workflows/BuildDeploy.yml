@@ -38,9 +38,20 @@ jobs:
         env:
           RELEASE_TAG: ${{ github.event.release.tag_name }}
           GH_TOKEN: ${{ github.token }}
-          CERTUM_EMAIL: ${{ secrets.CERTUM_EMAIL }}
-          CERTUM_OTP: ${{ secrets.CERTUM_OTP }}
-          CERTUM_TOKEN: ${{ secrets.CERTUM_TOKEN }}
-          SSIGN_PATH: ${{ vars.SSIGN_PATH }}
-          SSIGN_SHA256: ${{ vars.SSIGN_SHA256 }}
+          CERTUM_SIMPLYSIGN_EMAIL: ${{ secrets.CERTUM_SIMPLYSIGN_EMAIL }}
+          CERTUM_SIMPLYSIGN_TOTP_SECRET: ${{ secrets.CERTUM_SIMPLYSIGN_TOTP_SECRET }}
+          CERTUM_SIMPLYSIGN_OTP: ${{ secrets.CERTUM_SIMPLYSIGN_OTP }}
+          SAFESIGN_PROVIDER: ${{ vars.SAFESIGN_PROVIDER || 'certum' }}
+          SIGNING_TIMESTAMP_URL: ${{ vars.SIGNING_TIMESTAMP_URL || 'http://time.certum.pl' }}
+          SAFESIGN_FILE_PATH: ${{ vars.SAFESIGN_FILE_PATH }}
+          SAFESIGN_FILE_PASSWORD: ${{ secrets.SAFESIGN_FILE_PASSWORD }}
+          SAFESIGN_STORE_THUMBPRINT: ${{ vars.SAFESIGN_STORE_THUMBPRINT }}
+          AZURE_CODESIGNING_ENDPOINT: ${{ vars.AZURE_CODESIGNING_ENDPOINT }}
+          AZURE_CODESIGNING_ACCOUNT: ${{ vars.AZURE_CODESIGNING_ACCOUNT }}
+          AZURE_CODESIGNING_PROFILE: ${{ vars.AZURE_CODESIGNING_PROFILE }}
+          AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+          AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          SAFESIGN_PATH: ${{ vars.SAFESIGN_PATH }}
+          SAFESIGN_SHA256: ${{ vars.SAFESIGN_SHA256 }}
           SIGNING_CERTIFICATE_THUMBPRINT: ${{ vars.SIGNING_CERTIFICATE_THUMBPRINT }}

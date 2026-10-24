@@ -40,6 +40,7 @@ public partial class MainViewModel : RxObject
     private bool isSaved;
     private int publishMode;
     private Process? exeProcess;
+    private CancellationTokenSource? signingCancellation;
     private string? filePath;
     private IDisposable? dirtySubscription;
     private bool hasUnsavedNonTreeChanges;
@@ -192,7 +193,7 @@ public partial class MainViewModel : RxObject
         {
             this.activeBackgroungWorker.CancelAsync();
 
-            this.exeProcess?.Kill();
+            this.signingCancellation?.Cancel();
         }
 
         this.abortPackageFlag = true;
@@ -214,13 +215,20 @@ public partial class MainViewModel : RxObject
         if (rslt == MessageBoxResult.Yes)
         {
             this.Save();
+            if (this.HasUnsavedChanges)
+            {
+                return;
+            }
         }
 
         this.Model = new VelopackModel();
+        this.FilePath = null;
+        this.isSaved = false;
         this.SetupDirtyTracking();
         this.hasUnsavedNonTreeChanges = false;
         this.Model.HasUnsavedTreeChanges = false;
         this.RaisePropertyChanged(nameof(this.HasUnsavedChanges));
+        this.RaisePropertyChanged(nameof(this.WindowTitle));
     }
 
     /// <summary>
@@ -250,6 +258,24 @@ public partial class MainViewModel : RxObject
                 return;
             }
 
+            if (this.HasUnsavedChanges)
+            {
+                var result = MessageBox.Show("Save current project?", "Open Project", MessageBoxButton.YesNoCancel, MessageBoxImage.Question);
+                if (result == MessageBoxResult.Cancel)
+                {
+                    return;
+                }
+
+                if (result == MessageBoxResult.Yes)
+                {
+                    this.Save();
+                    if (this.HasUnsavedChanges)
+                    {
+                        return;
+                    }
+                }
+            }
+
             this.OpenProject(ofd.FileName);
         }
         catch (Exception ex)
@@ -272,8 +298,6 @@ public partial class MainViewModel : RxObject
                 return;
             }
 
-            this.FilePath = filepath;
-
             var m = JsonSerializer.Deserialize<VelopackModel>(File.ReadAllText(filepath), this.saveOptions);
 
             if (m == null)
@@ -281,22 +305,23 @@ public partial class MainViewModel : RxObject
                 return;
             }
 
-            this.Model = m;
-
             // Resync connection instances and mirror saved FileSystemBasePath into the active FileSystemConnection
-            this.Model.ResyncAfterLoad();
-            if (this.Model.SelectedConnection is not FileSystemConnection)
+            m.ResyncAfterLoad();
+            if (m.SelectedConnection is not FileSystemConnection)
             {
                 var projectDir = Path.GetDirectoryName(filepath);
                 if (!string.IsNullOrWhiteSpace(projectDir))
                 {
-                    this.Model.SetOutputBasePath(projectDir);
+                    m.SetOutputBasePath(projectDir);
                 }
             }
 
+            m.PackageFiles = VelopackModel.OrderFileList(m.PackageFiles);
+            m.RefreshPackageVersion();
+            this.Model = m;
+            this.FilePath = filepath;
+            this.isSaved = true;
             this.SetupDirtyTracking();
-            this.Model.PackageFiles = VelopackModel.OrderFileList(this.Model.PackageFiles);
-            this.Model.RefreshPackageVersion();
             this.AddLastProject(filepath);
             this.RaisePropertyChanged(nameof(this.WindowTitle));
 
@@ -362,6 +387,7 @@ public partial class MainViewModel : RxObject
             this.activeBackgroungWorker.RunWorkerCompleted += this.PackageCreationCompleted;
             this.activeBackgroungWorker.ProgressChanged += this.ActiveBackgroungWorker_ProgressChanged;
 
+            this.signingCancellation = new CancellationTokenSource();
             this.activeBackgroungWorker.RunWorkerAsync(this);
         }
         catch (Exception ex)
@@ -509,6 +535,7 @@ public partial class MainViewModel : RxObject
 
         this.activeBackgroungWorker?.Dispose();
         this.exeProcess?.Dispose();
+        this.signingCancellation?.Dispose();
         this.dirtySubscription?.Dispose();
     }
 
@@ -549,6 +576,8 @@ public partial class MainViewModel : RxObject
             this.Model.WhenAnyValue(m => m.UseSimplySign).Select(_ => RxVoid.Default),
             this.Model.WhenAnyValue(m => m.SimplySignExecutablePath).Select(_ => RxVoid.Default),
             this.Model.WhenAnyValue(m => m.SimplySignEmail).Select(_ => RxVoid.Default),
+            this.Model.WhenAnyValue(m => m.SafeSignProvider).Select(_ => RxVoid.Default),
+            this.Model.WhenAnyValue(m => m.SafeSignTimestampUrl).Select(_ => RxVoid.Default),
             this.Model.WhenAnyValue(m => m.SignExclude).Select(_ => RxVoid.Default),
             this.Model.WhenAnyValue(m => m.SignParallel).Select(_ => RxVoid.Default),
             this.Model.WhenAnyValue(m => m.AzureTrustedSignFile).Select(_ => RxVoid.Default),
@@ -618,7 +647,7 @@ public partial class MainViewModel : RxObject
 
             this.activeBackgroungWorker?.ReportProgress(60, "VELOPACK RELEASIFY");
 
-            this.VelopackPack();
+            this.VelopackPackAsync().GetAwaiter().GetResult();
             Trace.WriteLine("CREATED VELOPACK PACKAGE to : " + this.Model.VelopackOutputPath);
         }
         catch (Exception ex)
@@ -664,6 +693,8 @@ public partial class MainViewModel : RxObject
         this.activeBackgroungWorker?.Dispose();
 
         this.activeBackgroungWorker = null;
+        this.signingCancellation?.Dispose();
+        this.signingCancellation = null;
 
         if (this.abortPackageFlag)
         {
@@ -691,7 +722,7 @@ public partial class MainViewModel : RxObject
         this.Model?.BeginUpdatedFiles(this.publishMode);
     }
 
-    private void VelopackPack()
+    private async Task VelopackPackAsync()
     {
         if (this.Model == null)
         {
@@ -701,12 +732,35 @@ public partial class MainViewModel : RxObject
         var packDir = Path.GetFullPath(this.Model.PackageFilesOutputPath!);
         var outDir = Path.GetFullPath(this.Model.VelopackOutputPath!);
         var startInfo = this.CreateVelopackPackStartInfo(packDir, outDir);
+        var cancellationToken = this.signingCancellation?.Token ?? CancellationToken.None;
+        await VelopackToolUpdater.Shared.EnsureReadyAsync().WaitAsync(cancellationToken).ConfigureAwait(false);
+        if (this.Model.UseSimplySign)
+        {
+            await SimplySignSigning.SignAdditionalPayloadAsync(packDir, this.Model, startInfo, cancellationToken).ConfigureAwait(false);
+        }
 
+        cancellationToken.ThrowIfCancellationRequested();
         using (this.exeProcess = Process.Start(startInfo))
         {
-            var stdout = this.exeProcess!.StandardOutput.ReadToEnd();
-            var stderr = this.exeProcess!.StandardError.ReadToEnd();
-            this.exeProcess!.WaitForExit();
+            var stdoutTask = this.exeProcess!.StandardOutput.ReadToEndAsync();
+            var stderrTask = this.exeProcess!.StandardError.ReadToEndAsync();
+            try
+            {
+                await this.exeProcess.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                if (!this.exeProcess.HasExited)
+                {
+                    this.exeProcess.Kill(entireProcessTree: true);
+                }
+
+                await this.exeProcess.WaitForExitAsync().ConfigureAwait(false);
+                throw;
+            }
+
+            var stdout = await stdoutTask.ConfigureAwait(false);
+            var stderr = await stderrTask.ConfigureAwait(false);
             Trace.WriteLine(stdout);
             if (!string.IsNullOrWhiteSpace(stderr))
             {

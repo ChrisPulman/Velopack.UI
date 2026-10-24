@@ -19,19 +19,19 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Octokit" Version="14.0.0" />
-    <PackageReference Include="ReactiveUI.Primitives" Version="9.0.0" />
-    <PackageReference Include="ReactiveUI.SourceGenerators" Version="4.2.0">
+    <AssemblyMetadata Include="VelopackToolVersion" Value="$(VelopackVersion)" />
+    <PackageReference Include="Octokit" />
+    <PackageReference Include="ReactiveUI.Primitives" />
+    <PackageReference Include="ReactiveUI.SourceGenerators">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>compile; runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Velopack" Version="1.2.161" />
-    <PackageReference Include="AWSSDK.S3" Version="4.0.104.6" />
-    <PackageReference Include="CrissCross.WPF.UI" Version="5.0.2" />
-    <PackageReference Include="DotNetProjects.Extended.Wpf.Toolkit" Version="5.0.129" />
-    <PackageReference Include="gong-wpf-dragdrop" Version="4.0.0" />
-    <PackageReference Include="FluentValidation" Version="12.2.0" />
-    <PackageReference Update="Microsoft.SourceLink.GitHub" Version="10.0.402" />
+    <PackageReference Include="Velopack" />
+    <PackageReference Include="AWSSDK.S3" />
+    <PackageReference Include="CrissCross.WPF.UI" />
+    <PackageReference Include="gong-wpf-dragdrop" />
+    <PackageReference Include="FluentValidation" />
+    <PackageReference Update="Microsoft.SourceLink.GitHub" />
   </ItemGroup>
 
   <ItemGroup>

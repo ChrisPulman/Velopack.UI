@@ -54,6 +54,26 @@ public partial class App
     [STAThread]
     private static void Main(string[] args)
     {
+        if (args.Length > 0 && args[0] == "--safesign-file")
+        {
+            try
+            {
+                if (args.Length != 2)
+                {
+                    throw new ArgumentException("The signing helper requires exactly one file.");
+                }
+
+                SimplySignSigning.SignFileAsync(args[1], new ProcessStartInfo()).GetAwaiter().GetResult();
+            }
+            catch (Exception exception)
+            {
+                Console.Error.WriteLine(exception.Message);
+                Environment.ExitCode = 1;
+            }
+
+            return;
+        }
+
         StartupProjectFilePath = FileAssociationHelper.GetProjectFileArgument(args);
 
         VelopackApp.Build()
@@ -70,55 +90,19 @@ public partial class App
     }
 
     private static void QueueVelopackToolCheck() =>
-        _ = Task.Run(async () =>
-        {
-            try
-            {
-                await Task.Delay(TimeSpan.FromSeconds(2)).ConfigureAwait(false);
-                await TryPromptVelopackToolAsync().ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                Trace.TraceWarning($"Velopack tool check failed: {ex}");
-            }
-        });
+        _ = ObserveVelopackToolReadinessAsync();
 
-    private static async Task TryPromptVelopackToolAsync()
+    private static async Task ObserveVelopackToolReadinessAsync()
     {
-        var listResult = await RunProcessAsync("dotnet", TimeSpan.FromSeconds(30), "tool", "list", "-g").ConfigureAwait(false);
-        if (listResult.ExitCode != 0)
+        try
         {
-            Trace.TraceWarning($"Failed to list global dotnet tools: {listResult.StandardError}{listResult.StandardOutput}");
-            return;
+            await VelopackToolUpdater.Shared.EnsureReadyAsync().ConfigureAwait(false);
         }
-
-        if (listResult.StandardOutput.Contains("vpk", StringComparison.OrdinalIgnoreCase))
+        catch (Exception exception)
         {
-            return;
+            Trace.TraceWarning($"Velopack tool preparation failed: {exception}");
+            await ShowMessageBoxAsync(exception.Message, "Velopack tool preparation failed", MessageBoxButton.OK, MessageBoxImage.Error).ConfigureAwait(false);
         }
-
-        var rslt = await ShowMessageBoxAsync(
-            "The Velopack global tool 'vpk' is not installed. Install now?\nThis runs: dotnet tool install -g vpk",
-            "Velopack Tool Missing",
-            MessageBoxButton.YesNo,
-            MessageBoxImage.Information).ConfigureAwait(false);
-
-        if (rslt != MessageBoxResult.Yes)
-        {
-            return;
-        }
-
-        var installResult = await RunProcessAsync("dotnet", TimeSpan.FromMinutes(2), "tool", "install", "-g", "vpk").ConfigureAwait(false);
-        if (installResult.ExitCode == 0)
-        {
-            return;
-        }
-
-        await ShowMessageBoxAsync(
-            $"Failed to install vpk:\n{installResult.StandardError}\n{installResult.StandardOutput}",
-            "Install Error",
-            MessageBoxButton.OK,
-            MessageBoxImage.Error).ConfigureAwait(false);
     }
 
     private static void QueuePostStartupChecks()
@@ -219,50 +203,6 @@ public partial class App
         }
     }
 
-    private static async Task<ProcessResult> RunProcessAsync(string fileName, TimeSpan timeout, params string[] arguments)
-    {
-        using var process = new Process
-        {
-            StartInfo = new ProcessStartInfo
-            {
-                FileName = fileName,
-                UseShellExecute = false,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                CreateNoWindow = true,
-            },
-        };
-
-        foreach (var argument in arguments)
-        {
-            process.StartInfo.ArgumentList.Add(argument);
-        }
-
-        if (!process.Start())
-        {
-            return new ProcessResult(-1, string.Empty, $"Failed to start '{fileName}'.");
-        }
-
-        var standardOutput = process.StandardOutput.ReadToEndAsync();
-        var standardError = process.StandardError.ReadToEndAsync();
-
-        try
-        {
-            using var timeoutToken = new CancellationTokenSource(timeout);
-            await process.WaitForExitAsync(timeoutToken.Token).ConfigureAwait(false);
-        }
-        catch (OperationCanceledException)
-        {
-            TryKill(process);
-            return new ProcessResult(-1, string.Empty, $"'{fileName}' timed out after {timeout}.");
-        }
-
-        return new ProcessResult(
-            process.ExitCode,
-            await standardOutput.ConfigureAwait(false),
-            await standardError.ConfigureAwait(false));
-    }
-
     private static Task<MessageBoxResult> ShowMessageBoxAsync(string message, string title, MessageBoxButton buttons, MessageBoxImage image)
     {
         var dispatcher = Current?.Dispatcher;
@@ -281,18 +221,4 @@ public partial class App
             ? MessageBox.Show(message, title, buttons, image)
             : MessageBox.Show(owner, message, title, buttons, image);
     }
-
-    private static void TryKill(Process process)
-    {
-        try
-        {
-            process.Kill(entireProcessTree: true);
-        }
-        catch
-        {
-            // Process may already have exited.
-        }
-    }
-
-    private readonly record struct ProcessResult(int ExitCode, string StandardOutput, string StandardError);
 }

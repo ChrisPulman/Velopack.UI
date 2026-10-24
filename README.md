@@ -179,13 +179,17 @@ For exact configuration strings and provider‑specific options, refer to the Ve
 - Upload errors
   - Validate credentials/permissions and that the destination path exists. Check network/firewall and retry.
 
-### Certum SimplySign cloud signing
+### SafeSign signing
 
-Enable **Certum SimplySign (ssign)** in the signing options, select your installed `ssign.exe`, and enter your Certum email and current six-digit authenticator code. The code stays in memory and is passed only through the packaging process environment. It is excluded from saved `.velo` projects.
+Enable **SafeSign**, select an installed `safesign.exe`, and choose a provider. SafeSign supports Certum SimplySign, local PFX (`file`), certificate stores (`store`), Azure Artifact Signing and other cloud/HSM providers. Configure the timestamp URL and provider environment variables described in the [SafeSign documentation](https://github.com/glennawatson/SafeSign). Clear the legacy Sign Params, Sign Template and Azure metadata options when using SafeSign.
 
-For unattended signing, start the application with `CERTUM_EMAIL` and exactly one of `CERTUM_OTP` (the authenticator seed) or `CERTUM_TOKEN` (a current code). Enter the account email in the signing options. Clear the other signing modes before selecting SimplySign. MSI generation is unavailable with this option because `ssign` supports PE files. Install and test [ssign](https://github.com/Le-Syl21/ssign) independently before packaging; it is an independent client for the Certum service.
+For Certum, enter the account email and current six-digit authenticator code, or supply `CERTUM_SIMPLYSIGN_TOTP_SECRET` through the environment. Provider credentials entered for the current session are excluded from saved `.velo` projects and inherited only by child signing processes. For a PFX, use `SAFESIGN_FILE_PATH` and `SAFESIGN_FILE_PASSWORD`; for a certificate store use `SAFESIGN_STORE_THUMBPRINT`. The app maps these aliases to SafeSign 1.1.0 native `SAFESIGN_CERT_FILE`, `SAFESIGN_CERT_PASSWORD`, and `SAFESIGN_CERT_THUMBPRINT`.
+
+SafeSign signs supported unsigned payload files and the installer, including MSI. Existing signatures are preserved; damaged signatures stop packaging. Velopack signs PE files after preparing executable resources, while additional supported payload formats are signed in the staging directory before packing. Keep signing concurrency at 1 for providers that restrict concurrent operations. Automatic payload signing covers EXE/DLL/EFI, MSI/MSP/MST, CAB/CAT and supported Windows scripts. Other SafeSign formats (including MSIX/AppX, NAVX, RPM and NuGet) require a separate workflow because this app cannot safely inspect their existing signatures.
 
 ### Application updates and CI
+
+On startup, the application installs or updates global `vpk` to the version defined centrally for its Velopack dependency. Packaging waits for this preparation, failures report a repair command, and a later attempt can retry. This requires a .NET SDK and NuGet access when a tool change is needed. Already matching tools are reused. The background CLI processes opt out of optional telemetry and workload advertising so those requests do not delay startup.
 
 Installed copies check this repository's stable GitHub releases at startup and download available updates through Velopack. The application asks before restarting, warns about unsaved changes, and defers restart while packaging is active. Declining keeps the downloaded update for a later launch. Running from source skips installed-application updates.
 

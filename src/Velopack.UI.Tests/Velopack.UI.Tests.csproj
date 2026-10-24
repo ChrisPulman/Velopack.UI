@@ -10,8 +10,8 @@
     <Description>Application behavior tests for Velopack.UI.</Description>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="TUnit" Version="1.76.0" />
-    <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" Version="18.12.0" />
+    <PackageReference Include="TUnit" />
+    <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" />
     <ProjectReference Include="../Velopack.UI/Velopack.UI.csproj" />
   </ItemGroup>
   <ItemGroup>
