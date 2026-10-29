@@ -5,7 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageVersion Include="AWSSDK.S3" Version="4.0.104.6" />
+    <PackageVersion Include="AWSSDK.S3" Version="4.0.104.8" />
     <PackageVersion Include="CrissCross.WPF.UI" Version="5.0.2" />
     <PackageVersion Include="FluentValidation" Version="12.2.0" />
     <PackageVersion Include="gong-wpf-dragdrop" Version="4.0.0" />
