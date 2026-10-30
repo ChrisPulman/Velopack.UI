@@ -17,7 +17,7 @@
     <PackageVersion Include="ReactiveUI.SourceGenerators" Version="4.2.0" />
     <PackageVersion Include="Roslynator.Analyzers" Version="5.0.1" />
     <PackageVersion Include="stylecop.analyzers" Version="1.2.0-beta.556" />
-    <PackageVersion Include="TUnit" Version="1.76.0" />
+    <PackageVersion Include="TUnit" Version="1.76.45" />
     <PackageVersion Include="Velopack" Version="$(VelopackVersion)" />
   </ItemGroup>
 </Project>
