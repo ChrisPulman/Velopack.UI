@@ -14,7 +14,7 @@
     <PackageVersion Include="Nerdbank.GitVersioning" Version="3.10.94" />
     <PackageVersion Include="Octokit" Version="14.0.0" />
     <PackageVersion Include="ReactiveUI.Primitives" Version="9.0.0" />
-    <PackageVersion Include="ReactiveUI.SourceGenerators" Version="4.2.0" />
+    <PackageVersion Include="ReactiveUI.SourceGenerators" Version="6.0.0" />
     <PackageVersion Include="Roslynator.Analyzers" Version="5.0.1" />
     <PackageVersion Include="stylecop.analyzers" Version="1.2.0-beta.556" />
     <PackageVersion Include="TUnit" Version="1.76.45" />
